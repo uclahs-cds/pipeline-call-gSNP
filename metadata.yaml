@@ -1,0 +1,11 @@
+---
+Category: "pipeline"
+Description: "GATK pipeline on regenotyping germline variants on a cohort"
+Maintainers: "Boutros Lab Infrastructure - Stefan Eng (stefaneng@mednet.ucla.edu)"
+Contributors: ["Stefan Eng", "Yash Patel"]
+Languages: ["Nextflow", "Docker"]
+Dependencies: ["Java", "Nextflow", "Docker"]
+References: "https://confluence.mednet.ucla.edu/display/BOUTROSLAB/Guide+to+Nextflow"
+Tools: ["GATK:4.2.0.0", "RTG Tools:3.12"]
+Engineering_Owner: ["Stefan Eng"]
+Scientific_Owner: ["Stefan Eng"]

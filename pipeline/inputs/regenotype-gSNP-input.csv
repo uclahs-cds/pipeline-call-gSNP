@@ -1,0 +1,3 @@
+sample,input_file,chr
+S00-9422N_079_114,/hot/pipelines/development/slurm/call-gSNP/config/call-gSNP_v5.3.0_N-T_paired_targeted_exome/outputs/gSNP/2021-01-04_21.01.41/S00-9422/SAMtools-1.10_Picard-2.23.3/recalibrated_reheadered_bam_and_bai/S00-9422N_079_114_realigned_recalibrated_reheadered.bam,
+S00-9422T_027_166,/hot/pipelines/development/slurm/call-gSNP/config/call-gSNP_v5.3.0_N-T_paired_targeted_exome/outputs/gSNP/2021-01-04_21.01.41/S00-9422/SAMtools-1.10_Picard-2.23.3/recalibrated_reheadered_bam_and_bai/S00-9422T_027_166_realigned_recalibrated_reheadered.bam,
