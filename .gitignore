@@ -1,0 +1,21 @@
+# nextflow
+work/
+.nextflow/
+*.nextflow.log*
+*.log
+*.error
+
+filled-regenotype-gSNP-single-node.config
+
+# system
+.DS_Store
+*.swp
+
+# python
+.pytest_cache/
+__pycache__/
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+*.py[cod]
+*$py.class
