@@ -81,7 +81,7 @@ process run_HaplotypeCaller_GATK {
     publishDir path:params.output_dir,
       mode: "copy",
       enabled: params.save_intermediate_files,
-      pattern: '*.g.vcf*'
+      pattern: '*.vcf*'
 
     publishDir path: params.log_output_dir,
       pattern: ".command.*",
@@ -94,30 +94,64 @@ process run_HaplotypeCaller_GATK {
     path(reference_fasta_dict)
     path(dbsnp_bundle)
     path(dbsnp_bundle_index)
-    tuple val(sample_id), path(bam), path(bam_index), path(interval)
+    tuple val(sample_id), val(normal_id), val(tumour_id), path(bam), path(bam_index), path(bam_tumour), path(bam_index_tumour), path(interval)
 
 
     output:
       path(".command.*")
       tuple val(interval), path("${sample_id}_{${task.index}_,}raw_variants.g.vcf.gz"), path("${sample_id}_{${task.index}_,}raw_variants.g.vcf.gz.tbi"), emit: gvcf
+      tuple val(interval), path("${sample_id}_{${task.index}_,}.vcf"), path("${sample_id}_{${task.index}_,}.vcf.idx"), emit: vcf
 
     script:
-        out_filename = "${sample_id}_${task.index}_raw_variants.g.vcf.gz"
+        out_filename_normal = "${normal_id}_${task.index}_raw_variants.g.vcf.gz"
+        out_filename_tumour = "${tumour_id}_${task.index}_raw_variants.g.vcf.gz"
+        out_filename_vcf = "${sample_id}_${task.index}.vcf"
         interval_str = "--intervals ${interval}"
+        vcf_input_str = params.is_NT_paired ? "--input ${bam} --input ${bam_tumour}" : "--input ${bam}"
+
     """
       set -euo pipefail
+
+      gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=/tmp" \
+          HaplotypeCaller \
+          ${vcf_input_str} \
+          --output ${out_filename_vcf} \
+          --reference ${reference_fasta} \
+          --verbosity INFO \
+          --output-mode EMIT_VARIANTS_ONLY \
+          --dbsnp ${dbsnp_bundle} \
+          --sample-ploidy 2 \
+          --standard-min-confidence-threshold-for-calling 50 \
+          ${interval_str}
+
       gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=/scratch" \
-           HaplotypeCaller \
-           --input ${bam} \
-           --output ${out_filename} \
-           --reference ${reference_fasta} \
-           --verbosity INFO \
-           --output-mode EMIT_VARIANTS_ONLY \
-           --emit-ref-confidence GVCF \
-           --dbsnp ${dbsnp_bundle} \
-           --sample-ploidy 2 \
-           --standard-min-confidence-threshold-for-calling 30 \
-           ${interval_str}
+          HaplotypeCaller \
+          --input ${bam} \
+          --output ${out_filename_normal} \
+          --reference ${reference_fasta} \
+          --verbosity INFO \
+          --output-mode EMIT_VARIANTS_ONLY \
+          --emit-ref-confidence GVCF \
+          --dbsnp ${dbsnp_bundle} \
+          --sample-ploidy 2 \
+          --standard-min-confidence-threshold-for-calling 30 \
+          ${interval_str}
+
+      if ${params.is_NT_paired}
+      then
+        gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=/scratch" \
+          HaplotypeCaller \
+          --input ${bam_tumour} \
+          --output ${out_filename_tumour} \
+          --reference ${reference_fasta} \
+          --verbosity INFO \
+          --output-mode EMIT_VARIANTS_ONLY \
+          --emit-ref-confidence GVCF \
+          --dbsnp ${dbsnp_bundle} \
+          --sample-ploidy 2 \
+          --standard-min-confidence-threshold-for-calling 30 \
+          ${interval_str}
+      fi
     """
 }
 
