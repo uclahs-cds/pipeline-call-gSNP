@@ -99,9 +99,12 @@ process run_HaplotypeCaller_GATK {
 
     output:
       path(".command.*")
-      tuple val(interval), path("${normal_id}_{${task.index}_,}raw_variants.g.vcf.gz"), path("${normal_id}_{${task.index}_,}raw_variants.g.vcf.gz.tbi"), emit: gvcf_normal
-      tuple val(interval), path("${tumour_id}_{${task.index}_,}raw_variants.g.vcf.gz"), path("${tumour_id}_{${task.index}_,}raw_variants.g.vcf.gz.tbi"), emit: gvcf_tumour optional true
-      tuple val(interval), path("${sample_id}_{${task.index}_,}.vcf"), path("${sample_id}_{${task.index}_,}.vcf.idx"), emit: vcf
+      path("${sample_id}_${task.index}.vcf"), emit: vcf
+      path("${sample_id}_${task.index}.vcf.idx"), emit: vcf_index
+      path("${normal_id}_${task.index}_raw_variants.g.vcf.gz"), emit: gvcf_normal
+      path("${normal_id}_${task.index}_raw_variants.g.vcf.gz.tbi"), emit: gvcf_normal_index
+      path("${tumour_id}_${task.index}_raw_variants.g.vcf.gz"), emit: gvcf_tumour optional true
+      path("${tumour_id}_${task.index}_raw_variants.g.vcf.gz.tbi"), emit: gvcf_tumour_index optional true
 
     script:
         out_filename_normal = "${normal_id}_${task.index}_raw_variants.g.vcf.gz"
@@ -229,6 +232,7 @@ process run_MergeVcfs_Picard {
 
     publishDir path: params.output_dir,
       mode: "copy",
+      enabled: params.save_intermediate_files,
       pattern: "*.vcf*"
 
     publishDir path: params.log_output_dir,
@@ -244,9 +248,12 @@ process run_MergeVcfs_Picard {
 
     output:
     path(".command.*")
-    tuple path("${sample_id}_merged_raw.vcf"), path("${sample_id}_merged_raw.vcf.idx"), emit: vcf
-    tuple path("${normal_id}_merged_raw_variants.g.vcf.gz"), path("${normal_id}_merged_raw_variants.g.vcf.gz.tbi"), emit: gvcf_normal
-    tuple path("${tumour_id}_merged_raw_variants.g.vcf.gz"), path("${tumour_id}_merged_raw_variants.g.vcf.gz.tbi"), emit: gvcf_tumour optional true
+    path("${sample_id}_merged_raw.vcf"), emit: vcf
+    path("${sample_id}_merged_raw.vcf.idx"), emit: vcf_index
+    path("${normal_id}_merged_raw_variants.g.vcf.gz"), emit: gvcf_normal
+    path("${normal_id}_merged_raw_variants.g.vcf.gz.tbi"), emit: gvcf_normal_index
+    path("${tumour_id}_merged_raw_variants.g.vcf.gz"), emit: gvcf_tumour optional true
+    path("${tumour_id}_merged_raw_variants.g.vcf.gz.tbi"), emit: gvcf_tumour_index optional true
 
     script:
     vcf_args = vcfs.collect{ "-INPUT '$it'" }.join(' ')
@@ -260,23 +267,20 @@ process run_MergeVcfs_Picard {
       -jar /picard-tools/picard.jar MergeVcfs \
       ${vcf_args} \
       -OUTPUT ${sample_id}_merged_raw.vcf \
-      -SEQUENCE_DICTIONARY ${params.reference_dict} \
       -VALIDATION_STRINGENCY LENIENT
 
     java -Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -Djava.io.tmpdir=/scratch \
       -jar /picard-tools/picard.jar MergeVcfs \
-      ${gvcfs_args_normal} \
+      ${gvcf_args_normal} \
       -OUTPUT ${normal_id}_merged_raw_variants.g.vcf.gz \
-      -SEQUENCE_DICTIONARY ${params.reference_dict} \
       -VALIDATION_STRINGENCY LENIENT
     
     if ${params.is_NT_paired}
     then
       java -Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -Djava.io.tmpdir=/scratch \
         -jar /picard-tools/picard.jar MergeVcfs \
-        ${gvcfs_args_tumour} \
+        ${gvcf_args_tumour} \
         -OUTPUT ${tumour_id}_merged_raw_variants.g.vcf.gz \
-        -SEQUENCE_DICTIONARY ${params.reference_dict} \
         -VALIDATION_STRINGENCY LENIENT
     fi
     """
