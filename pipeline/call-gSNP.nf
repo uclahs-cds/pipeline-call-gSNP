@@ -11,6 +11,7 @@ Boutros Lab
 Current Configuration:
 
       - pipeline:
+          name: ${workflow.manifest.name}
           version: ${workflow.manifest.version}
 
       - input:
