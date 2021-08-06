@@ -87,7 +87,10 @@ if (params.is_NT_paired) {
     input_ch_input_csv.flatMap{it -> [it.normal_BAM, it.normal_index]}.set{input_validation}
 }
 
-merge_identifiers = input_ch_input_csv.map{it -> [it.sample_id, it.normal_id, it.tumour_id]}.collect()
+identifiers = input_ch_input_csv.map{it -> [it.sample_id, it.normal_id, it.tumour_id]}.collect()
+identifiers.set{ merge_identifiers }
+identifiers.set{ recal_snp_identifiers }
+identifiers.set{ recal_indels_identifiers }
 
 workflow {
     run_validate(input_validation)
@@ -124,6 +127,18 @@ workflow {
       run_HaplotypeCaller_GATK.out.gvcf_normal.collect(),
       run_HaplotypeCaller_GATK.out.gvcf_tumour.collect().ifEmpty("/scratch/placeholder.txt"),
       merge_identifiers
+      )
+
+    recalibrate_snps(
+      recal_snp_identifiers,
+      run_MergeVcfs_Picard.out.vcf,
+      run_MergeVcfs_Picard.out.vcf_index
+      )
+
+    recalibrate_indels(
+      recal_indels_identifiers,
+      recalibrate_snps.out.vcf,
+      recalibrate_snps.out.vcf_index
       )
 
 }

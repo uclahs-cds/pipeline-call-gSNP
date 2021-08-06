@@ -1,8 +1,8 @@
 process run_VariantRecalibratorINDEL_GATK {
     container params.docker_image_gatk
-    publishDir path: params.output_dir,
+    publishDir path: "${params.output_dir}/${task.process.replace(':', '/')}",
       mode: "copy",
-      pattern: "cohort_indel*"
+      pattern: "*_output_indel.*"
 
     publishDir path: params.log_output_dir,
       pattern: ".command.*",
@@ -15,51 +15,53 @@ process run_VariantRecalibratorINDEL_GATK {
     path(reference_fasta_dict)
     path(bundle_mills_and_1000g_gold_standards_vcf_gz)
     path(bundle_mills_and_1000g_gold_standards_vcf_gz_tbi)
-    tuple(path(cohort_vcf), path(cohort_vcf_tbi))
+    tuple val(sample_id), val(normal_id), val(tumour_id)
+    path(sample_vcf)
+    path(sample_vcf_tbi)
 
 
     output:
     path(".command.*")
-    path("cohort_indel.plots.R")
-    path("cohort_indel.plots.R.pdf")
-    tuple path(cohort_vcf),
-          path(cohort_vcf_tbi),
-          path("cohort_indel.recal"),
-          path("cohort_indel.recal.idx"),
-          path("cohort_indel.tranches"), emit: indel_recal
+    path("${sample_id}_output_indel.plots.R")
+    path("${sample_id}_output_indel.plots.R.pdf")
+    tuple path(sample_vcf),
+          path(sample_vcf_tbi),
+          path("${sample_id}_output_indel.recal"),
+          path("${sample_id}_output_indel.recal.idx"),
+          path("${sample_id}_output_indel.tranches"),
+          val(sample_id), emit: indel_recal
 
     script:
+    variable_mode_options = params.is_NT_paired ? "--use-annotation MQRankSum --use-annotation ReadPosRankSum" : ""
     """
     set -euo pipefail
-    gatk --java-options "-DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=/tmp" \
-           VariantRecalibrator \
-           --variant ${cohort_vcf} \
-           --reference ${reference_fasta} \
-           --resource:mills,known=true,training=true,truth=true,prior=12.0 ${bundle_mills_and_1000g_gold_standards_vcf_gz} \
-           --use-annotation DP \
-           --use-annotation FS \
-           --use-annotation QD \
-           --use-annotation MQ \
-           --use-annotation MQRankSum \
-           --use-annotation ReadPosRankSum \
-           --mode INDEL \
-           --tranches-file cohort_indel.tranches \
-           --output cohort_indel.recal \
-           --truth-sensitivity-tranche 100.0 \
-           --truth-sensitivity-tranche 99.9 \
-           --truth-sensitivity-tranche 99.0 \
-           --truth-sensitivity-tranche 90.0 \
-           --max-gaussians 4 \
-           --max-attempts 5 \
-           --rscript-file cohort_indel.plots.R
+
+    gatk --java-options "-DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=/scratch" \
+            VariantRecalibrator \
+            --variant ${sample_vcf} \
+            --reference ${reference_fasta} \
+            --resource:mills,known=true,training=true,truth=true,prior=12.0 ${bundle_mills_and_1000g_gold_standards_vcf_gz} \
+            --use-annotation DP \
+            --use-annotation FS \
+            ${variable_mode_options} \
+            --mode INDEL \
+            --tranches-file ${sample_id}_output_indel.tranches \
+            --output ${sample_id}_output_indel.recal \
+            --truth-sensitivity-tranche 100.0 \
+            --truth-sensitivity-tranche 99.9 \
+            --truth-sensitivity-tranche 99.0 \
+            --truth-sensitivity-tranche 90.0 \
+            --max-gaussians 2 \
+            --max-attempts 5 \
+            --rscript-file ${sample_id}_output_indel.plots.R
     """
 }
 
 process run_VariantRecalibratorSNP_GATK {
     container params.docker_image_gatk
-    publishDir path: params.output_dir,
+    publishDir path: "${params.output_dir}/${task.process.replace(':', '/')}",
       mode: "copy",
-      pattern: "cohort_snp*"
+      pattern: "*_output_snp.*"
 
     publishDir path: params.log_output_dir,
       pattern: ".command.*",
@@ -78,56 +80,58 @@ process run_VariantRecalibratorSNP_GATK {
     path(bundle_omni_1000g_2p5_vcf_gz_tbi)
     path(bundle_phase1_1000g_snps_high_conf_vcf_gz)
     path(bundle_phase1_1000g_snps_high_conf_vcf_gz_tbi)
-    tuple(path(cohort_vcf), path(cohort_vcf_tbi))
+    tuple val(sample_id), val(normal_id), val(tumour_id)
+    path(sample_vcf)
+    path(sample_vcf_tbi)
 
 
     output:
     path(".command.*")
-    path("cohort_snp.plots.R")
-    path("cohort_snp.plots.R.pdf")
-    path("cohort_snp.tranches.pdf")
-    tuple path(cohort_vcf),
-          path(cohort_vcf_tbi),
-          path("cohort_snp.recal"),
-          path("cohort_snp.recal.idx"),
-          path("cohort_snp.tranches"), emit: snp_recal
-
+    path("${sample_id}_output_snp.plots.R")
+    path("${sample_id}_output_snp.plots.R.pdf")
+    tuple path(sample_vcf),
+          path(sample_vcf_tbi),
+          path("${sample_id}_output_snp.recal"),
+          path("${sample_id}_output_snp.recal.idx"),
+          path("${sample_id}_output_snp.tranches"),
+          val(sample_id), emit: snp_recal
 
     script:
+    variable_mode_options = params.is_NT_paired ? "--use-annotation MQRankSum --use-annotation ReadPosRankSum" : ""
     """
     set -euo pipefail
-    gatk --java-options "-DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=/tmp" \
-           VariantRecalibrator \
-           --variant ${cohort_vcf} \
-           --reference ${reference_fasta} \
-           --resource:hapmap,known=false,training=true,truth=true,prior=15.0 ${bundle_hapmap_3p3_vcf_gz} \
-           --resource:omni,known=false,training=true,truth=true,prior=12.0 ${bundle_omni_1000g_2p5_vcf_gz} \
-           --resource:1000G,known=false,training=true,truth=false,prior=10.0 ${bundle_phase1_1000g_snps_high_conf_vcf_gz} \
-           --resource:dbsnp,known=true,training=false,truth=false,prior=2.0 ${bundle_v0_dbsnp138_vcf_gz} \
-           --use-annotation DP \
-           --use-annotation FS \
-           --use-annotation QD \
-           --use-annotation MQ \
-           --use-annotation MQRankSum \
-           --use-annotation ReadPosRankSum \
-           --mode SNP \
-           --tranches-file cohort_snp.tranches \
-           --output cohort_snp.recal \
-           --truth-sensitivity-tranche 100.0 \
-           --truth-sensitivity-tranche 99.9 \
-           --truth-sensitivity-tranche 99.0 \
-           --truth-sensitivity-tranche 90.0 \
-           --max-gaussians 4 \
-           --max-attempts 5 \
-           --rscript-file cohort_snp.plots.R
+
+    gatk --java-options "-DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=/scratch" \
+        VariantRecalibrator \
+        --variant ${sample_vcf} \
+        --reference ${reference_fasta} \
+        --resource:hapmap,known=false,training=true,truth=true,prior=15.0 ${bundle_hapmap_3p3_vcf_gz} \
+        --resource:omni,known=false,training=true,truth=true,prior=12.0 ${bundle_omni_1000g_2p5_vcf_gz} \
+        --resource:1000G,known=false,training=true,truth=false,prior=10.0 ${bundle_phase1_1000g_snps_high_conf_vcf_gz} \
+        --resource:dbsnp,known=true,training=false,truth=false,prior=2.0 ${bundle_v0_dbsnp138_vcf_gz} \
+        --use-annotation DP \
+        --use-annotation QD \
+        --use-annotation FS \
+        --use-annotation MQ \
+        ${variable_mode_options} \
+        --mode SNP \
+        --tranches-file ${sample_id}_output_snp.tranches \
+        --output ${sample_id}_output_snp.recal \
+        --truth-sensitivity-tranche 100.0 \
+        --truth-sensitivity-tranche 99.9 \
+        --truth-sensitivity-tranche 99.0 \
+        --truth-sensitivity-tranche 90.0 \
+        --max-gaussians 4 \
+        --max-attempts 5 \
+        --rscript-file ${sample_id}_output_snp.plots.R
     """
 }
 
 process run_ApplyVQSR_GATK {
     container params.docker_image_gatk
-    publishDir path: params.output_dir,
+    publishDir path: "${params.output_dir}/${task.process.replace(':', '/')}",
       mode: "copy",
-      pattern: "regenotyped_merged_recalibrated_${suffix}.vcf.gz{,.tbi}"
+      pattern: "*_merged_recalibrated_${suffix}.vcf.gz{,.tbi}"
 
     publishDir path: params.log_output_dir,
       pattern: ".command.*",
@@ -140,25 +144,26 @@ process run_ApplyVQSR_GATK {
     path(reference_fasta)
     path(reference_fasta_fai)
     path(reference_fasta_dict)
-    tuple(path(cohort_vcf), path(cohort_vcf_tbi), path(recal_file), path(recal_index_file), path(tranches_file))
+    tuple(path(sample_vcf), path(sample_vcf_tbi), path(recal_file), path(recal_index_file), path(tranches_file), val(sample_id))
 
 
     output:
     path(".command.*")
-    path("regenotyped_merged_recalibrated_${suffix}.vcf.gz{,.tbi}"), emit: vcf
+    path("${sample_id}_merged_recalibrated_${suffix}.vcf.gz"), emit: vcf
+    path("${sample_id}_merged_recalibrated_${suffix}.vcf.gz.tbi"), emit: vcf_index
 
     script:
     """
     set -euo pipefail
-    gatk --java-options "-DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=/tmp" \
+    gatk --java-options "-DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=/scratch" \
            ApplyVQSR \
-           --variant ${cohort_vcf} \
+           --variant ${sample_vcf} \
            --reference ${reference_fasta} \
            --mode ${mode} \
-           --truth-sensitivity-filter-level 99 \
+           --ts-filter-level 99 \
            --tranches-file ${tranches_file} \
            --recal-file ${recal_file} \
-           --output regenotyped_merged_recalibrated_${suffix}.vcf.gz
+           --output ${sample_id}_merged_recalibrated_${suffix}.vcf.gz
     """
 }
 
@@ -190,12 +195,17 @@ process run_vcfstats_RTG {
 }
 
 workflow recalibrate_snps {
-  take: cohort_vcf_channel
+  take:
+  merge_identifiers
+  sample_vcf
+  sample_vcf_tbi
+
   main:
   run_VariantRecalibratorSNP_GATK(
       params.reference_fasta,
       "${params.reference_fasta}.fai",
-      params.reference_dict, params.bundle_v0_dbsnp138_vcf_gz,
+      params.reference_dict,
+      params.bundle_v0_dbsnp138_vcf_gz,
       "${params.bundle_v0_dbsnp138_vcf_gz}.tbi",
       params.bundle_hapmap_3p3_vcf_gz,
       "${params.bundle_hapmap_3p3_vcf_gz}.tbi",
@@ -203,7 +213,9 @@ workflow recalibrate_snps {
       "${params.bundle_omni_1000g_2p5_vcf_gz}.tbi",
       params.bundle_phase1_1000g_snps_high_conf_vcf_gz,
       "${params.bundle_phase1_1000g_snps_high_conf_vcf_gz}.tbi",
-      cohort_vcf_channel
+      merge_identifiers,
+      sample_vcf,
+      sample_vcf_tbi
   )
 
   run_ApplyVQSR_GATK(
@@ -215,16 +227,17 @@ workflow recalibrate_snps {
       run_VariantRecalibratorSNP_GATK.out.snp_recal
   )
 
-  run_vcfstats_RTG(
-      run_ApplyVQSR_GATK.out.vcf
-  )
-
   emit:
   vcf = run_ApplyVQSR_GATK.out.vcf
+  vcf_index = run_ApplyVQSR_GATK.out.vcf_index
 }
 
 workflow recalibrate_indels {
-  take: cohort_vcf_channel
+  take:
+  merge_identifiers
+  sample_vcf
+  sample_vcf_tbi
+
   main:
   run_VariantRecalibratorINDEL_GATK(
       params.reference_fasta,
@@ -232,7 +245,9 @@ workflow recalibrate_indels {
       params.reference_dict,
       params.bundle_mills_and_1000g_gold_standard_indels_vcf_gz,
       "${params.bundle_mills_and_1000g_gold_standard_indels_vcf_gz}.tbi",
-      cohort_vcf_channel
+      merge_identifiers,
+      sample_vcf,
+      sample_vcf_tbi
   )
 
   run_ApplyVQSR_GATK(
@@ -244,10 +259,7 @@ workflow recalibrate_indels {
       run_VariantRecalibratorINDEL_GATK.out.indel_recal
   )
 
-  run_vcfstats_RTG(
-      run_ApplyVQSR_GATK.out.vcf
-  )
-
   emit:
   vcf = run_ApplyVQSR_GATK.out.vcf
+  vcf_index = run_ApplyVQSR_GATK.out.vcf_index
 }
