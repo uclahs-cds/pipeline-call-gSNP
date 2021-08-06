@@ -111,14 +111,14 @@ process run_HaplotypeCaller_GATK {
         out_filename_tumour = "${tumour_id}_${task.index}_raw_variants.g.vcf.gz"
         out_filename_vcf = "${sample_id}_${task.index}.vcf"
         interval_str = "--intervals ${interval}"
-        vcf_input_str = params.is_NT_paired ? "--input ${bam} --input ${bam_tumour}" : "--input ${bam}"
+        bam_input_str = params.is_NT_paired ? "--input ${bam} --input ${bam_tumour}" : "--input ${bam}"
 
     """
     set -euo pipefail
 
     gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=/scratch" \
         HaplotypeCaller \
-        ${vcf_input_str} \
+        ${bam_input_str} \
         --output ${out_filename_vcf} \
         --reference ${reference_fasta} \
         --verbosity INFO \
