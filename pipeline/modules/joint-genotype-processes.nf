@@ -78,7 +78,7 @@ process run_SplitIntervals_GATK {
 
 process run_HaplotypeCaller_GATK {
     container params.docker_image_gatk
-    publishDir path:params.output_dir,
+    publishDir path: "${params.output_dir}/${task.process.replace(':', '/')}",
       mode: "copy",
       enabled: params.save_intermediate_files,
       pattern: '*.vcf*'
@@ -230,7 +230,7 @@ process run_SortVcf_GATK {
 process run_MergeVcfs_Picard {
     container params.docker_image_picard
 
-    publishDir path: params.output_dir,
+    publishDir path: "${params.output_dir}/${task.process.replace(':', '/')}",
       mode: "copy",
       enabled: params.save_intermediate_files,
       pattern: "*.vcf*"
