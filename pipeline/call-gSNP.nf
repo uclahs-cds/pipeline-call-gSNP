@@ -44,7 +44,7 @@ Starting workflow...
 ------------------------------------
         """
 
-include { run_validate, calculate_sha512 } from './modules/validation'
+include { run_validate; calculate_sha512 } from './modules/validation'
 include { run_GenomicsDBImport_GATK; run_SplitIntervals_GATK; run_HaplotypeCaller_GATK; run_GenotypeGVCFs_GATK; run_SortVcf_GATK; run_MergeVcfs_Picard } from './modules/joint-genotype-processes'
 include { recalibrate_snps; recalibrate_indels, filter_gSNP_GATK } from './modules/variant-recalibration'
 
