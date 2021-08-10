@@ -167,6 +167,51 @@ process run_ApplyVQSR_GATK {
     """
 }
 
+process filter_gSNP_GATK {
+    container params.docker_image_gatkfilter
+    publishDir path: "${params.output_dir}/${task.process.replace(':', '/')}",
+      mode: "copy",
+      pattern: "filtered_germline_*"
+
+    publishDir path: params.log_output_dir,
+      pattern: ".command.*",
+      mode: "copy",
+      saveAs: { "filter_gSNP_GATK/log${file(it).getName()}" }
+
+    input:
+    path(reference_fasta)
+    path(reference_fasta_fai)
+    path(reference_fasta_dict)
+    path(sample_vcf)
+    path(sample_vcf_tbi)
+    tuple val(sample_id), val(normal_id), val(tumour_id)
+
+    output:
+    path(".command.*")
+    tuple path("filtered_germline_snv_${sample_id}_nosomatic.vcf.gz"),
+          path("filtered_germline_snv_${sample_id}_nosomatic.vcf.gz.tbi"),
+          path("filtered_germline_indel_${sample_id}_nosomatic.vcf.gz"),
+          path("filtered_germline_indel_${sample_id}_nosomatic.vcf.gz.tbi"), emit: germline_filtered
+    tuple path("filtered_germline_variant_class_count_${sample_id}.tsv"),
+          path("filtered_germline_genotype_count_${sample_id}.tsv"), emit: germline_filtered_tsv
+
+    script:
+    tumour_option = params.is_NT_paired ? "--tumour ${normal_id}" : "--tumour ${tumour_id}"
+    """
+    set -euo pipefail
+    /src/NGS-Tools-GATK/bin/filter_GATK_SNV_calls.pl \
+        --input ${sample_vcf} \
+        --sample ${sample_id} \
+        --ref ${reference_fasta} \
+        --normal ${normal_id} \
+        --tumour ${tumour_option} \
+        --filter_somatic Y \
+        --filter_ambiguous Y \
+        --split_calls Y \
+        --output_dir `pwd`
+    """
+}
+
 process run_vcfstats_RTG {
     container params.docker_image_rtg
     publishDir path: params.output_dir,

@@ -44,9 +44,9 @@ Starting workflow...
 ------------------------------------
         """
 
-include { run_validate } from './modules/validation'
+include { run_validate, calculate_sha512 } from './modules/validation'
 include { run_GenomicsDBImport_GATK; run_SplitIntervals_GATK; run_HaplotypeCaller_GATK; run_GenotypeGVCFs_GATK; run_SortVcf_GATK; run_MergeVcfs_Picard } from './modules/joint-genotype-processes'
-include { recalibrate_snps; recalibrate_indels} from './modules/variant-recalibration'
+include { recalibrate_snps; recalibrate_indels, filter_gSNP_GATK } from './modules/variant-recalibration'
 
 // Returns the index file for the given bam or vcf
 def indexFile(bam_or_vcf) {
@@ -91,6 +91,7 @@ identifiers = input_ch_input_csv.map{it -> [it.sample_id, it.normal_id, it.tumou
 identifiers.set{ merge_identifiers }
 identifiers.set{ recal_snp_identifiers }
 identifiers.set{ recal_indels_identifiers }
+identifiers.set{ filter_gSNP_identifiers }
 
 workflow {
     run_validate(input_validation)
@@ -140,5 +141,22 @@ workflow {
       recalibrate_snps.out.vcf,
       recalibrate_snps.out.vcf_index
       )
+
+    filter_gSNP_GATK(
+      params.reference_fasta,
+      "${params.reference_fasta}.fai",
+      params.reference_dict,
+      recalibrate_indels.out.vcf,
+      recalibrate_indels.out.vcf_index,
+      filter_gSNP_identifiers
+      )
+
+    // Collect g.vcf.gz files, germline_filtered vcf files
+    // TODO: add BQSRed bam files after BQSR process added
+    Channel.from( run_MergeVcfs_Picard.out.gvcf_normal, run_MergeVcfs_Picard.out.gvcf_normal_index, run_MergeVcfs_Picard.out.gvcf_tumour, run_MergeVcfs_Picard.out.gvcf_tumour_index )
+      .mix( filter_gSNP_GATK.out.germline_filtered )
+      .set{ files_for_sha512 }
+
+    calculate_sha512(files_for_sha512)
 
 }
