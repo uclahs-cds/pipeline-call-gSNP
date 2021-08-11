@@ -47,6 +47,7 @@ Starting workflow...
 include { run_validate; calculate_sha512 } from './modules/validation'
 include { run_GenomicsDBImport_GATK; run_SplitIntervals_GATK; run_HaplotypeCaller_GATK; run_GenotypeGVCFs_GATK; run_SortVcf_GATK; run_MergeVcfs_Picard } from './modules/joint-genotype-processes'
 include { recalibrate_snps; recalibrate_indels; filter_gSNP_GATK } from './modules/variant-recalibration'
+include { run_RealignerTargetCreator_GATK; run_IndelRealigner_GATK } from './modules/indel_realignment.nf'
 
 // Returns the index file for the given bam or vcf
 def indexFile(bam_or_vcf) {
@@ -111,9 +112,32 @@ workflow {
 
     split_intervals = run_SplitIntervals_GATK.out.interval_list.flatten()
 
-    hc_input = input_ch_input_csv.combine(split_intervals) // Cross the input files with all the chr list
+    ir_input = input_ch_input_csv.combine(split_intervals) // Cross the input files with all the chr list
         .map{ input_csv,interval -> [input_csv.sample_id, input_csv.normal_id, input_csv.tumour_id, input_csv.normal_BAM, input_csv.normal_index, input_csv.tumour_BAM, input_csv.tumour_index, interval] }
 
+    run_RealignerTargetCreator_GATK(
+      params.reference_fasta,
+      "${params.reference_fasta}.fai",
+      params.reference_dict,
+      params.bundle_mills_and_1000g_gold_standard_indels_vcf_gz,
+      "${params.bundle_mills_and_1000g_gold_standard_indels_vcf_gz}.tbi",
+      params.bundle_known_indels_vcf_gz,
+      "${params.bundle_known_indels_vcf_gz}.tbi",
+      ir_input
+      )
+
+    run_IndelRealigner_GATK(
+      params.reference_fasta,
+      "${params.reference_fasta}.fai",
+      params.reference_dict,
+      params.bundle_mills_and_1000g_gold_standard_indels_vcf_gz,
+      "${params.bundle_mills_and_1000g_gold_standard_indels_vcf_gz}.tbi",
+      params.bundle_known_indels_vcf_gz,
+      "${params.bundle_known_indels_vcf_gz}.tbi",
+      run_RealignerTargetCreator_GATK.out.intervals_RTC
+      )
+
+    /** temporarily comment out to test indel realignment
     run_HaplotypeCaller_GATK(
       params.reference_fasta,
       "${params.reference_fasta}.fai",
@@ -159,4 +183,5 @@ workflow {
       )
 
     calculate_sha512(files_for_sha512)
+    **/
 }
