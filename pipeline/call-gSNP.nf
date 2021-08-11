@@ -151,7 +151,6 @@ workflow {
       filter_gSNP_identifiers
       )
 
-    
     files_for_sha512 = run_MergeVcfs_Picard.out.gvcf_normal.flatten().mix(
       run_MergeVcfs_Picard.out.gvcf_normal_index.flatten(),
       run_MergeVcfs_Picard.out.gvcf_tumour.flatten(),
@@ -160,12 +159,4 @@ workflow {
       )
 
     calculate_sha512(files_for_sha512)
-    // // Channel.from( run_MergeVcfs_Picard.out.gvcf_normal, run_MergeVcfs_Picard.out.gvcf_normal_index, run_MergeVcfs_Picard.out.gvcf_tumour, run_MergeVcfs_Picard.out.gvcf_tumour_index ).set{ gvcfs_for_sha512 }
-
-    // calculate_sha512(Channel.from( run_MergeVcfs_Picard.out.gvcf_normal, run_MergeVcfs_Picard.out.gvcf_normal_index, run_MergeVcfs_Picard.out.gvcf_tumour, run_MergeVcfs_Picard.out.gvcf_tumour_index ))
-
-    // // Channel.from( filter_gSNP_GATK.out.germline_filtered ).set{ vcfs_for_sha512 }
-
-    // calculate_sha512_vcf(filter_gSNP_GATK.out.germline_filtered.flatten())
-
 }
