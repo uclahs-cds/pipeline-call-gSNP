@@ -19,7 +19,7 @@ process calculate_sha512 {
     publishDir path: params.log_output_dir,
       pattern: ".command.*",
       mode: "copy",
-      saveAs: { "calculate_sha512/log${file(it).getName()}" }
+      saveAs: { "${task.process}-${task.index}/log${file(it).getName()}" }
 
     input:
     path(file_for_calc)
