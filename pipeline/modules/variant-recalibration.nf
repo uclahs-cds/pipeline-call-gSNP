@@ -196,7 +196,7 @@ process filter_gSNP_GATK {
           path("filtered_germline_genotype_count_${sample_id}.tsv"), emit: germline_filtered_tsv
 
     script:
-    tumour_option = params.is_NT_paired ? "--tumour ${normal_id}" : "--tumour ${tumour_id}"
+    tumour_option = params.is_NT_paired ? "--tumour ${tumour_id}" : "--tumour ${normal_id}"
     """
     set -euo pipefail
     /src/NGS-Tools-GATK/bin/filter_GATK_SNV_calls.pl \
@@ -204,7 +204,7 @@ process filter_gSNP_GATK {
         --sample ${sample_id} \
         --ref ${reference_fasta} \
         --normal ${normal_id} \
-        --tumour ${tumour_option} \
+        ${tumour_option} \
         --filter_somatic Y \
         --filter_ambiguous Y \
         --split_calls Y \
