@@ -65,7 +65,7 @@ process run_ApplyBQSR_GATK {
 
     output:
     path(".command.*")
-    path(interval), emit: assoc_interval
+    path(interval), emit: associated_interval
     path("${normal_id}_recalibrated_${task.index}.bam"), emit: recalibrated_normal_bam
     path("${normal_id}_recalibrated_${task.index}.bai"), emit: recalibrated_normal_bam_index
     path("${tumour_id}_recalibrated_${task.index}.bam"), emit: recalibrated_tumour_bam optional true
@@ -98,4 +98,3 @@ process run_ApplyBQSR_GATK {
     fi
     """
 }
-

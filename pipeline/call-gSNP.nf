@@ -95,6 +95,7 @@ identifiers.set{ recal_snp_identifiers }
 identifiers.set{ recal_indels_identifiers }
 identifiers.set{ filter_gSNP_identifiers }
 identifiers.set{ bqsr_generator_identifiers }
+identifiers.set{ hc_identifiers }
 
 workflow {
     run_validate(input_validation)
@@ -144,14 +145,18 @@ workflow {
       realign_indels.out.identifier_input
       )
 
-    /** temporarily comment out to test indel realignment
     run_HaplotypeCaller_GATK(
       params.reference_fasta,
       "${params.reference_fasta}.fai",
       params.reference_dict,
       params.bundle_v0_dbsnp138_vcf_gz,
       "${params.bundle_v0_dbsnp138_vcf_gz}.tbi",
-      hc_input
+      hc_identifiers,
+      run_ApplyBQSR_GATK.out.recalibrated_normal_bam,
+      run_ApplyBQSR_GATK.out.recalibrated_normal_bam_index,
+      run_ApplyBQSR_GATK.out.recalibrated_tumour_bam,
+      run_ApplyBQSR_GATK.out.recalibrated_tumour_bam_index,
+      run_ApplyBQSR_GATK.out.associated_interval
       )
 
     run_MergeVcfs_Picard(
@@ -190,5 +195,4 @@ workflow {
       )
 
     calculate_sha512(files_for_sha512)
-    **/
 }
