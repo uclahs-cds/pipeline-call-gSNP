@@ -70,7 +70,7 @@ process run_ApplyBQSR_GATK {
     path("${normal_id}_recalibrated_${task.index}.bam"), emit: recalibrated_normal_bam
     path("${normal_id}_recalibrated_${task.index}.bai"), emit: recalibrated_normal_bam_index
     path("${tumour_id}_recalibrated_${task.index}.bam"), emit: recalibrated_tumour_bam optional true
-    path("${tumour_id}_recalibrated_${task.index}.bam"), emit: recalibrated_tumour_bam_index optional true
+    path("${tumour_id}_recalibrated_${task.index}.bai"), emit: recalibrated_tumour_bam_index optional true
 
     script:
     """
