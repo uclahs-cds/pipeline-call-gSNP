@@ -98,3 +98,45 @@ process run_ApplyBQSR_GATK {
     fi
     """
 }
+
+workflow recalibrate_base {
+    take:
+    realigned_bam
+    realigned_bam_index
+    ir_identifiers
+    bqsr_generator_identifiers
+
+    main:
+    run_BaseRecalibrator_GATK(
+      params.reference_fasta,
+      "${params.reference_fasta}.fai",
+      params.reference_dict,
+      params.bundle_mills_and_1000g_gold_standard_indels_vcf_gz,
+      "${params.bundle_mills_and_1000g_gold_standard_indels_vcf_gz}.tbi",
+      params.bundle_known_indels_vcf_gz,
+      "${params.bundle_known_indels_vcf_gz}.tbi",
+      params.bundle_v0_dbsnp138_vcf_gz,
+      "${params.bundle_v0_dbsnp138_vcf_gz}.tbi",
+      realigned_bam.collect(),
+      realigned_bam_index.collect(),
+      bqsr_generator_identifiers
+      )
+
+    run_ApplyBQSR_GATK(
+      params.reference_fasta,
+      "${params.reference_fasta}.fai",
+      params.reference_dict,
+      run_BaseRecalibrator_GATK.out.recalibration_table,
+      realigned_bam,
+      realigned_bam_index,
+      ir_identifiers
+      )
+
+    emit:
+    recalibrated_normal_bam = run_ApplyBQSR_GATK.out.recalibrated_normal_bam
+    recalibrated_normal_bam_index = run_ApplyBQSR_GATK.out.recalibrated_normal_bam_index
+    recalibrated_tumour_bam = run_ApplyBQSR_GATK.out.recalibrated_tumour_bam
+    recalibrated_tumour_bam_index = run_ApplyBQSR_GATK.out.recalibrated_tumour_bam_index
+    associated_interval = run_ApplyBQSR_GATK.out.associated_interval
+    
+}

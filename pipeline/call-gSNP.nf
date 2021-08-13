@@ -48,7 +48,7 @@ include { run_validate; calculate_sha512 } from './modules/validation'
 include { run_GenomicsDBImport_GATK; run_SplitIntervals_GATK; run_HaplotypeCaller_GATK; run_GenotypeGVCFs_GATK; run_SortVcf_GATK; run_MergeVcfs_Picard } from './modules/joint-genotype-processes'
 include { recalibrate_snps; recalibrate_indels; filter_gSNP_GATK } from './modules/variant-recalibration'
 include { realign_indels } from './modules/indel-realignment.nf'
-include { run_ApplyBQSR_GATK; run_BaseRecalibrator_GATK } from './modules/base-recalibration.nf'
+include { recalibrate_base } from './modules/base-recalibration.nf'
 
 // Returns the index file for the given bam or vcf
 def indexFile(bam_or_vcf) {
@@ -120,30 +120,20 @@ workflow {
 
     realign_indels(ir_input)
 
-    run_BaseRecalibrator_GATK(
-      params.reference_fasta,
-      "${params.reference_fasta}.fai",
-      params.reference_dict,
-      params.bundle_mills_and_1000g_gold_standard_indels_vcf_gz,
-      "${params.bundle_mills_and_1000g_gold_standard_indels_vcf_gz}.tbi",
-      params.bundle_known_indels_vcf_gz,
-      "${params.bundle_known_indels_vcf_gz}.tbi",
-      params.bundle_v0_dbsnp138_vcf_gz,
-      "${params.bundle_v0_dbsnp138_vcf_gz}.tbi",
-      realign_indels.out.realigned_bam.collect(),
-      realign_indels.out.realigned_bam_index.collect(),
+    recalibrate_base(
+      realign_indels.out.realigned_bam,
+      realign_indels.out.realigned_bam_index,
+      realign_indels.out.identifier_input,
       bqsr_generator_identifiers
       )
 
-    run_ApplyBQSR_GATK(
-      params.reference_fasta,
-      "${params.reference_fasta}.fai",
-      params.reference_dict,
-      run_BaseRecalibrator_GATK.out.recalibration_table,
-      realign_indels.out.realigned_bam,
-      realign_indels.out.realigned_bam_index,
-      realign_indels.out.identifier_input
-      )
+    if (params.is_NT_paired) {
+      tumour_bam_ch = recalibrate_base.out.recalibrated_tumour_bam
+      tumour_bam_index_ch = recalibrate_base.out.recalibrated_tumour_bam_index
+    } else {// Generate decoy tumour bam and index channels for single sample mode
+      tumour_bam_ch = Channel.of(1..params.scatter_count).map{"/scratch/placeholder_${it}.txt"}
+      tumour_bam_index_ch = Channel.of(1..params.scatter_count).map{"/scratch/placeholder_${it}_index.txt"}
+    }
 
     run_HaplotypeCaller_GATK(
       params.reference_fasta,
@@ -152,11 +142,11 @@ workflow {
       params.bundle_v0_dbsnp138_vcf_gz,
       "${params.bundle_v0_dbsnp138_vcf_gz}.tbi",
       hc_identifiers,
-      run_ApplyBQSR_GATK.out.recalibrated_normal_bam,
-      run_ApplyBQSR_GATK.out.recalibrated_normal_bam_index,
-      run_ApplyBQSR_GATK.out.recalibrated_tumour_bam,
-      run_ApplyBQSR_GATK.out.recalibrated_tumour_bam_index,
-      run_ApplyBQSR_GATK.out.associated_interval
+      recalibrate_base.out.recalibrated_normal_bam,
+      recalibrate_base.out.recalibrated_normal_bam_index,
+      tumour_bam_ch,
+      tumour_bam_index_ch,
+      recalibrate_base.out.associated_interval
       )
 
     run_MergeVcfs_Picard(
