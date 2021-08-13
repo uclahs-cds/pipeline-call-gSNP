@@ -23,6 +23,13 @@ process run_RealignerTargetCreator_GATK {
     path(".command.*")
     path(interval), emit: scatter_intervals
     path("${sample_id}_RTC_${task.index}.intervals"), emit: intervals_RTC
+    tuple val(sample_id),
+          val(normal_id),
+          val(tumour_id),
+          path(bam),
+          path(bam_index),
+          path(bam_tumour),
+          path(bam_tumour_index), emit: bams_to_realign
 
     script:
     bam_input_str = params.is_NT_paired ? "--input_file ${bam} --input_file ${bam_tumour}" : "--input_file ${bam}"
@@ -61,7 +68,7 @@ process run_IndelRealigner_GATK {
     path(bundle_mills_and_1000g_gold_standards_vcf_gz_tbi)
     path(bundle_known_indels_vcf_gz)
     path(bundle_known_indels_vcf_gz_tbi)
-    tuple val(sample_id), val(normal_id), val(tumour_id), path(bam), path(bam_index), path(bam_tumour), path(bam_index_tumour), path(interval)
+    tuple val(sample_id), val(normal_id), val(tumour_id), path(bam), path(bam_index), path(bam_tumour), path(bam_index_tumour)
     path(target_intervals_RTC)
     path(scatter_intervals)
 
@@ -114,7 +121,7 @@ workflow realign_indels {
         "${params.bundle_mills_and_1000g_gold_standard_indels_vcf_gz}.tbi",
         params.bundle_known_indels_vcf_gz,
         "${params.bundle_known_indels_vcf_gz}.tbi",
-        ir_input,
+        run_RealignerTargetCreator_GATK.out.bams_to_realign,
         run_RealignerTargetCreator_GATK.out.intervals_RTC,
         run_RealignerTargetCreator_GATK.out.scatter_intervals
         )
