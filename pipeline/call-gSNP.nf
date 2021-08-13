@@ -122,7 +122,7 @@ workflow {
 
     realign_indels(
         ir_input,
-        it_input_no_interval
+        ir_input_no_interval
         )
 
     recalibrate_base(
