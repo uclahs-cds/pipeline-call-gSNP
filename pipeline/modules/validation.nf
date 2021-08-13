@@ -9,3 +9,28 @@ process run_validate {
     python -m validate -t file-input ${file_to_validate}
     """
 }
+
+process calculate_sha512 {
+    container params.docker_image_validate
+    publishDir path: "${params.output_dir}/${task.process.replace(':', '/')}",
+      mode: "copy",
+      pattern: "*.sha512"
+
+    publishDir path: params.log_output_dir,
+      pattern: ".command.*",
+      mode: "copy",
+      saveAs: { "${task.process}-${task.index}/log${file(it).getName()}" }
+
+    input:
+    path(file_for_calc)
+
+    output:
+    path(".command.*")
+    path("*.sha512"), emit: sha512_sum
+
+    script:
+    """
+    set -euo pipefail
+    sha512sum ${file_for_calc} > ${file_for_calc}.sha512
+    """
+}
