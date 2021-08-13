@@ -21,6 +21,7 @@ process run_RealignerTargetCreator_GATK {
 
     output:
     path(".command.*")
+    path(interval), emit: scatter_intervals
     path("${sample_id}_RTC_${task.index}.intervals"), emit: intervals_RTC
 
     script:
@@ -62,9 +63,11 @@ process run_IndelRealigner_GATK {
     path(bundle_known_indels_vcf_gz_tbi)
     tuple val(sample_id), val(normal_id), val(tumour_id), path(bam), path(bam_index), path(bam_tumour), path(bam_index_tumour), path(interval)
     path(target_intervals_RTC)
+    path(scatter_intervals)
 
     output:
     path(".command.*")
+    path(scatter_intervals), emit: associated_interval
     path("${sample_id}_indelrealigned_${task.index}.bam"), emit: realigned_indels_bam
     path("${sample_id}_indelrealigned_${task.index}.bai"), emit: realigned_indels_bam_index
 
@@ -83,7 +86,7 @@ process run_IndelRealigner_GATK {
         --allow_potentially_misencoded_quality_scores \
         --targetIntervals ${target_intervals_RTC} \
         --out ${sample_id}_indelrealigned_${task.index}.bam \
-        --intervals ${interval}
+        --intervals ${scatter_intervals}
     """
 }
 
@@ -112,11 +115,12 @@ workflow realign_indels {
         params.bundle_known_indels_vcf_gz,
         "${params.bundle_known_indels_vcf_gz}.tbi",
         ir_input,
-        run_RealignerTargetCreator_GATK.out.intervals_RTC
+        run_RealignerTargetCreator_GATK.out.intervals_RTC,
+        run_RealignerTargetCreator_GATK.out.scatter_intervals
         )
 
     emit:
-    identifier_input = ir_input
+    associated_interval = run_IndelRealigner_GATK.out.associated_interval
     realigned_bam = run_IndelRealigner_GATK.out.realigned_indels_bam
     realigned_bam_index = run_IndelRealigner_GATK.out.realigned_indels_bam_index
 }
