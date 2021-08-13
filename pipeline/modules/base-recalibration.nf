@@ -61,7 +61,8 @@ process run_ApplyBQSR_GATK {
     path(recalibration_table)
     path(indelrealigned_bam)
     path(indelrealigned_bam_index)
-    tuple val(sample_id), val(normal_id), val(tumour_id), path(bam), path(bam_index), path(bam_tumour), path(bam_index_tumour), path(interval)
+    path(interval)
+    tuple val(sample_id), val(normal_id), val(tumour_id)
 
     output:
     path(".command.*")
@@ -103,7 +104,7 @@ workflow recalibrate_base {
     take:
     realigned_bam
     realigned_bam_index
-    ir_identifiers
+    associated_interval
     bqsr_generator_identifiers
 
     main:
@@ -129,7 +130,8 @@ workflow recalibrate_base {
       run_BaseRecalibrator_GATK.out.recalibration_table,
       realigned_bam,
       realigned_bam_index,
-      ir_identifiers
+      associated_interval,
+      bqsr_generator_identifiers
       )
 
     emit:

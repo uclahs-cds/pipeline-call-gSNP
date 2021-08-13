@@ -123,7 +123,7 @@ workflow {
     recalibrate_base(
       realign_indels.out.realigned_bam,
       realign_indels.out.realigned_bam_index,
-      realign_indels.out.identifier_input,
+      realign_indels.out.associated_interval,
       bqsr_generator_identifiers
       )
 
