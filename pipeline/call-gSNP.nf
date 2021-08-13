@@ -114,8 +114,13 @@ workflow {
 
     ir_input = input_ch_input_csv.combine(split_intervals) // Cross the input files with all the chr list
         .map{ input_csv,interval -> [input_csv.sample_id, input_csv.normal_id, input_csv.tumour_id, input_csv.normal_BAM, input_csv.normal_index, input_csv.tumour_BAM, input_csv.tumour_index, interval] }
+    ir_input_no_interval = input_ch_input_csv.combine(split_intervals)
+        .map{ input_csv,interval -> [input_csv.sample_id, input_csv.normal_id, input_csv.tumour_id, input_csv.normal_BAM, input_csv.normal_index, input_csv.tumour_BAM, input_csv.tumour_index] }
 
-    realign_indels(ir_input)
+    realign_indels(
+        ir_input,
+        it_input_no_interval
+        )
 
     /** temporarily comment out to test indel realignment
     run_HaplotypeCaller_GATK(
