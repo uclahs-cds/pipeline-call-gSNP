@@ -48,8 +48,11 @@ include { run_validate; calculate_sha512 } from './modules/validation'
 include { run_GenomicsDBImport_GATK; run_SplitIntervals_GATK; run_HaplotypeCaller_GATK; run_GenotypeGVCFs_GATK; run_SortVcf_GATK; run_MergeVcfs_Picard } from './modules/joint-genotype-processes'
 include { recalibrate_snps; recalibrate_indels; filter_gSNP_GATK } from './modules/variant-recalibration'
 include { realign_indels } from './modules/indel-realignment.nf'
+<<<<<<< HEAD
 include { recalibrate_base } from './modules/base-recalibration.nf'
 include { reheader_interval_bams } from './modules/bam-processing.nf'
+=======
+>>>>>>> main
 
 // Returns the index file for the given bam or vcf
 def indexFile(bam_or_vcf) {
