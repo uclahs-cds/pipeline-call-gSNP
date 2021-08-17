@@ -49,7 +49,8 @@ include { run_GenomicsDBImport_GATK; run_SplitIntervals_GATK; run_HaplotypeCalle
 include { recalibrate_snps; recalibrate_indels; filter_gSNP_GATK } from './modules/variant-recalibration'
 include { realign_indels } from './modules/indel-realignment.nf'
 include { recalibrate_base } from './modules/base-recalibration.nf'
-include { reheader_interval_bams } from './modules/bam-processing.nf'
+include { reheader_interval_bams; run_MergeSamFiles_Picard } from './modules/bam-processing.nf'
+include { calculate_contamination; run_DepthOfCoverage_GATK } from './modules/summary-processes.nf'
 
 // Returns the index file for the given bam or vcf
 def indexFile(bam_or_vcf) {
@@ -98,6 +99,9 @@ identifiers.set{ filter_gSNP_identifiers }
 identifiers.set{ bqsr_generator_identifiers }
 identifiers.set{ hc_identifiers }
 identifiers.set{ bam_reheadering_identifiers }
+identifiers.set{ merge_bams_identifiers }
+identifiers.set{ contamination_identifiers }
+identifiers.set{ doc_identifiers }
 
 workflow {
     run_validate(input_validation)
@@ -157,6 +161,33 @@ workflow {
       hc_interval = recalibrate_base.out.associated_interval
     }
 
+    run_MergeSamFiles_Picard(
+      normal_bam_ch.collect(),
+      tumour_bam_ch.collect(),
+      merge_bams_identifiers
+      )
+
+    calculate_contamination(
+      run_MergeSamFiles_Picard.out.merged_normal_bam,
+      run_MergeSamFiles_Picard.out.merged_normal_bam_index,
+      run_MergeSamFiles_Picard.out.merged_tumour_bam.ifEmpty("/scratch/placeholder.txt"),
+      run_MergeSamFiles_Picard.out.merged_tumour_bam_index.ifEmpty("/scratch/placeholder_index.txt"),
+      split_intervals,
+      contamination_identifiers
+      )
+
+    run_DepthOfCoverage_GATK(
+      params.reference_fasta,
+      "${params.reference_fasta}.fai",
+      params.reference_dict,
+      split_intervals.collect(),
+      run_MergeSamFiles_Picard.out.merged_normal_bam,
+      run_MergeSamFiles_Picard.out.merged_normal_bam_index,
+      run_MergeSamFiles_Picard.out.merged_tumour_bam.ifEmpty("/scratch/placeholder.txt"),
+      run_MergeSamFiles_Picard.out.merged_tumour_bam_index.ifEmpty("/scratch/placeholder_index.txt"),
+      doc_identifiers
+      )
+
     run_HaplotypeCaller_GATK(
       params.reference_fasta,
       "${params.reference_fasta}.fai",
@@ -203,7 +234,11 @@ workflow {
       run_MergeVcfs_Picard.out.gvcf_normal_index.flatten(),
       run_MergeVcfs_Picard.out.gvcf_tumour.flatten(),
       run_MergeVcfs_Picard.out.gvcf_tumour_index.flatten(),
-      filter_gSNP_GATK.out.germline_filtered.flatten()
+      filter_gSNP_GATK.out.germline_filtered.flatten(),
+      run_MergeSamFiles_Picard.out.merged_normal_bam.flatten(),
+      run_MergeSamFiles_Picard.out.merged_normal_bam_index.flatten(),
+      run_MergeSamFiles_Picard.out.merged_tumour_bam.flatten(),
+      run_MergeSamFiles_Picard.out.merged_tumour_bam_index.flatten()
       )
 
     calculate_sha512(files_for_sha512)
