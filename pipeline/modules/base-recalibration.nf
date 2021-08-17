@@ -83,7 +83,8 @@ process run_ApplyBQSR_GATK {
         --output ${normal_id}_recalibrated_${task.index}.bam \
         --read-filter SampleReadFilter \
         --sample ${normal_id} \
-        --intervals ${interval}
+        --intervals ${interval} \
+        --emit-original-quals ${params.is_emit_original_quals}
 
     if ${params.is_NT_paired}
     then
@@ -95,7 +96,8 @@ process run_ApplyBQSR_GATK {
             --output ${tumour_id}_recalibrated_${task.index}.bam \
             --read-filter SampleReadFilter \
             --sample ${tumour_id} \
-            --intervals ${interval}
+            --intervals ${interval} \
+            --emit-original-quals ${params.is_emit_original_quals}
     fi
     """
 }
