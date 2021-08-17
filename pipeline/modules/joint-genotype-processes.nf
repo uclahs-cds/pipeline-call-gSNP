@@ -94,7 +94,12 @@ process run_HaplotypeCaller_GATK {
     path(reference_fasta_dict)
     path(dbsnp_bundle)
     path(dbsnp_bundle_index)
-    tuple val(sample_id), val(normal_id), val(tumour_id), path(bam), path(bam_index), path(bam_tumour), path(bam_index_tumour), path(interval)
+    tuple val(sample_id), val(normal_id), val(tumour_id)
+    path(bam)
+    path(bam_index)
+    path(bam_tumour)
+    path(bam_index_tumour)
+    path(interval)
 
 
     output:

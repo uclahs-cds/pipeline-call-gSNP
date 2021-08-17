@@ -48,6 +48,8 @@ include { run_validate; calculate_sha512 } from './modules/validation'
 include { run_GenomicsDBImport_GATK; run_SplitIntervals_GATK; run_HaplotypeCaller_GATK; run_GenotypeGVCFs_GATK; run_SortVcf_GATK; run_MergeVcfs_Picard } from './modules/joint-genotype-processes'
 include { recalibrate_snps; recalibrate_indels; filter_gSNP_GATK } from './modules/variant-recalibration'
 include { realign_indels } from './modules/indel-realignment.nf'
+include { recalibrate_base } from './modules/base-recalibration.nf'
+include { reheader_interval_bams } from './modules/bam-processing.nf'
 
 // Returns the index file for the given bam or vcf
 def indexFile(bam_or_vcf) {
@@ -93,6 +95,9 @@ identifiers.set{ merge_identifiers }
 identifiers.set{ recal_snp_identifiers }
 identifiers.set{ recal_indels_identifiers }
 identifiers.set{ filter_gSNP_identifiers }
+identifiers.set{ bqsr_generator_identifiers }
+identifiers.set{ hc_identifiers }
+identifiers.set{ bam_reheadering_identifiers }
 
 workflow {
     run_validate(input_validation)
@@ -122,14 +127,48 @@ workflow {
         ir_input_no_interval
         )
 
-    /** temporarily comment out to test indel realignment
+    recalibrate_base(
+      realign_indels.out.realigned_bam,
+      realign_indels.out.realigned_bam_index,
+      realign_indels.out.associated_interval,
+      bqsr_generator_identifiers
+      )
+
+    if (params.is_NT_paired) {// Reheader interval-level bams in NT paired mode
+      reheader_interval_bams(
+        bam_reheadering_identifiers,
+        recalibrate_base.out.recalibrated_normal_bam,
+        recalibrate_base.out.recalibrated_normal_bam_index,
+        recalibrate_base.out.recalibrated_tumour_bam,
+        recalibrate_base.out.recalibrated_tumour_bam_index,
+        recalibrate_base.out.associated_interval
+        )
+
+      normal_bam_ch = reheader_interval_bams.out.reheadered_normal_bam
+      normal_bam_index_ch = reheader_interval_bams.out.reheadered_normal_bam_index
+      tumour_bam_ch = reheader_interval_bams.out.reheadered_tumour_bam
+      tumour_bam_index_ch = reheader_interval_bams.out.reheadered_tumour_bam_index
+      hc_interval = reheader_interval_bams.out.associated_interval
+    } else {// Generate decoy tumour bam and index channels for single sample mode
+      normal_bam_ch = recalibrate_base.out.recalibrated_normal_bam
+      normal_bam_index_ch = recalibrate_base.out.recalibrated_normal_bam_index
+      tumour_bam_ch = Channel.of(1..params.scatter_count).map{"/scratch/placeholder_${it}.txt"}
+      tumour_bam_index_ch = Channel.of(1..params.scatter_count).map{"/scratch/placeholder_${it}_index.txt"}
+      hc_interval = recalibrate_base.out.associated_interval
+    }
+
     run_HaplotypeCaller_GATK(
       params.reference_fasta,
       "${params.reference_fasta}.fai",
       params.reference_dict,
       params.bundle_v0_dbsnp138_vcf_gz,
       "${params.bundle_v0_dbsnp138_vcf_gz}.tbi",
-      hc_input
+      hc_identifiers,
+      normal_bam_ch,
+      normal_bam_index_ch,
+      tumour_bam_ch,
+      tumour_bam_index_ch,
+      hc_interval
       )
 
     run_MergeVcfs_Picard(
@@ -168,5 +207,4 @@ workflow {
       )
 
     calculate_sha512(files_for_sha512)
-    **/
 }
