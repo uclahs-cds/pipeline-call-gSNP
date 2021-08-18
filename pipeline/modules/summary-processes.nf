@@ -89,7 +89,7 @@ process run_CalculateContamination_GATK {
         gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=/scratch" \
             CalculateContamination \
             --input ${tumour_pileupsummaries} \
-            --output ${tumour_id}_calculatecontamination_normal_alone.table
+            --output ${tumour_id}_calculatecontamination_tumour_alone.table
 
         gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=/scratch" \
             CalculateContamination \
