@@ -121,12 +121,17 @@ Generate sha512 checksum for final BAM, filtered VCF, and GVCFs for SNPs and IND
 | Input Parameter | Required | Type | Description |
 |:----------------|:---------|:-----|:------------|
 | `dataset_id` | optional | string | Dataset ID placeholder for now (will be standardized according to data storage structure in the near future) |
+| `avere_prefix` | Yes | string | Prefix for location of avere cache |
 | `blcds_registered_dataset` | Yes | boolean | Set to true when using BLCDS folder structure; use false for now |
 | `output_dir` | Yes | string | Need to set if `blcds_registered_dataset = false` |
 | `java_temp_dir` | Yes | string | Store Java temp files; set to `/scratch` in production |
 | `temp_dir` | Yes | string | Store Nextflow workDir intermediate files; set to `/scratch` in production |
 | `input_csv` | Yes | path | Absolute path to input CSV file |
+| `save_intermediate_files` | Yes | boolean | Set to false to disable publishing of intermediate files; true otherwise |
+| `is_emit_original_quals` | Yes | boolean | Set to true to emit original quality scores; false to omit |
 | `is_NT_paired` | Yes | boolean | Set to true for normal-tumour paired mode, and to false for normal only mode |
+| `is_DOC_run` | Yes | boolean | Set to true to run GATK DepthOfCoverage (very time-consuming for large BAMs); false otherwise |
+| `scatter_count` | Yes | integer | Number of intervals to divide into for parallelization |
 | `intervals` | Yes | path | Use all .list in inputs for WGS; Set to absolute path to targeted exome interval file (with .interval_list, .list, .intervals, or .bed suffix to be matched by `is_targeted` in the main nextflow script) |
 | `reference_fasta` | Yes | path | Absolute path to reference genome fasta file, e.g., `/hot/ref/reference/GRCh38-BI-20160721/Homo_sapiens_assembly38.fasta` |
 | `reference_dict` | Yes | path | Absolute path to reference genome fasta dict file, e.g., `/hot/ref/reference/GRCh38-BI-20160721/Homo_sapiens_assembly38.dict` |
