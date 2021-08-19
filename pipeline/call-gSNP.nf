@@ -33,8 +33,10 @@ Current Configuration:
       Tools Used:
           tool GATK: ${params.docker_image_gatk}
           tool validate: ${params.docker_image_validate}
-          tool RTG: ${params.docker_image_rtg}
           tool Picard: ${params.docker_image_picard}
+          tool SAMtools: ${params.docker_image_samtools}
+          tool GATK3: ${params.docker_image_gatk3}
+          tool GATK Filter: ${params.docker_image_gatkfilter}
 
       Extra parameters:
           ${params}
