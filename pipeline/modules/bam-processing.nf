@@ -2,6 +2,7 @@ process run_reheader_SAMtools {
     container params.docker_image_samtools
     publishDir path: "${params.output_dir}/${task.process.replace(':', '/')}",
         mode: "copy",
+        enabled: params.save_intermediate_files,
         pattern: "*_reheadered_*"
 
     publishDir path: params.log_output_dir,
@@ -43,6 +44,7 @@ process run_BuildBamIndex_Picard {
     container params.docker_image_picard
     publishDir path: "${params.output_dir}/${task.process.replace(':', '/')}",
         mode: "copy",
+        enabled: params.save_intermediate_files,
         pattern: "*_reheadered_*"
 
     publishDir path: params.log_output_dir,

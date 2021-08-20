@@ -2,6 +2,7 @@ process run_BaseRecalibrator_GATK {
     container params.docker_image_gatk
     publishDir path: "${params.output_dir}/${task.process.replace(':', '/')}",
       mode: "copy",
+      enabled: params.save_intermediate_files,
       pattern: "*.grp"
 
     publishDir path: params.log_output_dir,
@@ -19,6 +20,7 @@ process run_BaseRecalibrator_GATK {
     path(bundle_known_indels_vcf_gz_tbi)
     path(bundle_v0_dbsnp138_vcf_gz)
     path(bundle_v0_dbsnp138_vcf_gz_tbi)
+    path(all_intervals)
     path(indelrealigned_bams)
     path(indelrealigned_bams_bai)
     tuple val(sample_id), val(normal_id), val(tumour_id)
@@ -40,7 +42,7 @@ process run_BaseRecalibrator_GATK {
         --known-sites ${bundle_known_indels_vcf_gz} \
         --known-sites ${bundle_v0_dbsnp138_vcf_gz} \
         --output ${sample_id}_recalibration_table.grp \
-        --intervals ${params.intervals} \
+        --intervals ${all_intervals} \
         --interval-padding 100
     """
 }
@@ -49,6 +51,7 @@ process run_ApplyBQSR_GATK {
     container params.docker_image_gatk
     publishDir path: "${params.output_dir}/${task.process.replace(':', '/')}",
       mode: "copy",
+      enabled: params.save_intermediate_files,
       pattern: "*_recalibrated_*"
 
     publishDir path: params.log_output_dir,
@@ -125,6 +128,7 @@ workflow recalibrate_base {
       "${params.bundle_known_indels_vcf_gz}.tbi",
       params.bundle_v0_dbsnp138_vcf_gz,
       "${params.bundle_v0_dbsnp138_vcf_gz}.tbi",
+      params.intervals,
       realigned_bam.collect(),
       realigned_bam_index.collect(),
       bqsr_generator_identifiers
