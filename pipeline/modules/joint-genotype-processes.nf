@@ -240,7 +240,6 @@ process run_MergeVcfs_Picard {
 
     publishDir path: "${params.output_dir}/${task.process.replace(':', '/')}",
       mode: "copy",
-      enabled: params.save_intermediate_files,
       pattern: "*.vcf*"
 
     publishDir path: params.log_output_dir,
