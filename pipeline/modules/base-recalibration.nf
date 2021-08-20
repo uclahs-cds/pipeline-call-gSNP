@@ -19,6 +19,7 @@ process run_BaseRecalibrator_GATK {
     path(bundle_known_indels_vcf_gz_tbi)
     path(bundle_v0_dbsnp138_vcf_gz)
     path(bundle_v0_dbsnp138_vcf_gz_tbi)
+    path(all_intervals)
     path(indelrealigned_bams)
     path(indelrealigned_bams_bai)
     tuple val(sample_id), val(normal_id), val(tumour_id)
@@ -40,7 +41,7 @@ process run_BaseRecalibrator_GATK {
         --known-sites ${bundle_known_indels_vcf_gz} \
         --known-sites ${bundle_v0_dbsnp138_vcf_gz} \
         --output ${sample_id}_recalibration_table.grp \
-        --intervals ${params.intervals} \
+        --intervals ${all_intervals} \
         --interval-padding 100
     """
 }
@@ -125,6 +126,7 @@ workflow recalibrate_base {
       "${params.bundle_known_indels_vcf_gz}.tbi",
       params.bundle_v0_dbsnp138_vcf_gz,
       "${params.bundle_v0_dbsnp138_vcf_gz}.tbi",
+      params.intervals,
       realigned_bam.collect(),
       realigned_bam_index.collect(),
       bqsr_generator_identifiers
