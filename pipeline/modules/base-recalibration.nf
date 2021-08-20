@@ -2,6 +2,7 @@ process run_BaseRecalibrator_GATK {
     container params.docker_image_gatk
     publishDir path: "${params.output_dir}/${task.process.replace(':', '/')}",
       mode: "copy",
+      enabled: params.save_intermediate_files,
       pattern: "*.grp"
 
     publishDir path: params.log_output_dir,
@@ -50,6 +51,7 @@ process run_ApplyBQSR_GATK {
     container params.docker_image_gatk
     publishDir path: "${params.output_dir}/${task.process.replace(':', '/')}",
       mode: "copy",
+      enabled: params.save_intermediate_files,
       pattern: "*_recalibrated_*"
 
     publishDir path: params.log_output_dir,

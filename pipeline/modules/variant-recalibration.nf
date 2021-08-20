@@ -2,6 +2,7 @@ process run_VariantRecalibratorINDEL_GATK {
     container params.docker_image_gatk
     publishDir path: "${params.output_dir}/${task.process.replace(':', '/')}",
       mode: "copy",
+      enabled: params.save_intermediate_files,
       pattern: "*_output_indel.*"
 
     publishDir path: params.log_output_dir,
@@ -61,6 +62,7 @@ process run_VariantRecalibratorSNP_GATK {
     container params.docker_image_gatk
     publishDir path: "${params.output_dir}/${task.process.replace(':', '/')}",
       mode: "copy",
+      enabled: params.save_intermediate_files,
       pattern: "*_output_snp.*"
 
     publishDir path: params.log_output_dir,
@@ -131,6 +133,7 @@ process run_ApplyVQSR_GATK {
     container params.docker_image_gatk
     publishDir path: "${params.output_dir}/${task.process.replace(':', '/')}",
       mode: "copy",
+      enabled: params.save_intermediate_files,
       pattern: "*_merged_recalibrated_${suffix}.vcf.gz{,.tbi}"
 
     publishDir path: params.log_output_dir,
