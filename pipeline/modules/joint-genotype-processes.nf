@@ -131,7 +131,8 @@ process run_HaplotypeCaller_GATK {
         --dbsnp ${dbsnp_bundle} \
         --sample-ploidy 2 \
         --standard-min-confidence-threshold-for-calling 50 \
-        ${interval_str}
+        ${interval_str} \
+        --interval-padding 100
 
     gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=/scratch" \
         HaplotypeCaller \
@@ -144,7 +145,8 @@ process run_HaplotypeCaller_GATK {
         --dbsnp ${dbsnp_bundle} \
         --sample-ploidy 2 \
         --standard-min-confidence-threshold-for-calling 30 \
-        ${interval_str}
+        ${interval_str} \
+        --interval-padding 100
 
     if ${params.is_NT_paired}
     then
@@ -159,7 +161,8 @@ process run_HaplotypeCaller_GATK {
         --dbsnp ${dbsnp_bundle} \
         --sample-ploidy 2 \
         --standard-min-confidence-threshold-for-calling 30 \
-        ${interval_str}
+        ${interval_str} \
+        --interval-padding 100
     fi
     """
 }

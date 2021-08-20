@@ -39,7 +39,9 @@ process run_BaseRecalibrator_GATK {
         --known-sites ${bundle_mills_and_1000g_gold_standards_vcf_gz} \
         --known-sites ${bundle_known_indels_vcf_gz} \
         --known-sites ${bundle_v0_dbsnp138_vcf_gz} \
-        --output ${sample_id}_recalibration_table.grp
+        --output ${sample_id}_recalibration_table.grp \
+        --intervals ${params.intervals} \
+        --interval-padding 100
     """
 }
 
