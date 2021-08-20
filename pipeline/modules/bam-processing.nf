@@ -80,6 +80,59 @@ process run_BuildBamIndex_Picard {
     """
 }
 
+process run_MergeSamFiles_Picard {
+    container params.docker_image_picard
+    publishDir path: "${params.output_dir}/${task.process.replace(':', '/')}",
+        mode: "copy",
+        pattern: "*_merged*"
+
+    publishDir path: params.log_output_dir,
+        pattern: ".command.*",
+        mode: "copy",
+        saveAs: { "${task.process.replace(':', '/')}-${task.index}/log${file(it).getName()}" }
+
+    input:
+    path(normal_bams)
+    path(tumour_bams)
+    tuple val(sample_id), val(normal_id), val(tumour_id)
+
+    output:
+    path(".command.*")
+    path("${normal_id}_realigned_recalibrated_merged.bam"), emit: merged_normal_bam
+    path("${normal_id}_realigned_recalibrated_merged.bai"), emit: merged_normal_bam_index
+    path("${tumour_id}_realigned_recalibrated_merged.bam"), emit: merged_tumour_bam optional true
+    path("${tumour_id}_realigned_recalibrated_merged.bai"), emit: merged_tumour_bam_index optional true
+
+    script:
+    normal_bams_input = normal_bams.collect{ "-INPUT '$it'" }.join(' ')
+    tumour_bams_input = tumour_bams.collect{ "-INPUT '$it'" }.join(' ')
+    """
+    set -euo pipefail
+    java -Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -Djava.io.tmpdir=/scratch \
+        -jar /picard-tools/picard.jar MergeSamFiles \
+        ${normal_bams_input} \
+        -OUTPUT ${normal_id}_realigned_recalibrated_merged.bam \
+        -CREATE_INDEX true \
+        -SORT_ORDER coordinate \
+        -ASSUME_SORTED false \
+        -USE_THREADING false \
+        -VALIDATION_STRINGENCY LENIENT
+
+    if ${params.is_NT_paired}
+    then
+        java -Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -Djava.io.tmpdir=/scratch \
+            -jar /picard-tools/picard.jar MergeSamFiles \
+            ${tumour_bams_input} \
+            -OUTPUT ${tumour_id}_realigned_recalibrated_merged.bam \
+            -CREATE_INDEX true \
+            -SORT_ORDER coordinate \
+            -ASSUME_SORTED false \
+            -USE_THREADING false \
+            -VALIDATION_STRINGENCY LENIENT
+    fi
+    """
+}
+
 workflow reheader_interval_bams {
     take:
     identifiers
