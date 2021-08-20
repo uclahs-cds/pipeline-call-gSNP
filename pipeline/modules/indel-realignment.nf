@@ -38,7 +38,8 @@ process run_RealignerTargetCreator_GATK {
         --intervals ${interval} \
         --out ${sample_id}_RTC_${task.index}.intervals \
         --allow_potentially_misencoded_quality_scores \
-        --num_threads 2
+        --num_threads 2 \
+        --interval_padding 100
     """
 }
 
