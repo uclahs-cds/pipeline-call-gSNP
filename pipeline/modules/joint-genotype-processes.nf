@@ -117,6 +117,7 @@ process run_HaplotypeCaller_GATK {
         out_filename_vcf = "${sample_id}_${task.index}.vcf"
         interval_str = "--intervals ${interval}"
         bam_input_str = params.is_NT_paired ? "--input ${bam} --input ${bam_tumour}" : "--input ${bam}"
+        interval_padding = params.is_targeted ? "--interval-padding 100" : ""
 
     """
     set -euo pipefail
@@ -132,7 +133,7 @@ process run_HaplotypeCaller_GATK {
         --sample-ploidy 2 \
         --standard-min-confidence-threshold-for-calling 50 \
         ${interval_str} \
-        --interval-padding 100
+        ${interval_padding}
 
     gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=/scratch" \
         HaplotypeCaller \
@@ -146,7 +147,7 @@ process run_HaplotypeCaller_GATK {
         --sample-ploidy 2 \
         --standard-min-confidence-threshold-for-calling 30 \
         ${interval_str} \
-        --interval-padding 100
+        ${interval_padding}
 
     if ${params.is_NT_paired}
     then
@@ -162,7 +163,7 @@ process run_HaplotypeCaller_GATK {
         --sample-ploidy 2 \
         --standard-min-confidence-threshold-for-calling 30 \
         ${interval_str} \
-        --interval-padding 100
+        ${interval_padding}
     fi
     """
 }
