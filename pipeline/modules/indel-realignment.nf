@@ -27,6 +27,7 @@ process run_RealignerTargetCreator_GATK {
 
     script:
     bam_input_str = params.is_NT_paired ? "--input_file ${bam} --input_file ${bam_tumour}" : "--input_file ${bam}"
+    interval_padding = params.is_targeted ? "--interval_padding 100" : ""
     """
     set -euo pipefail
     java -Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -Djava.io.tmpdir=/scratch \
@@ -40,7 +41,7 @@ process run_RealignerTargetCreator_GATK {
         --out ${sample_id}_RTC_${task.index}.intervals \
         --allow_potentially_misencoded_quality_scores \
         --num_threads 2 \
-        --interval_padding 100
+        ${interval_padding}
     """
 }
 
