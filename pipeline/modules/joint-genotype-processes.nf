@@ -145,7 +145,6 @@ process run_HaplotypeCaller_GATK {
         --emit-ref-confidence GVCF \
         --dbsnp ${dbsnp_bundle} \
         --sample-ploidy 2 \
-        --standard-min-confidence-threshold-for-calling 30 \
         ${interval_str} \
         ${interval_padding}
 
@@ -161,7 +160,6 @@ process run_HaplotypeCaller_GATK {
         --emit-ref-confidence GVCF \
         --dbsnp ${dbsnp_bundle} \
         --sample-ploidy 2 \
-        --standard-min-confidence-threshold-for-calling 30 \
         ${interval_str} \
         ${interval_padding}
     fi
