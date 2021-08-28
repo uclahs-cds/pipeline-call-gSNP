@@ -79,6 +79,7 @@ process run_ApplyBQSR_GATK {
 
     script:
     unmapped_interval_option = (task.index == 1) ? "--intervals unmapped" : ""
+    combined_interval_options = (params.is_targeted) ? "" : "--intervals ${interval} ${unmapped_interval_option}"
     """
     set -euo pipefail
     gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=/scratch" \
@@ -89,8 +90,7 @@ process run_ApplyBQSR_GATK {
         --output ${normal_id}_recalibrated_${task.index}.bam \
         --read-filter SampleReadFilter \
         --sample ${normal_id} \
-        --intervals ${interval} \
-        ${unmapped_interval_option} \
+        ${combined_interval_options} \
         --emit-original-quals ${params.is_emit_original_quals}
 
     if ${params.is_NT_paired}
@@ -103,8 +103,7 @@ process run_ApplyBQSR_GATK {
             --output ${tumour_id}_recalibrated_${task.index}.bam \
             --read-filter SampleReadFilter \
             --sample ${tumour_id} \
-            --intervals ${interval} \
-            ${unmapped_interval_option} \
+            ${combined_interval_options} \
             --emit-original-quals ${params.is_emit_original_quals}
     fi
     """
