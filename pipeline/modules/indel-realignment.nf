@@ -78,7 +78,8 @@ process run_IndelRealigner_GATK {
     script:
     bam_input_str = params.is_NT_paired ? "--input_file ${bam} --input_file ${bam_tumour}" : "--input_file ${bam}"
     unmapped_interval_option = (task.index == 1) ? "--intervals unmapped" : ""
-    combined_interval_options = (params.is_targeted) ? "" : "--intervals ${scatter_intervals} ${unmapped_interval_option}"
+    interval_padding = (params.is_targeted) ? "--interval_padding 100" : ""
+    combined_interval_options = "--intervals ${scatter_intervals} ${unmapped_interval_option} ${interval_padding}"
     """
     set -euo pipefail
     java -Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -Djava.io.tmpdir=/scratch \
