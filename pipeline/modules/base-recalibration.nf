@@ -79,7 +79,8 @@ process run_ApplyBQSR_GATK {
 
     script:
     unmapped_interval_option = (task.index == 1) ? "--intervals unmapped" : ""
-    combined_interval_options = (params.is_targeted) ? "" : "--intervals ${interval} ${unmapped_interval_option}"
+    interval_padding = (params.is_targeted) ? "--interval-padding 100" : ""
+    combined_interval_options = "--intervals ${interval} ${unmapped_interval_option} ${interval_padding}"
     """
     set -euo pipefail
     gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=/scratch" \
