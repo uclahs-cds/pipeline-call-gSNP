@@ -4,6 +4,8 @@ work/
 *.nextflow.log*
 *.log
 *.error
+pipeline/RTC_bed.nf
+pipeline/RTC_split.nf
 
 filled-regenotype-gSNP-single-node.config
 
