@@ -1,2 +1,2 @@
 project_id,sample_id,normal_id,normal_BAM,tumour_id,tumour_BAM
-TCEB1_RCC,S00-9422,S00-9422N_079_114,/hot/users/shutao/TCEB1_mutated_RCC/mapping/S00-9422/S00-9422N_079_114/output_bwa/2020-03-05_DNA_alignments/bwa/0.7.15/TCEB1_RCC/TCEB1_RCC_S00-9422N_079_114.merged.bam,S00-9422T_027_166,/hot/users/shutao/TCEB1_mutated_RCC/mapping/S00-9422/S00-9422T_027_166/output_bwa/2020-03-05_DNA_alignments/bwa/0.7.15/TCEB1_RCC/TCEB1_RCC_S00-9422T_027_166.merged.bam
+<ProjectID>,<SampleID>,<NormalSampleID>,/path/to/normal/bam,<TumourSampleID>,/path/to/tumour/bam
