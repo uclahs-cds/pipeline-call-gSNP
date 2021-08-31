@@ -30,7 +30,7 @@ process run_RealignerTargetCreator_GATK {
     interval_padding = params.is_targeted ? "--interval_padding 100" : ""
     """
     set -euo pipefail
-    java -Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -Djava.io.tmpdir=/scratch \
+    java -Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=/scratch \
         -jar /GenomeAnalysisTK.jar \
         --analysis_type RealignerTargetCreator \
         ${bam_input_str} \
@@ -78,11 +78,10 @@ process run_IndelRealigner_GATK {
     script:
     bam_input_str = params.is_NT_paired ? "--input_file ${bam} --input_file ${bam_tumour}" : "--input_file ${bam}"
     unmapped_interval_option = (task.index == 1) ? "--intervals unmapped" : ""
-    interval_padding = (params.is_targeted) ? "--interval_padding 100" : ""
-    combined_interval_options = "--intervals ${scatter_intervals} ${unmapped_interval_option} ${interval_padding}"
+    combined_interval_options = (params.is_targeted) ? "" : "--intervals ${scatter_intervals} ${unmapped_interval_option}"
     """
     set -euo pipefail
-    java -Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -Djava.io.tmpdir=/scratch \
+    java -Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=/scratch \
         -jar /GenomeAnalysisTK.jar \
         --analysis_type IndelRealigner \
         ${bam_input_str} \

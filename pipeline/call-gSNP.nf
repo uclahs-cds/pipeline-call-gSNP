@@ -123,10 +123,18 @@ workflow {
 
     split_intervals = run_SplitIntervals_GATK.out.interval_list.flatten()
 
-    ir_input = input_ch_input_csv.combine(split_intervals) // Cross the input files with all the chr list
-        .map{ input_csv,interval -> [input_csv.sample_id, input_csv.normal_id, input_csv.tumour_id, input_csv.normal_BAM, input_csv.normal_index, input_csv.tumour_BAM, input_csv.tumour_index, interval] }
-    ir_input_no_interval = input_ch_input_csv.combine(split_intervals)
-        .map{ input_csv,interval -> [input_csv.sample_id, input_csv.normal_id, input_csv.tumour_id, input_csv.normal_BAM, input_csv.normal_index, input_csv.tumour_BAM, input_csv.tumour_index] }
+
+    if (params.is_targeted) {
+      ir_input = input_ch_input_csv.combine(Channel.of(params.intervals)) // Cross the input files with all the exome targets
+          .map{ input_csv,interval -> [input_csv.sample_id, input_csv.normal_id, input_csv.tumour_id, input_csv.normal_BAM, input_csv.normal_index, input_csv.tumour_BAM, input_csv.tumour_index, interval] }
+      ir_input_no_interval = input_ch_input_csv.combine(Channel.of(params.intervals))
+          .map{ input_csv,interval -> [input_csv.sample_id, input_csv.normal_id, input_csv.tumour_id, input_csv.normal_BAM, input_csv.normal_index, input_csv.tumour_BAM, input_csv.tumour_index] }
+    } else {
+      ir_input = input_ch_input_csv.combine(split_intervals) // Cross the input files with all the chr list
+          .map{ input_csv,interval -> [input_csv.sample_id, input_csv.normal_id, input_csv.tumour_id, input_csv.normal_BAM, input_csv.normal_index, input_csv.tumour_BAM, input_csv.tumour_index, interval] }
+      ir_input_no_interval = input_ch_input_csv.combine(split_intervals)
+          .map{ input_csv,interval -> [input_csv.sample_id, input_csv.normal_id, input_csv.tumour_id, input_csv.normal_BAM, input_csv.normal_index, input_csv.tumour_BAM, input_csv.tumour_index] }
+    }
 
     realign_indels(
         ir_input,
@@ -189,6 +197,14 @@ workflow {
       run_MergeSamFiles_Picard.out.merged_tumour_bam_index.ifEmpty("/scratch/placeholder_index.txt"),
       doc_identifiers
       )
+
+    if (params.is_targeted) {
+      normal_bam_ch = run_MergeSamFiles_Picard.out.merged_normal_bam
+      normal_bam_index_ch = run_MergeSamFiles_Picard.out.merged_normal_bam_index
+      tumour_bam_ch = run_MergeSamFiles_Picard.out.merged_tumour_bam.ifEmpty("/scratch/placeholder.txt")
+      tumour_bam_index_ch = run_MergeSamFiles_Picard.out.merged_tumour_bam_index.ifEmpty("/scratch/placeholder_index.txt")
+      hc_interval = split_intervals
+    }
 
     run_HaplotypeCaller_GATK(
       params.reference_fasta,
