@@ -215,6 +215,33 @@ process filter_gSNP_GATK {
     """
 }
 
+process run_vcfstats_RTG {
+    container params.docker_image_rtg
+    publishDir path: params.output_dir,
+      mode: "copy",
+      pattern: "*.txt"
+
+    publishDir path: params.log_output_dir,
+      pattern: ".command.*",
+      mode: "copy",
+      saveAs: { "run_vcfstats_RTG/log${file(it).getName()}" }
+
+    input:
+    tuple(path(cohort_vcf), path(cohort_vcf_tbi))
+
+    output:
+    path(".command.*")
+    path("*.txt")
+
+    script:
+    """
+    set -euo pipefail
+    rtg vcfstats \
+      ${cohort_vcf} \
+      > ${cohort_vcf.baseName.substring(0, cohort_vcf.baseName.indexOf('.'))}_vcfstats.txt
+    """
+}
+
 workflow recalibrate_snps {
   take:
   merge_identifiers
