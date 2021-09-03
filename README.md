@@ -1,87 +1,103 @@
-# Regenotype gSNP
+# pipeline-call-gSNP
 
-- [regenotype-gSNP](#regenotype-gsnp)
-  - [Overview](#overview)
-  - [How To Run](#how-to-run)
-  - [Flow Diagram](#flow-diagram)
-  - [Pipeline Steps](#pipeline-steps)
-    - [1. GATK HaplotypeCaller](#1-gatk-haplotypecaller)
-    - [2. GATK Split Intervals](#2-gatk-split-intervals)
-    - [3. GATK GenomicsDBImport](#3-gatk-genomicsdbimport)
-    - [4. GATK GenotypeGVCFs](#4-gatk-genotypegvcfs)
-    - [5. GATK SortVcf](#5-gatk-sortvcf)
-    - [6. GATK/Picard MergeVcfs](#6-gatkpicard-mergevcfs)
-    - [7. GATK VariantRecalibrator](#7-gatk-variantrecalibrator)
-    - [8. GATK ApplyVQSR](#8-gatk-applyvqsr)
-    - [9. RTG vcfstats](#9-rtg-vcfstats)
+1. [Overview](#Overview)
+2. [How To Run](#How-To-Run)
+3. [Flow Diagram](#Flow-Diagram)
+4. [Pipeline Steps](#Pipeline-Steps)
+5. [Inputs](#Inputs)
+5. [Outputs](#Outputs)
+6. [Benchmarking](#Benchmarking)
+7. [References](#References)
 
-  - [Inputs](#inputs)
-  - [Outputs](#outputs)
-  - [Testing and Validation](#testing-and-validation)
-    - [Test Data Set](#test-data-set)
-    - [Validation](#validation)
-    - [Validation Tool](#validation-tool)
-  - [References](#references)
+For pipeline documentation, please refer to [here](https://uclahs.app.box.com/file/699720501323).
 
 ## Overview
 
-The regenotype gSNP pipeline performs joint genotyping on a cohort.
-This allows population level information to be used to have greater sensitivity for low-frequency variants and filter out false positives.
-This pipeline takes in single-sample BAMs or GVCFs (output from the [call-gSNP pipeline](https://github.com/uclahs-cds/pipeline-call-gSNP)) and then performs joint-genotyping on the entire cohort.
+This pipeline takes BAM and BAM index from [pipeline-align-DNA](https://github.com/uclahs-cds/pipeline-align-DNA), and runs through GATK4 best practice to call germline short variant (SNP and INDEL). It can be run on a single normal sample or on normal-tumour paired samples.
 
 ---
 
 ## How To Run
 
-1. Update the params section of the .config file
+**The pipeline is currently configured to run on SINGLE NODE mode with normal only or normal-tumour paired sample.**
 
-2. Update the input csv
+1. Update the params section of the .config file (Example config in pipeline/config/call-gSNP.config).
 
-3. See the submission script, [here](https://github.com/uclahs-cds/tool-submit-nf), to submit your pipeline
+2. Update the input csv.
+
+3. Download the submission script (submit_nextflow_pipeline.py) from [here](https://github.com/uclahs-cds/tool-submit-nf), and submit your pipeline below.
+```
+python submit_nextflow_pipeline.py \
+       --nextflow_script /path/to/call-gSNP.nf \
+       --sge_scheduler False \
+       --multi_node_mode False \
+       --nextflow_config /path/to/call-gSNP.SLURM.template.WGS.config \
+       --pipeline_run_name job_name \
+       --partition_type midmem_or_execute \
+       --email email_address
+```
 
 ---
 
 ## Flow Diagram
 
-[Source: GATK Documentation](https://gatk.broadinstitute.org/hc/en-us/articles/360035890431-The-logic-of-joint-calling-for-germline-short-variants)
-
-![Joint Calling Flow](https://drive.google.com/uc?id=15MxnVvtt8yR8nn7_wChzsZz_vqFHFmON)
-
-[Source GATK Documentation](https://gatk.broadinstitute.org/hc/en-us/articles/360035890411)
-
-![Joint Calling Flow](https://drive.google.com/uc?id=1EOTFKQPBLApJkAHx1GU6VImq_xeGac1w)
+![call-gSNP flow diagram](call-gSNP-DSL2.png)
 
 ---
 
 ## Pipeline Steps
 
-### 1. GATK HaplotypeCaller
+### 1. Split genome into intervals for parallelization
+Use the input target intervals and split them into intervals for parallel processing.
 
-Call variants individually per-sample. Use the HaplotypeCaller to call variants individually per-sample in `-ERC GVCF` mode.
+### 2. Realign Indels
+Generate indel realignment targets and realign indels.
 
-### 2. GATK Split Intervals
-Scatter the input intervals for parallelization.
+### 3. Generate BQSR (Base Quality Score Recalibration)
+Assess how sequencing errors correlate with four covariates (assigned quality score, read group the read belongs, machine cycle producing this base, and current and immediately upstream base), and output base quality score recalibration table.
 
-### 3. GATK GenomicsDBImport
-Combine all of the samples into one database, per interval.
+### 4. Apply BQSR per split interval in parallel
+Print out interval-level recalibrated BAM.
 
-### 4. GATK GenotypeGVCFs
-Perform a joint genotyping analysis of the gVCFs produced for all samples in a cohort from the genomics database.
+### 5. Reheader interval-level BAMs
+In paired mode, reheader the interval-level BAMs.
 
-### 5. GATK SortVcf
-Sort each of the VCF files before merging.
+### 6. Index reheadered BAMs
+Index each reheadered interval-level BAM. After this step, the workflow splits into two: one path (7-10) merges the BAMs for Depth of Coverage and contamination calculations while the other path proceeds with the HaplotypeCaller (11-17).
 
-### 6. GATK/Picard MergeVcfs
-Combine all of the scattered interval vcfs into one vcf file.
+### 7. Merge interval-level BAMs
+Merge BAMs from each interval to generate whole sample BAM.
 
-### 7. GATK VariantRecalibrator
-Build the variant recalibration model for SNPs and INDELs separately.
+### 8. Get pileup summaries
+Summarizes counts of reads that support reference, alternate and other alleles for given sites. Results will be used in the next Calculate Contamination step.
 
-### 8. GATK ApplyVQSR
-Apply the variant recalibration model from step 5 to the GVCF file.
+### 9. Calculate contamination
+Calculates the fraction of reads coming from cross-sample contamination, given results from Step 8.
 
-### 9. RTG vcfstats
-Generate statistics about the content of the output VCF file(s) from step 7.
+### 10.	DepthOfCoverage
+Calculate depth of coverage using the whole sample BAM from step 7.
+
+### 11.	HC – call raw VCF on each interval in parallel
+Generate raw VCF for each split interval using HaplotypeCaller. Generate GVCF for SNPs and INDELs.
+
+### 12. Merge raw VCFs
+Merge raw variants from each interval to generate whole sample raw VCF.
+
+### 13. VQSR (Variant Quality Score Recalibration): Generate VQSR model for SNPs.
+
+### 14. VQSR: Generate VQSR model for INDELs.
+
+### 15. VQSR: Take the whole sample raw VCF from Step 11 as input, and apply the model in Step 13 to generate variants in which only SNPs are recalibrated.
+
+### 16. VQSR: Take the output from Step 15 as input, and apply the model in Step 14 to recalibrate only INDELs.
+
+#### Steps 13 through 16 model the technical profile of variants in a training set and uses that to filter out probable artifacts from the raw VCF. After these four steps, a recalibrated VCF is generated.
+
+### 17. Filter gSNP – Filter out ambiguous variants
+Use customized Perl script to filter out ambiguous variants.
+
+### 18. Generate sha512 checksum
+Generate sha512 checksum for final BAM, filtered VCF, and GVCFs for SNPs and INDELs.
 
 ---
 
@@ -89,130 +105,76 @@ Generate statistics about the content of the output VCF file(s) from step 7.
 
 ### Input CSV
 
- Field | Type | Description |
-| ------------ | ------------ | ------------------------ |
-| sample |  String | Sample ID |
-| input_file | Path | Path to the BAM or GVCF file. Both BAMs and GVCFs can be passed as inputs. BAMs with be processed with HaplotypeCaller. |
-| chr | String | (Optional) Omit if BAM/GVCF is over entire genome. Specify the single chromosome for the given BAM/GVCF file. |
+| Field | Type | Description |
+|:------|:-----|:------------|
+| projectID | string | Project ID (will be standardized according to data storage structure in the near future) |
+| sampleID | string | Sample ID, patient ID, or study participant ID (to be standardized) |
+| normalID | string | Must be strictly set to the sample tag (SM:) in the BAM header @RG line (should be also in the pipeline-align-DNA input .csv file) |
+| normalBAM | path | Set to absolute path to normal BAM |
+| normalBAMindex | path | Set to absolute path to normal BAM index |
+| tumourID | string | Set to placeholder 'NA1' if normal only; otherwise must be strictly set to the sample tag (SM:) in the BAM header @RG line (should be also in the pipeline-align-DNA input .csv file) |
+| tumourBAM | path | Set to placeholder 'NA2' if normal only; otherwise absolute path to tumour BAM |
+| tumourBAMindex | path | Set to placeholder 'NA3' if normal only; otherwise absolute path to tumour BAM index |
 
 ### Config
-| Parameter | Description |
-| --- | --- |
-| dataset_id | ID of the data set |
-| blcds_registered_dataset | Boolean indicating if you want the output to be registered |
-| sge_scheduler | Boolean indicating if we are on SGE. Use `false` if on slurm. |
-| input_csv | Path to input.csv |
-| intervals | A list of interval to run in parallel. Defaults to canonical chromosomes in [hg38_decoy_chromosomes_canonical.txt](pipeline/config/single-node/hg38_decoy_chromosomes_canonical.txt) |
-| save_intermediate_files | true to save all intermediate files |
-| reference_fasta |   path to genome genome.fa |
-| reference_fasta_fai |  path to genome genome.fa.fai |
-| reference_dict |  path to genome genome.dict |
-| bundle_v0_dbsnp138_vcf_gz |  path to resources_broad_hg38_v0_Homo_sapiens_assembly38.dbsnp138.vcf.gz |
-| bundle_mills_and_1000g_gold_standard_indels_vcf_gz |  path to Mills_and_1000G_gold_standard.indels.hg38.vcf.gz |
-| bundle_known_indels_vcf_gz |  path to Homo_sapiens_assembly38.known_indels.vcf.gz |
-| bundle_v0_dbsnp138_vcf_gz |  path to resources_broad_hg38_v0_Homo_sapiens_assembly38.dbsnp138.vcf.gz |
-| bundle_hapmap_3p3_vcf_gz |  path to hapmap_3.3.hg38.vcf.gz |
-| bundle_omni_1000g_2p5_vcf_gz |  path to 1000G_omni2.5.hg38.vcf.gz |
-| bundle_phase1_1000g_snps_high_conf_vcf_gz |  path to 1000G_phase1.snps.high_confidence.hg38.vcf.gz |
-| bundle_contest_hapmap_3p3_vcf_gz |  path to hapmap_3.3.hg38.BIALLELIC.PASS.vcf.gz |
-| output_dir |  path to outputs  |
-| output_log_directory |  path to logs |
-| temp_dir |  path to temp, e.g /scratch |
-| scatter_count | 50 |
-| split_intervals_extra_args | Extra arguments to pass into SplitIntervals |
-| max_num_intervals_to_import_in_parallel | Max number of intervals to import in parallel; higher values may improve performance, but require more memory and a higher number of file descriptors open at the same time. |
-| reader_threads | How many simultaneous threads to use when opening VCFs in batches; higher values may improve performance when network latency is an issue |
-| batch_size | Batch size controls the number of samples for which readers are open at once and therefore provides a way to minimize memory consumption. If batch_size > 100, use --consolidate True in extra args. Start with `batch_size = 50` for large datasets |
-| genomics_db_import_extra_args | Extra arguments for GenomicsDBImport |
+
+| Input Parameter | Required | Type | Description |
+|:----------------|:---------|:-----|:------------|
+| `dataset_id` | optional | string | Dataset ID placeholder for now (will be standardized according to data storage structure in the near future) |
+| `avere_prefix` | Yes | string | Prefix for location of avere cache |
+| `blcds_registered_dataset` | Yes | boolean | Set to true when using BLCDS folder structure; use false for now |
+| `output_dir` | Yes | string | Need to set if `blcds_registered_dataset = false` |
+| `java_temp_dir` | Yes | string | Store Java temp files; set to `/scratch` in production |
+| `temp_dir` | Yes | string | Store Nextflow workDir intermediate files; set to `/scratch` in production |
+| `input_csv` | Yes | path | Absolute path to input CSV file |
+| `save_intermediate_files` | Yes | boolean | Set to false to disable publishing of intermediate files; true otherwise |
+| `is_emit_original_quals` | Yes | boolean | Set to true to emit original quality scores; false to omit |
+| `is_NT_paired` | Yes | boolean | Set to true for normal-tumour paired mode, and to false for normal only mode |
+| `is_DOC_run` | Yes | boolean | Set to true to run GATK DepthOfCoverage (very time-consuming for large BAMs); false otherwise |
+| `scatter_count` | Yes | integer | Number of intervals to divide into for parallelization |
+| `intervals` | Yes | path | Use all .list in inputs for WGS; Set to absolute path to targeted exome interval file (with .interval_list, .list, .intervals, or .bed suffix) |
+| `is_targeted` | Yes | boolean | Set to true for targeted exome mode and false for WGS mode |
+| `reference_fasta` | Yes | path | Absolute path to reference genome fasta file, e.g., `/hot/ref/reference/GRCh38-BI-20160721/Homo_sapiens_assembly38.fasta` |
+| `reference_dict` | Yes | path | Absolute path to reference genome fasta dict file, e.g., `/hot/ref/reference/GRCh38-BI-20160721/Homo_sapiens_assembly38.dict` |
+| `bundle_mills_and_1000g_gold_standard_indels_vcf_gz` | Yes | path | Absolute path to Mills & 1000G Gold Standard Indels file, e.g., `/hot/ref/tool-specific-input/GATK/GRCh38/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz` |
+| `bundle_known_indels_vcf_gz` | Yes | path | Absolute path to known indels file, e.g., `/hot/ref/tool-specific-input/GATK/GRCh38/Homo_sapiens_assembly38.known_indels.vcf.gz` |
+| `bundle_v0_dbsnp138_vcf_gz` | Yes | path | Absolute path to dbsnp file, e.g., `/hot/ref/tool-specific-input/GATK/GRCh38/resources_broad_hg38_v0_Homo_sapiens_assembly38.dbsnp138.vcf.gz` |
+| `bundle_hapmap_3p3_vcf_gz` | Yes | path | Absolute path to HapMap 3.3 file, e.g., `/hot/ref/tool-specific-input/GATK/GRCh38/hapmap_3.3.hg38.vcf.gz` |
+| `bundle_omni_1000g_2p5_vcf_gz` | Yes | path | Absolute path to 1000 genomes OMNI 2.5 file, e.g., `/hot/ref/tool-specific-input/GATK/GRCh38/1000G_omni2.5.hg38.vcf.gz` |
+| `bundle_phase1_1000g_snps_high_conf_vcf_gz` | Yes | path | Absolute path to 1000 genomes phase 1 high-confidence file, e.g., `/hot/ref/tool-specific-input/GATK/GRCh38/1000G_phase1.snps.high_confidence.hg38.vcf.gz` |
+| `bundle_contest_hapmap_3p3_vcf_gz` | Yes | path | Absolute path to HapMap 3.3 biallelic sites file, e.g., `/hot/users/shutao/Biallelic/hapmap_3.3.hg38.BIALLELIC.PASS.vcf.gz` |
 
 ---
 
 ## Outputs
 
 | Output | Description |
-| ------------ | ------------------------ |
-| regenotyped_merged_recalibrated_SNP.vcf.gz | Recalibrated germline SNPs |
-| regenotyped_merged_recalibrated_SNP_AND_INDEL.vcf.gz | Recalibrate germline SNPs and INDELs |
-| regenotyped_merged_recalibrated_SNP_vcfstats.txt | vcfstats for germline SNP vcf output |
-| regenotyped_merged_recalibrated_SNP_AND_INDEL_vcfstats.txt | vcfstats for germline SNP and INDEL vcf output |
+|:-------|:------------|
+| `${normal_id}_realigned_recalibrated_merged.bam` | Post-processed normal BAM |
+| `${normal_id}_realigned_recalibrated_merged.bam.bai` | Post-processed normal BAM index |
+| `${normal_id}_realigned_recalibrated_merged.bam.sha512` | Post-processed normal BAM sha512 checksum |
+| `${tumour_id}_realigned_recalibrated_merged.bam` | Post-processed tumour BAM if in normal-tumour paired mode |
+| `${tumour_id}_realigned_recalibrated_merged.bam.bai` | Post-processed tumour BAM index if in normal-tumour paired mode |
+| `${tumour_id}_realigned_recalibrated_merged.bam.sha512` | Post-processed tumour BAM sha512 checksum if in normal-tumour paired mode |
+| `filtered_germline_snv_${samplel_id}_nosomatic.vcf.gz` | Filtered germline SNVs |
+| `filtered_germline_snv_${samplel_id}_nosomatic.vcf.gz.tbi` | Filtered germline SNVs index |
+| `filtered_germline_snv_${samplel_id}_nosomatic.vcf.gz.sha512` | Filtered germline SNVs sha512 checksum |
+| `filtered_germline_indel_${samplel_id}_nosomatic.vcf.gz` | Filtered germline INDELs |
+| `filtered_germline_indel_${samplel_id}_nosomatic.vcf.gz.tbi` | Filtered germline INDELs index |
+| `filtered_germline_indel_${samplel_id}_nosomatic.vcf.gz.sha512` | Filtered germline INDELs sha512 checksum |
+| `report.html`, `timeline.html` and `trace.txt` | Nextflow report, timeline and trace files |
+| `*.command.*` | Process specific logging files created by nextflow |
 
 ---
 
-## Testing and Validation
+## Benchmarking
 
-### Test Data Sets
+### Test Data Set
 
-#### Soragni-Eng-cNF-MNFO (cNF-organoid) WGS
-A small dataset used for testing (5 samples) is the cNF-organoid data from Alice Soragni's lab. The input.csv used for testing was
-```
-sample,input_file
-SECNMNFO000001,/hot/users/stefaneng/project-cNF-organoid/pipeline/pipeline-call-gSNP/output/SECNMNFO000001/call-gSNP-20210220-190250/SECNMNFO000001/Picard-2.23.3/merged_raw_gvcf/SECNMNFO000001_merged_raw_variants.g.vcf.gz
-SECNMNFO000002,/hot/users/stefaneng/project-cNF-organoid/pipeline/pipeline-call-gSNP/output/SECNMNFO000002/call-gSNP-20210220-200223/SECNMNFO000002/Picard-2.23.3/merged_raw_gvcf/SECNMNFO000002_merged_raw_variants.g.vcf.gz
-SECNMNFO000003,/hot/users/stefaneng/project-cNF-organoid/pipeline/pipeline-call-gSNP/output/SECNMNFO000003/call-gSNP-20210220-190250/SECNMNFO000003/Picard-2.23.3/merged_raw_gvcf/SECNMNFO000003_merged_raw_variants.g.vcf.gz
-SECNMNFO000004,/hot/users/stefaneng/project-cNF-organoid/pipeline/pipeline-call-gSNP/output/SECNMNFO000004/call-gSNP-20210220-190219/SECNMNFO000004/Picard-2.23.3/merged_raw_gvcf/SECNMNFO000004_merged_raw_variants.g.vcf.gz
-SECNMNFO000005,/hot/users/stefaneng/project-cNF-organoid/pipeline/pipeline-call-gSNP/output/SECNMNFO000005/call-gSNP-20210220-190222/SECNMNFO000005/Picard-2.23.3/merged_raw_gvcf/SECNMNFO000005_merged_raw_variants.g.vcf.gz
-```
+1. A-mini: A subset dataset consisting of read alignment from chr8, chr21, and chrX.
 
-This run is quick
-```
-Duration    : 48m 42s
-CPU hours   : 6.0
-```
-
-|process_name                                          |realtime              |cpu    |peak_rss |peak_vmem |
-|:-----------------------------------------------------|:---------------------|:------|:--------|:---------|
-|GATK_merge_vcfs                                       |116s (~1.93 minutes)  |96.9%  |394.6 MB |16.1 GB   |
-|GATK_run_GenomicsDBImport_import_gvcfs                |170s (~2.83 minutes)  |190.7% |2.5 GB   |17.1 GB   |
-|GATK_run_GenotypeGVCFs                                |344s (~5.73 minutes)  |98.5%  |789.4 MB |6.6 GB    |
-|GATK_sort_vcf                                         |18s                   |95.1%  |1.2 GB   |16.1 GB   |
-|GATK_split_intervals                                  |5.7s                  |94.2%  |608 MB   |32.1 GB   |
-|recalibrate_indels:GATK_run_ApplyVQSR                 |127s (~2.12 minutes)  |97.2%  |917.2 MB |32.1 GB   |
-|recalibrate_indels:GATK_run_VariantRecalibrator_indel |202s (~3.37 minutes)  |97.4%  |1.8 GB   |35.2 GB   |
-|recalibrate_snps:GATK_run_ApplyVQSR                   |146s (~2.43 minutes)  |97.2%  |948.7 MB |32.1 GB   |
-|recalibrate_snps:GATK_run_VariantRecalibrator_snp     |1032s (~17.2 minutes) |97.9%  |3.6 GB   |35.3 GB   |
-
-#### COVID19 WGS
-The [COVID dataset](https://github.com/uclahs-cds/dataset-register-file/tree/master/COVID19) is the largest test so far for regenotype-gSNP with 702 `.g.vcf` files. The current settings in the config file provided were sufficient for this size of dataset but not guaranteed for other datasets. The run time was `6d 23h 23m 13s` (CPU hours `7'864.4`) on `M64` node with scratch space > 4T. The config, input csv, timeline.html, report.html and trace.txt are available on SLURM (10.18.82.18) `/hot/pipelines/development/slurm/regenotype-gSNP/benchmarks/COVID`
-
-|process_name                                          |realtime              |cpu   |peak_rss |peak_vmem |
-|:-----------------------------------------------------|:---------------------|:-----|:--------|:---------|
-|GATK_merge_vcfs                                       |15159s (~4.21 hours)  |97.9% |978.3 MB |35.1 GB   |
-|GATK_run_GenomicsDBImport_import_gvcfs                |117840s (~1.36 days)  |99.3% |14.3 GB  |33.4 GB   |
-|GATK_run_GenotypeGVCFs                                |294203s (~3.41 days)  |98.3% |3.4 GB   |9.2 GB    |
-|GATK_sort_vcf                                         |1182s (~19.7 minutes) |96.9% |33.7 GB  |35.3 GB   |
-|GATK_split_intervals                                  |7.6s                  |91.1% |743.9 MB |32.1 GB   |
-|recalibrate_indels:GATK_run_ApplyVQSR                 |10651s (~2.96 hours)  |97.2% |969.2 MB |32.1 GB   |
-|recalibrate_indels:GATK_run_VariantRecalibrator_indel |6817s (~1.89 hours)   |98%   |3.8 GB   |34.9 GB   |
-|recalibrate_snps:GATK_run_ApplyVQSR                   |11049s (~3.07 hours)  |97.7% |1 GB     |32.1 GB   |
-|recalibrate_snps:GATK_run_VariantRecalibrator_snp     |10084s (~2.8 hours)   |92.9% |23.5 GB  |34.9 GB   |
-
-#### Zlotta-Gebo-PRAD-RGK6 WGS
-
-The output and logs are available on SLURM here: `/hot/projects/diseases/prostate-cancer/tag/zlotta/output_regenotype-gSNP/`
-The run time was `1d 23h 12m 48s` with `1'421.9` CPU hours.
-
-|process_name                                          |realtime               |cpu   |peak_rss |peak_vmem |
-|:-----------------------------------------------------|:----------------------|:-----|:--------|:---------|
-|GATK_merge_vcfs                                       |2931s (~48.85 minutes) |97%   |599.6 MB |35.1 GB   |
-|GATK_run_GenomicsDBImport_import_gvcfs                |67845s (~18.85 hours)  |99.3% |16.1 GB  |31.4 GB   |
-|GATK_run_GenotypeGVCFs                                |71702s (~19.92 hours)  |99.3% |2.8 GB   |8.8 GB    |
-|GATK_sort_vcf                                         |321s (~5.35 minutes)   |96.7% |15.4 GB  |35.3 GB   |
-|GATK_split_intervals                                  |7s                     |93.5% |619 MB   |32.1 GB   |
-|recalibrate_indels:GATK_run_ApplyVQSR                 |2169s (~36.15 minutes) |96.4% |964.4 MB |32.1 GB   |
-|recalibrate_indels:GATK_run_VariantRecalibrator_indel |1638s (~27.3 minutes)  |95.6% |2.7 GB   |34.9 GB   |
-|recalibrate_snps:GATK_run_ApplyVQSR                   |2295s (~38.25 minutes) |96.6% |979.5 MB |32.1 GB   |
-|recalibrate_snps:GATK_run_VariantRecalibrator_snp     |3582s (~59.7 minutes)  |98.3% |12.6 GB  |34.9 GB   |
-
-### Validation
-
-### Validation Tool
-
-Included is a template for validating your input files. For more information on the tool check out: https://github.com/uclahs-cds/tool-validate-nf
+### Results
 
 ---
 
 ## References
-1. [Old Perl Pipeline](https://github.com/uclahs-cds/BoutrosLab/blob/master/CPC-GENE/GermlineSomatic/genome-wide/branches/GWAS/gwas_pipelines/regenotype_sig_snps.pl)
-2. [The logic of joint calling for germline short variants](https://gatk.broadinstitute.org/hc/en-us/articles/360035890431-The-logic-of-joint-calling-for-germline-short-variants)
-3. [Calling variants on cohorts of samples using the HaplotypeCaller in GVCF mode](https://gatk.broadinstitute.org/hc/en-us/articles/360035890411)
-4. [GVCF - Genomic Variant Call Format](https://gatk.broadinstitute.org/hc/en-us/articles/360035531812)

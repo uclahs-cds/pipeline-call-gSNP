@@ -33,8 +33,10 @@ Current Configuration:
       Tools Used:
           tool GATK: ${params.docker_image_gatk}
           tool validate: ${params.docker_image_validate}
-          tool RTG: ${params.docker_image_rtg}
           tool Picard: ${params.docker_image_picard}
+          tool SAMtools: ${params.docker_image_samtools}
+          tool GATK3: ${params.docker_image_gatk3}
+          tool GATK Filter: ${params.docker_image_gatkfilter}
 
       Extra parameters:
           ${params}
@@ -44,9 +46,9 @@ Starting workflow...
 ------------------------------------
         """
 
-include { run_validate; calculate_sha512 } from './modules/validation'
-include { run_GenomicsDBImport_GATK; run_SplitIntervals_GATK; run_HaplotypeCaller_GATK; run_GenotypeGVCFs_GATK; run_SortVcf_GATK; run_MergeVcfs_Picard } from './modules/joint-genotype-processes'
-include { recalibrate_snps; recalibrate_indels; filter_gSNP_GATK } from './modules/variant-recalibration'
+include { run_validate; calculate_sha512 } from './modules/validation.nf'
+include { run_SplitIntervals_GATK; run_HaplotypeCaller_GATK; run_MergeVcfs_Picard } from './modules/genotype-processes.nf'
+include { recalibrate_snps; recalibrate_indels; filter_gSNP_GATK } from './modules/variant-recalibration.nf'
 include { realign_indels } from './modules/indel-realignment.nf'
 include { recalibrate_base } from './modules/base-recalibration.nf'
 include { reheader_interval_bams; run_MergeSamFiles_Picard } from './modules/bam-processing.nf'
