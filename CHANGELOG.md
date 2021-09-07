@@ -10,3 +10,4 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ## [Unreleased]
 ### Added
 - Update call-gSNP to DSL2
+- Add GPL2 license
