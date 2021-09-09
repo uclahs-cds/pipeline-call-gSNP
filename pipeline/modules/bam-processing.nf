@@ -94,44 +94,29 @@ process run_MergeSamFiles_Picard {
         saveAs: { "${task.process.replace(':', '/')}-${task.index}/log${file(it).getName()}" }
 
     input:
-    path(normal_bams)
-    path(tumour_bams)
+    path(bams)
+    val(sample_type)
     tuple val(sample_id), val(normal_id), val(tumour_id)
 
     output:
     path(".command.*")
-    path("${normal_id}_realigned_recalibrated_merged.bam"), emit: merged_normal_bam
-    path("${normal_id}_realigned_recalibrated_merged.bai"), emit: merged_normal_bam_index
-    path("${tumour_id}_realigned_recalibrated_merged.bam"), emit: merged_tumour_bam optional true
-    path("${tumour_id}_realigned_recalibrated_merged.bai"), emit: merged_tumour_bam_index optional true
+    path("${output_id}_realigned_recalibrated_merged.bam"), emit: merged_bam
+    path("${output_id}_realigned_recalibrated_merged.bai"), emit: merged_bam_index
 
     script:
-    normal_bams_input = normal_bams.collect{ "-INPUT '$it'" }.join(' ')
-    tumour_bams_input = tumour_bams.collect{ "-INPUT '$it'" }.join(' ')
+    all_bams = bams.collect{ "-INPUT '$it'" }.join(' ')
+    output_id = (sample_id == "normal") ? "${normal_id}" : "${tumour_id}"
     """
     set -euo pipefail
     java -Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -Djava.io.tmpdir=/scratch \
         -jar /picard-tools/picard.jar MergeSamFiles \
-        ${normal_bams_input} \
-        -OUTPUT ${normal_id}_realigned_recalibrated_merged.bam \
+        ${all_bams} \
+        -OUTPUT ${output_id}_realigned_recalibrated_merged.bam \
         -CREATE_INDEX true \
         -SORT_ORDER coordinate \
         -ASSUME_SORTED false \
         -USE_THREADING false \
         -VALIDATION_STRINGENCY LENIENT
-
-    if ${params.is_NT_paired}
-    then
-        java -Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -Djava.io.tmpdir=/scratch \
-            -jar /picard-tools/picard.jar MergeSamFiles \
-            ${tumour_bams_input} \
-            -OUTPUT ${tumour_id}_realigned_recalibrated_merged.bam \
-            -CREATE_INDEX true \
-            -SORT_ORDER coordinate \
-            -ASSUME_SORTED false \
-            -USE_THREADING false \
-            -VALIDATION_STRINGENCY LENIENT
-    fi
     """
 }
 

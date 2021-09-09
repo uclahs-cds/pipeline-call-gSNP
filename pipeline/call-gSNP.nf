@@ -51,7 +51,7 @@ include { run_SplitIntervals_GATK; run_HaplotypeCaller_GATK; run_MergeVcfs_Picar
 include { recalibrate_snps; recalibrate_indels; filter_gSNP_GATK } from './modules/variant-recalibration.nf'
 include { realign_indels } from './modules/indel-realignment.nf'
 include { recalibrate_base } from './modules/base-recalibration.nf'
-include { reheader_interval_bams; run_MergeSamFiles_Picard } from './modules/bam-processing.nf'
+include { reheader_interval_bams; run_MergeSamFiles_Picard as run_MergeSamFiles_Picard_normal; run_MergeSamFiles_Picard as run_MergeSamFiles_Picard_tumour } from './modules/bam-processing.nf'
 include { calculate_contamination; run_DepthOfCoverage_GATK } from './modules/summary-processes.nf'
 
 // Returns the index file for the given bam or vcf
@@ -171,17 +171,25 @@ workflow {
       hc_interval = recalibrate_base.out.associated_interval
     }
 
-    run_MergeSamFiles_Picard(
+    run_MergeSamFiles_Picard_normal(
       normal_bam_ch.collect(),
-      tumour_bam_ch.collect(),
+      "normal",
       merge_bams_identifiers
       )
+    
+    if (params.is_NT_paired) {
+      run_MergeSamFiles_Picard_tumour(
+        tumour_bam_ch.collect(),
+        "tumour",
+        merge_bams_identifiers
+        )
+    }
 
     calculate_contamination(
-      run_MergeSamFiles_Picard.out.merged_normal_bam,
-      run_MergeSamFiles_Picard.out.merged_normal_bam_index,
-      run_MergeSamFiles_Picard.out.merged_tumour_bam.ifEmpty("/scratch/placeholder.txt"),
-      run_MergeSamFiles_Picard.out.merged_tumour_bam_index.ifEmpty("/scratch/placeholder_index.txt"),
+      run_MergeSamFiles_Picard_normal.out.merged_bam,
+      run_MergeSamFiles_Picard_normal.out.merged_bam_index,
+      run_MergeSamFiles_Picard_tumour.out.merged_bam.ifEmpty("/scratch/placeholder.txt"),
+      run_MergeSamFiles_Picard_tumour.out.merged_bam_index.ifEmpty("/scratch/placeholder_index.txt"),
       split_intervals,
       contamination_identifiers
       )
@@ -191,18 +199,18 @@ workflow {
       "${params.reference_fasta}.fai",
       params.reference_dict,
       split_intervals.collect(),
-      run_MergeSamFiles_Picard.out.merged_normal_bam,
-      run_MergeSamFiles_Picard.out.merged_normal_bam_index,
-      run_MergeSamFiles_Picard.out.merged_tumour_bam.ifEmpty("/scratch/placeholder.txt"),
-      run_MergeSamFiles_Picard.out.merged_tumour_bam_index.ifEmpty("/scratch/placeholder_index.txt"),
+      run_MergeSamFiles_Picard_normal.out.merged_bam,
+      run_MergeSamFiles_Picard_normal.out.merged_bam_index,
+      run_MergeSamFiles_Picard_tumour.out.merged_bam.ifEmpty("/scratch/placeholder.txt"),
+      run_MergeSamFiles_Picard_tumour.out.merged_bam_index.ifEmpty("/scratch/placeholder_index.txt"),
       doc_identifiers
       )
 
     if (params.is_targeted) {
-      normal_bam_ch = run_MergeSamFiles_Picard.out.merged_normal_bam
-      normal_bam_index_ch = run_MergeSamFiles_Picard.out.merged_normal_bam_index
-      tumour_bam_ch = run_MergeSamFiles_Picard.out.merged_tumour_bam.ifEmpty("/scratch/placeholder.txt")
-      tumour_bam_index_ch = run_MergeSamFiles_Picard.out.merged_tumour_bam_index.ifEmpty("/scratch/placeholder_index.txt")
+      normal_bam_ch = run_MergeSamFiles_Picard_normal.out.merged_bam
+      normal_bam_index_ch = run_MergeSamFiles_Picard_normal.out.merged_bam_index
+      tumour_bam_ch = run_MergeSamFiles_Picard_tumour.out.merged_bam.ifEmpty("/scratch/placeholder.txt")
+      tumour_bam_index_ch = run_MergeSamFiles_Picard_tumour.out.merged_bam_index.ifEmpty("/scratch/placeholder_index.txt")
       hc_interval = split_intervals
     }
 
@@ -269,10 +277,10 @@ workflow {
       run_MergeVcfs_Picard_tumour_GVCF.out.vcf.flatten(),
       run_MergeVcfs_Picard_tumour_GVCF.out.vcf_index.flatten(),
       filter_gSNP_GATK.out.germline_filtered.flatten(),
-      run_MergeSamFiles_Picard.out.merged_normal_bam.flatten(),
-      run_MergeSamFiles_Picard.out.merged_normal_bam_index.flatten(),
-      run_MergeSamFiles_Picard.out.merged_tumour_bam.flatten(),
-      run_MergeSamFiles_Picard.out.merged_tumour_bam_index.flatten()
+      run_MergeSamFiles_Picard_normal.out.merged_bam.flatten(),
+      run_MergeSamFiles_Picard_normal.out.merged_bam_index.flatten(),
+      run_MergeSamFiles_Picard_tumour.out.merged_bam.flatten(),
+      run_MergeSamFiles_Picard_tumour.out.merged_bam_index.flatten()
       )
 
     calculate_sha512(files_for_sha512)
