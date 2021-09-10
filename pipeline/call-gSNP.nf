@@ -47,7 +47,7 @@ Starting workflow...
         """
 
 include { run_validate; calculate_sha512 } from './modules/validation.nf'
-include { run_SplitIntervals_GATK; run_HaplotypeCaller_GATK; run_MergeVcfs_Picard } from './modules/genotype-processes.nf'
+include { run_SplitIntervals_GATK; run_HaplotypeCaller_GATK; run_MergeVcfs_Picard as run_MergeVcfs_Picard_VCF; run_MergeVcfs_Picard as run_MergeVcfs_Picard_normal_GVCF; run_MergeVcfs_Picard as run_MergeVcfs_Picard_tumour_GVCF } from './modules/genotype-processes.nf'
 include { recalibrate_snps; recalibrate_indels; filter_gSNP_GATK } from './modules/variant-recalibration.nf'
 include { realign_indels } from './modules/indel-realignment.nf'
 include { recalibrate_base } from './modules/base-recalibration.nf'
@@ -220,17 +220,33 @@ workflow {
       hc_interval
       )
 
-    run_MergeVcfs_Picard(
+    run_MergeVcfs_Picard_VCF(
       run_HaplotypeCaller_GATK.out.vcf.collect(),
-      run_HaplotypeCaller_GATK.out.gvcf_normal.collect(),
-      run_HaplotypeCaller_GATK.out.gvcf_tumour.collect().ifEmpty("/scratch/placeholder.txt"),
+      "VCF",
+      "-",
       merge_identifiers
       )
 
+    run_MergeVcfs_Picard_normal_GVCF(
+      run_HaplotypeCaller_GATK.out.gvcf_normal.collect(),
+      "GVCF",
+      "normal",
+      merge_identifiers
+      )
+
+    if (params.is_NT_paired) {
+      run_MergeVcfs_Picard_tumour_GVCF(
+        run_HaplotypeCaller_GATK.out.gvcf_tumour.collect(),
+        "GVCF",
+        "tumour",
+        merge_identifiers
+        )
+    }
+
     recalibrate_snps(
       recal_snp_identifiers,
-      run_MergeVcfs_Picard.out.vcf,
-      run_MergeVcfs_Picard.out.vcf_index
+      run_MergeVcfs_Picard_VCF.out.vcf,
+      run_MergeVcfs_Picard_VCF.out.vcf_index
       )
 
     recalibrate_indels(
@@ -248,10 +264,10 @@ workflow {
       filter_gSNP_identifiers
       )
 
-    files_for_sha512 = run_MergeVcfs_Picard.out.gvcf_normal.flatten().mix(
-      run_MergeVcfs_Picard.out.gvcf_normal_index.flatten(),
-      run_MergeVcfs_Picard.out.gvcf_tumour.flatten(),
-      run_MergeVcfs_Picard.out.gvcf_tumour_index.flatten(),
+    files_for_sha512 = run_MergeVcfs_Picard_normal_GVCF.out.vcf.flatten().mix(
+      run_MergeVcfs_Picard_normal_GVCF.out.vcf_index.flatten(),
+      run_MergeVcfs_Picard_tumour_GVCF.out.vcf.flatten(),
+      run_MergeVcfs_Picard_tumour_GVCF.out.vcf_index.flatten(),
       filter_gSNP_GATK.out.germline_filtered.flatten(),
       run_MergeSamFiles_Picard.out.merged_normal_bam.flatten(),
       run_MergeSamFiles_Picard.out.merged_normal_bam_index.flatten(),

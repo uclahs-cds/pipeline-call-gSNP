@@ -135,46 +135,27 @@ process run_MergeVcfs_Picard {
 
     input:
     path(vcfs)
-    path(gvcfs_normal)
-    path(gvcfs_tumour)
+    val(vcf_type)
+    val(sample_type)
     tuple val(sample_id), val(normal_id), val(tumour_id)
 
     output:
     path(".command.*")
-    path("${sample_id}_merged_raw.vcf"), emit: vcf
-    path("${sample_id}_merged_raw.vcf.idx"), emit: vcf_index
-    path("${normal_id}_merged_raw_variants.g.vcf.gz"), emit: gvcf_normal
-    path("${normal_id}_merged_raw_variants.g.vcf.gz.tbi"), emit: gvcf_normal_index
-    path("${tumour_id}_merged_raw_variants.g.vcf.gz"), emit: gvcf_tumour optional true
-    path("${tumour_id}_merged_raw_variants.g.vcf.gz.tbi"), emit: gvcf_tumour_index optional true
+    path("*.vcf{,.gz}"), emit: vcf
+    path("*.vcf.{idx,gz.tbi}"), emit: vcf_index
 
     script:
-    vcf_args = vcfs.collect{ "-INPUT '$it'" }.join(' ')
-    gvcf_args_normal = gvcfs_normal.collect{ "-INPUT '$it'" }.join(' ')
-    gvcf_args_tumour = gvcfs_tumour.collect{ "-INPUT '$it'" }.join(' ')
+    all_vcfs = vcfs.collect{ "-INPUT '$it'" }.join(' ')
+    output_gvcf_id = (sample_type == "normal") ? "${normal_id}" : "${tumour_id}"
+    output_filename = (vcf_type == "GVCF") ? "${output_gvcf_id}_merged_raw_variants.g.vcf.gz" : "${sample_id}_merged_raw.vcf"
 
     """
     set -euo pipefail
 
     java -Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -Djava.io.tmpdir=/scratch \
       -jar /picard-tools/picard.jar MergeVcfs \
-      ${vcf_args} \
-      -OUTPUT ${sample_id}_merged_raw.vcf \
+      ${all_vcfs} \
+      -OUTPUT ${output_filename} \
       -VALIDATION_STRINGENCY LENIENT
-
-    java -Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -Djava.io.tmpdir=/scratch \
-      -jar /picard-tools/picard.jar MergeVcfs \
-      ${gvcf_args_normal} \
-      -OUTPUT ${normal_id}_merged_raw_variants.g.vcf.gz \
-      -VALIDATION_STRINGENCY LENIENT
-    
-    if ${params.is_NT_paired}
-    then
-      java -Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -Djava.io.tmpdir=/scratch \
-        -jar /picard-tools/picard.jar MergeVcfs \
-        ${gvcf_args_tumour} \
-        -OUTPUT ${tumour_id}_merged_raw_variants.g.vcf.gz \
-        -VALIDATION_STRINGENCY LENIENT
-    fi
     """
 }
