@@ -105,7 +105,7 @@ process run_MergeSamFiles_Picard {
 
     script:
     all_bams = bams.collect{ "-INPUT '$it'" }.join(' ')
-    output_id = (sample_id == "normal") ? "${normal_id}" : "${tumour_id}"
+    output_id = (sample_type == "normal") ? "${normal_id}" : "${tumour_id}"
     """
     set -euo pipefail
     java -Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -Djava.io.tmpdir=/scratch \
