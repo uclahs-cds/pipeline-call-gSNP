@@ -13,3 +13,4 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Add GPL2 license
 - Parallelize MergeVcfs
 - Parallelize MergeSamFiles
+
