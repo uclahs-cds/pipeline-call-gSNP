@@ -67,6 +67,7 @@ process run_ApplyBQSR_GATK {
     path(indelrealigned_bam)
     path(indelrealigned_bam_index)
     path(interval)
+    val(includes_unmapped)
     tuple val(sample_id), val(normal_id), val(tumour_id)
 
     output:
@@ -78,7 +79,7 @@ process run_ApplyBQSR_GATK {
     path("${tumour_id}_recalibrated_${task.index}.bai"), emit: recalibrated_tumour_bam_index optional true
 
     script:
-    unmapped_interval_option = (task.index == 1) ? "--intervals unmapped" : ""
+    unmapped_interval_option = (includes_unmapped) ? "--intervals unmapped" : ""
     combined_interval_options = (params.is_targeted) ? "" : "--intervals ${interval} ${unmapped_interval_option}"
     """
     set -euo pipefail
@@ -114,6 +115,7 @@ workflow recalibrate_base {
     realigned_bam
     realigned_bam_index
     associated_interval
+    includes_unmapped
     bqsr_generator_identifiers
 
     main:
@@ -141,6 +143,7 @@ workflow recalibrate_base {
       realigned_bam,
       realigned_bam_index,
       associated_interval,
+      includes_unmapped,
       bqsr_generator_identifiers
       )
 
