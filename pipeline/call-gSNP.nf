@@ -267,14 +267,19 @@ workflow {
 
     files_for_sha512 = run_MergeVcfs_Picard_normal_GVCF.out.vcf.flatten().mix(
       run_MergeVcfs_Picard_normal_GVCF.out.vcf_index.flatten(),
-      run_MergeVcfs_Picard_tumour_GVCF.out.vcf.flatten(),
-      run_MergeVcfs_Picard_tumour_GVCF.out.vcf_index.flatten(),
       filter_gSNP_GATK.out.germline_filtered.flatten(),
       run_MergeSamFiles_Picard.out.merged_normal_bam.flatten(),
       run_MergeSamFiles_Picard.out.merged_normal_bam_index.flatten(),
       run_MergeSamFiles_Picard.out.merged_tumour_bam.flatten(),
       run_MergeSamFiles_Picard.out.merged_tumour_bam_index.flatten()
       )
+
+    if (params.is_NT_paired) {
+      files_for_sha512.mix(
+        run_MergeVcfs_Picard_tumour_GVCF.out.vcf.flatten(),
+        run_MergeVcfs_Picard_tumour_GVCF.out.vcf_index.flatten(),
+        )
+    }
 
     calculate_sha512(files_for_sha512)
 }

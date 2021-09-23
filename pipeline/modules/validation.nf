@@ -12,11 +12,11 @@ process run_validate {
 
 process calculate_sha512 {
     container params.docker_image_validate
-    publishDir path: "${params.output_dir}/${task.process.replace(':', '/')}",
+    publishDir path: "${params.output_dir}/${params.docker_image_validate.split("/")[1].replace(':', '-')}/output",
       mode: "copy",
       pattern: "*.sha512"
 
-    publishDir path: params.log_output_dir,
+    publishDir path: "${params.log_output_dir}/process-log",
       pattern: ".command.*",
       mode: "copy",
       saveAs: { "${task.process}-${task.index}/log${file(it).getName()}" }
