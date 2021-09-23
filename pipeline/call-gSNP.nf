@@ -145,6 +145,7 @@ workflow {
       realign_indels.out.realigned_bam,
       realign_indels.out.realigned_bam_index,
       realign_indels.out.associated_interval,
+      realign_indels.out.includes_unmapped,
       bqsr_generator_identifiers
       )
 
@@ -274,14 +275,19 @@ workflow {
 
     files_for_sha512 = run_MergeVcfs_Picard_normal_GVCF.out.vcf.flatten().mix(
       run_MergeVcfs_Picard_normal_GVCF.out.vcf_index.flatten(),
-      run_MergeVcfs_Picard_tumour_GVCF.out.vcf.flatten(),
-      run_MergeVcfs_Picard_tumour_GVCF.out.vcf_index.flatten(),
       filter_gSNP_GATK.out.germline_filtered.flatten(),
       run_MergeSamFiles_Picard_normal.out.merged_bam.flatten(),
       run_MergeSamFiles_Picard_normal.out.merged_bam_index.flatten(),
       run_MergeSamFiles_Picard_tumour.out.merged_bam.flatten(),
       run_MergeSamFiles_Picard_tumour.out.merged_bam_index.flatten()
       )
+
+    if (params.is_NT_paired) {
+      files_for_sha512.mix(
+        run_MergeVcfs_Picard_tumour_GVCF.out.vcf.flatten(),
+        run_MergeVcfs_Picard_tumour_GVCF.out.vcf_index.flatten(),
+        )
+    }
 
     calculate_sha512(files_for_sha512)
 }

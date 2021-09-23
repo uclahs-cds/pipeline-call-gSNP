@@ -1,11 +1,11 @@
 process run_RealignerTargetCreator_GATK {
     container params.docker_image_gatk3
-    publishDir path: "${params.output_dir}/${task.process.replace(':', '/')}",
+    publishDir path: "${params.output_dir}/${params.docker_image_gatk3.split("/")[1].replace(':', '-')}/intermediate/${task.process.replace(':', '/')}",
       mode: "copy",
       enabled: params.save_intermediate_files,
       pattern: "*.intervals"
 
-    publishDir path: params.log_output_dir,
+    publishDir path: "${params.log_output_dir}/process-log",
       pattern: ".command.*",
       mode: "copy",
       saveAs: { "${task.process.replace(':', '/')}-${task.index}/log${file(it).getName()}" }
@@ -47,12 +47,12 @@ process run_RealignerTargetCreator_GATK {
 
 process run_IndelRealigner_GATK {
     container params.docker_image_gatk3
-    publishDir path: "${params.output_dir}/${task.process.replace(':', '/')}",
+    publishDir path: "${params.output_dir}/${params.docker_image_gatk3.split("/")[1].replace(':', '-')}/intermediate/${task.process.replace(':', '/')}",
       mode: "copy",
       enabled: params.save_intermediate_files,
       pattern: "*_indelrealigned_*"
 
-    publishDir path: params.log_output_dir,
+    publishDir path: "${params.log_output_dir}/process-log",
       pattern: ".command.*",
       mode: "copy",
       saveAs: { "${task.process.replace(':', '/')}-${task.index}/log${file(it).getName()}" }
@@ -72,12 +72,14 @@ process run_IndelRealigner_GATK {
     output:
     path(".command.*")
     path(scatter_intervals), emit: associated_interval
+    val(has_unmapped), emit: includes_unmapped
     path("${sample_id}_indelrealigned_${task.index}.bam"), emit: realigned_indels_bam
     path("${sample_id}_indelrealigned_${task.index}.bai"), emit: realigned_indels_bam_index
 
     script:
     bam_input_str = params.is_NT_paired ? "--input_file ${bam} --input_file ${bam_tumour}" : "--input_file ${bam}"
     unmapped_interval_option = (task.index == 1) ? "--intervals unmapped" : ""
+    has_unmapped = (task.index == 1) ? true : false
     combined_interval_options = (params.is_targeted) ? "" : "--intervals ${scatter_intervals} ${unmapped_interval_option}"
     """
     set -euo pipefail
@@ -128,6 +130,7 @@ workflow realign_indels {
 
     emit:
     associated_interval = run_IndelRealigner_GATK.out.associated_interval
+    includes_unmapped = run_IndelRealigner_GATK.out.includes_unmapped
     realigned_bam = run_IndelRealigner_GATK.out.realigned_indels_bam
     realigned_bam_index = run_IndelRealigner_GATK.out.realigned_indels_bam_index
 }

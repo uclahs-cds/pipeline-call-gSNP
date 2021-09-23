@@ -1,14 +1,14 @@
 process run_BaseRecalibrator_GATK {
     container params.docker_image_gatk
-    publishDir path: "${params.output_dir}/${task.process.replace(':', '/')}",
+    publishDir path: "${params.output_dir}/${params.docker_image_gatk.split("/")[1].replace(':', '-')}/intermediate/${task.process.replace(':', '/')}",
       mode: "copy",
       enabled: params.save_intermediate_files,
       pattern: "*.grp"
 
-    publishDir path: params.log_output_dir,
+    publishDir path: "${params.log_output_dir}/process-log",
       pattern: ".command.*",
       mode: "copy",
-      saveAs: { "run_BaseRecalibrator_GATK/log${file(it).getName()}" }
+      saveAs: { "${task.process.replace(':', '/')}/log${file(it).getName()}" }
 
     input:
     path(reference_fasta)
@@ -49,12 +49,12 @@ process run_BaseRecalibrator_GATK {
 
 process run_ApplyBQSR_GATK {
     container params.docker_image_gatk
-    publishDir path: "${params.output_dir}/${task.process.replace(':', '/')}",
+    publishDir path: "${params.output_dir}/${params.docker_image_gatk.split("/")[1].replace(':', '-')}/intermediate/${task.process.replace(':', '/')}",
       mode: "copy",
       enabled: params.save_intermediate_files,
       pattern: "*_recalibrated_*"
 
-    publishDir path: params.log_output_dir,
+    publishDir path: "${params.log_output_dir}/process-log",
       pattern: ".command.*",
       mode: "copy",
       saveAs: { "${task.process.replace(':', '/')}-${task.index}/log${file(it).getName()}" }
@@ -67,6 +67,7 @@ process run_ApplyBQSR_GATK {
     path(indelrealigned_bam)
     path(indelrealigned_bam_index)
     path(interval)
+    val(includes_unmapped)
     tuple val(sample_id), val(normal_id), val(tumour_id)
 
     output:
@@ -78,7 +79,7 @@ process run_ApplyBQSR_GATK {
     path("${tumour_id}_recalibrated_${task.index}.bai"), emit: recalibrated_tumour_bam_index optional true
 
     script:
-    unmapped_interval_option = (task.index == 1) ? "--intervals unmapped" : ""
+    unmapped_interval_option = (includes_unmapped) ? "--intervals unmapped" : ""
     combined_interval_options = (params.is_targeted) ? "" : "--intervals ${interval} ${unmapped_interval_option}"
     """
     set -euo pipefail
@@ -114,6 +115,7 @@ workflow recalibrate_base {
     realigned_bam
     realigned_bam_index
     associated_interval
+    includes_unmapped
     bqsr_generator_identifiers
 
     main:
@@ -141,6 +143,7 @@ workflow recalibrate_base {
       realigned_bam,
       realigned_bam_index,
       associated_interval,
+      includes_unmapped,
       bqsr_generator_identifiers
       )
 
