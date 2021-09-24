@@ -1,6 +1,6 @@
 process run_VariantRecalibratorINDEL_GATK {
     container params.docker_image_gatk
-    publishDir path: "${params.output_dir}/${params.docker_image_gatk.split("/")[1].replace(':', '-')}/intermediate/${task.process.replace(':', '/')}",
+    publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}",
       mode: "copy",
       enabled: params.save_intermediate_files,
       pattern: "*_output_indel.*"
@@ -60,7 +60,7 @@ process run_VariantRecalibratorINDEL_GATK {
 
 process run_VariantRecalibratorSNP_GATK {
     container params.docker_image_gatk
-    publishDir path: "${params.output_dir}/${params.docker_image_gatk.split("/")[1].replace(':', '-')}/intermediate/${task.process.replace(':', '/')}",
+    publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}",
       mode: "copy",
       enabled: params.save_intermediate_files,
       pattern: "*_output_snp.*"
@@ -131,7 +131,7 @@ process run_VariantRecalibratorSNP_GATK {
 
 process run_ApplyVQSR_GATK {
     container params.docker_image_gatk
-    publishDir path: "${params.output_dir}/${params.docker_image_gatk.split("/")[1].replace(':', '-')}/intermediate/${task.process.replace(':', '/')}",
+    publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}",
       mode: "copy",
       enabled: params.save_intermediate_files,
       pattern: "*_merged_recalibrated_${suffix}.vcf.gz{,.tbi}"
@@ -172,7 +172,7 @@ process run_ApplyVQSR_GATK {
 
 process filter_gSNP_GATK {
     container params.docker_image_gatkfilter
-    publishDir path: "${params.output_dir}/${params.docker_image_gatkfilter.split("/")[1].replace(':', '-')}/output",
+    publishDir path: "${params.output_dir}/output",
       mode: "copy",
       pattern: "filtered_germline_*"
 
@@ -217,7 +217,7 @@ process filter_gSNP_GATK {
 
 process run_vcfstats_RTG {
     container params.docker_image_rtg
-    publishDir path: "${params.output_dir}/${params.docker_image_rtg.split("/")[1].replace(':', '-')}/output",
+    publishDir path: "${params.output_dir}/output",
       mode: "copy",
       pattern: "*.txt"
 

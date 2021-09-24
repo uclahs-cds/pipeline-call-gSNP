@@ -1,6 +1,6 @@
 process run_GetPileupSummaries_GATK {
     container params.docker_image_gatk
-    publishDir path: "${params.output_dir}/${params.docker_image_gatk.split("/")[1].replace(':', '-')}/output",
+    publishDir path: "${params.output_dir}/output",
       mode: "copy",
       pattern: '*.table'
 
@@ -55,7 +55,7 @@ process run_GetPileupSummaries_GATK {
 
 process run_CalculateContamination_GATK {
     container params.docker_image_gatk
-    publishDir path: "${params.output_dir}/${params.docker_image_gatk.split("/")[1].replace(':', '-')}/output",
+    publishDir path: "${params.output_dir}/output",
       mode: "copy",
       pattern: '*.table'
 
@@ -102,7 +102,7 @@ process run_CalculateContamination_GATK {
 
 process run_DepthOfCoverage_GATK {
     container params.docker_image_gatk
-    publishDir path: "${params.output_dir}/${params.docker_image_gatk.split("/")[1].replace(':', '-')}/output",
+    publishDir path: "${params.output_dir}/output",
       mode: "copy",
       pattern: '*_DOC*'
 

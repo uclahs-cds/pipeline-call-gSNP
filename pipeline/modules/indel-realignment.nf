@@ -1,6 +1,6 @@
 process run_RealignerTargetCreator_GATK {
     container params.docker_image_gatk3
-    publishDir path: "${params.output_dir}/${params.docker_image_gatk3.split("/")[1].replace(':', '-')}/intermediate/${task.process.replace(':', '/')}",
+    publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}",
       mode: "copy",
       enabled: params.save_intermediate_files,
       pattern: "*.intervals"
@@ -47,7 +47,7 @@ process run_RealignerTargetCreator_GATK {
 
 process run_IndelRealigner_GATK {
     container params.docker_image_gatk3
-    publishDir path: "${params.output_dir}/${params.docker_image_gatk3.split("/")[1].replace(':', '-')}/intermediate/${task.process.replace(':', '/')}",
+    publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}",
       mode: "copy",
       enabled: params.save_intermediate_files,
       pattern: "*_indelrealigned_*"
