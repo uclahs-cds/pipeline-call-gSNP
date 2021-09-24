@@ -277,15 +277,15 @@ workflow {
       run_MergeVcfs_Picard_normal_GVCF.out.vcf_index.flatten(),
       filter_gSNP_GATK.out.germline_filtered.flatten(),
       run_MergeSamFiles_Picard_normal.out.merged_bam.flatten(),
-      run_MergeSamFiles_Picard_normal.out.merged_bam_index.flatten(),
-      run_MergeSamFiles_Picard_tumour.out.merged_bam.flatten(),
-      run_MergeSamFiles_Picard_tumour.out.merged_bam_index.flatten()
+      run_MergeSamFiles_Picard_normal.out.merged_bam_index.flatten()
       )
 
     if (params.is_NT_paired) {
       files_for_sha512.mix(
         run_MergeVcfs_Picard_tumour_GVCF.out.vcf.flatten(),
         run_MergeVcfs_Picard_tumour_GVCF.out.vcf_index.flatten(),
+        run_MergeSamFiles_Picard_tumour.out.merged_bam.flatten(),
+        run_MergeSamFiles_Picard_tumour.out.merged_bam_index.flatten()
         )
     }
 
