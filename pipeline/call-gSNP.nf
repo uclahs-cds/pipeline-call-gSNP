@@ -184,13 +184,19 @@ workflow {
         "tumour",
         merge_bams_identifiers
         )
+
+      merged_tumour_bam = run_MergeSamFiles_Picard_tumour.out.merged_bam
+      merged_tumour_bam_index = run_MergeSamFiles_Picard_tumour.out.merged_bam_index
+    } else {
+      merged_tumour_bam = Channel.of("/scratch/placeholder.txt")
+      merged_tumour_bam_index = Channel.of("/scratch/placeholder_index.txt")
     }
 
     calculate_contamination(
       run_MergeSamFiles_Picard_normal.out.merged_bam,
       run_MergeSamFiles_Picard_normal.out.merged_bam_index,
-      run_MergeSamFiles_Picard_tumour.out.merged_bam.ifEmpty("/scratch/placeholder.txt"),
-      run_MergeSamFiles_Picard_tumour.out.merged_bam_index.ifEmpty("/scratch/placeholder_index.txt"),
+      merged_tumour_bam,
+      merged_tumour_bam_index,
       split_intervals,
       contamination_identifiers
       )
@@ -202,16 +208,16 @@ workflow {
       split_intervals.collect(),
       run_MergeSamFiles_Picard_normal.out.merged_bam,
       run_MergeSamFiles_Picard_normal.out.merged_bam_index,
-      run_MergeSamFiles_Picard_tumour.out.merged_bam.ifEmpty("/scratch/placeholder.txt"),
-      run_MergeSamFiles_Picard_tumour.out.merged_bam_index.ifEmpty("/scratch/placeholder_index.txt"),
+      merged_tumour_bam,
+      merged_tumour_bam_index,
       doc_identifiers
       )
 
     if (params.is_targeted) {
       normal_bam_ch = run_MergeSamFiles_Picard_normal.out.merged_bam
       normal_bam_index_ch = run_MergeSamFiles_Picard_normal.out.merged_bam_index
-      tumour_bam_ch = run_MergeSamFiles_Picard_tumour.out.merged_bam.ifEmpty("/scratch/placeholder.txt")
-      tumour_bam_index_ch = run_MergeSamFiles_Picard_tumour.out.merged_bam_index.ifEmpty("/scratch/placeholder_index.txt")
+      tumour_bam_ch = merged_tumour_bam
+      tumour_bam_index_ch = merged_tumour_bam_index
       hc_interval = split_intervals
     }
 
