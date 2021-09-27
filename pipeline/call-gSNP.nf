@@ -46,7 +46,7 @@ Starting workflow...
 ------------------------------------
         """
 
-include { run_validate; calculate_sha512 } from './modules/validation.nf'
+include { run_validate_PipeVal; calculate_sha512 } from './modules/validation.nf'
 include { run_SplitIntervals_GATK; run_HaplotypeCaller_GATK; run_MergeVcfs_Picard as run_MergeVcfs_Picard_VCF; run_MergeVcfs_Picard as run_MergeVcfs_Picard_normal_GVCF; run_MergeVcfs_Picard as run_MergeVcfs_Picard_tumour_GVCF } from './modules/genotype-processes.nf'
 include { recalibrate_snps; recalibrate_indels; filter_gSNP_GATK } from './modules/variant-recalibration.nf'
 include { realign_indels } from './modules/indel-realignment.nf'
@@ -107,7 +107,7 @@ identifiers.set{ contamination_identifiers }
 identifiers.set{ doc_identifiers }
 
 workflow {
-    run_validate(input_validation)
+    run_validate_PipeVal(input_validation)
 
     if (params.intervals) {
       intervals = params.intervals
