@@ -53,7 +53,7 @@ include { realign_indels } from './modules/indel-realignment.nf'
 include { recalibrate_base } from './modules/base-recalibration.nf'
 include { reheader_interval_bams; run_MergeSamFiles_Picard } from './modules/bam-processing.nf'
 include { calculate_contamination; run_DepthOfCoverage_GATK } from './modules/summary-processes.nf'
-include { remove_intermediate_files } from './modules/intermediate-cleanup.nf'
+include { remove_intermediate_files as remove_recalibrated_bams; remove_intermediate_files as remove_reheadered_bams } from './modules/intermediate-cleanup.nf'
 
 // Returns the index file for the given bam or vcf
 def indexFile(bam_or_vcf) {
@@ -164,6 +164,17 @@ workflow {
       tumour_bam_ch = reheader_interval_bams.out.reheadered_tumour_bam
       tumour_bam_index_ch = reheader_interval_bams.out.reheadered_tumour_bam_index
       hc_interval = reheader_interval_bams.out.associated_interval
+
+      recalibrated_bams_to_delete = reheader_interval_bams.out.normal_bam_for_deletion.mix(
+        reheader_interval_bams.out.normal_bam_index_for_deletion,
+        reheader_interval_bams.out.tumour_bam_for_deletion,
+        reheader_interval_bams.out.tumour_bam_index_for_deletion
+        )
+
+      remove_recalibrated_bams(
+        recalibrated_bams_to_delete,
+        "mergesams_complete" // Decoy signal to let these files be deleted
+        )
     } else {// Generate decoy tumour bam and index channels for single sample mode
       normal_bam_ch = recalibrate_base.out.recalibrated_normal_bam
       normal_bam_index_ch = recalibrate_base.out.recalibrated_normal_bam_index
@@ -219,6 +230,17 @@ workflow {
       tumour_bam_ch,
       tumour_bam_index_ch,
       hc_interval
+      )
+
+    reheadered_bams_to_delete = run_HaplotypeCaller_GATK.out.normal_bam_for_deletion.mix(
+      run_HaplotypeCaller_GATK.out.normal_bam_index_for_deletion,
+      run_HaplotypeCaller_GATK.out.tumour_bam_for_deletion,
+      run_HaplotypeCaller_GATK.out.tumour_bam_index_for_deletion
+      )
+
+    remove_reheadered_bams(
+      reheadered_bams_to_delete,
+      run_MergeSamFiles_Picard.out.merged_normal_bam
       )
 
     run_MergeVcfs_Picard_VCF(

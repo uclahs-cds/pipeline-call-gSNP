@@ -23,6 +23,10 @@ process run_reheader_SAMtools {
     path("${normal_id}_recalibrated_reheadered_${task.index}.bam"), emit: normal_bam_reheadered
     path("${tumour_id}_recalibrated_reheadered_${task.index}.bam"), emit: tumour_bam_reheadered
     path(interval), emit: associated_interval
+    path(normal_bam), emit: normal_bam_for_deletion
+    path(tumour_bam), emit: tumour_bam_for_deletion
+    path(normal_bam_index), emit: normal_bam_index_for_deletion
+    path(tumour_bam_index), emit: tumour_bam_index_for_deletion
 
     script:
     """
@@ -56,6 +60,10 @@ process run_BuildBamIndex_Picard {
     path(normal_bam)
     path(tumour_bam)
     path(interval)
+    path(normal_bam_del)
+    path(tumour_bam_del)
+    path(normal_bam_index_del)
+    path(tumour_bam_index_del)
 
     output:
     path(".command.*")
@@ -64,6 +72,10 @@ process run_BuildBamIndex_Picard {
     path(tumour_bam), emit: tumour_bam_reheadered
     path("${tumour_bam}.bai"), emit: tumour_bam_reheadered_index
     path(interval), emit: associated_interval
+    path(normal_bam_del), emit: normal_bam_for_deletion
+    path(tumour_bam_del), emit: tumour_bam_for_deletion
+    path(normal_bam_index_del), emit: normal_bam_index_for_deletion
+    path(tumour_bam_index_del), emit: tumour_bam_index_for_deletion
 
     script:
     """
@@ -157,7 +169,11 @@ workflow reheader_interval_bams {
     run_BuildBamIndex_Picard(
         run_reheader_SAMtools.out.normal_bam_reheadered,
         run_reheader_SAMtools.out.tumour_bam_reheadered,
-        run_reheader_SAMtools.out.associated_interval
+        run_reheader_SAMtools.out.associated_interval,
+        run_reheader_SAMtools.out.normal_bam_for_deletion,
+        run_reheader_SAMtools.out.tumour_bam_for_deletion,
+        run_reheader_SAMtools.out.normal_bam_index_for_deletion,
+        run_reheader_SAMtools.out.tumour_bam_index_for_deletion
         )
 
     emit:
@@ -166,4 +182,8 @@ workflow reheader_interval_bams {
     reheadered_tumour_bam = run_BuildBamIndex_Picard.out.tumour_bam_reheadered
     reheadered_tumour_bam_index = run_BuildBamIndex_Picard.out.tumour_bam_reheadered_index
     associated_interval = run_BuildBamIndex_Picard.out.associated_interval
+    normal_bam_for_deletion = run_BuildBamIndex_Picard.out.normal_bam_for_deletion
+    tumour_bam_for_deletion = run_BuildBamIndex_Picard.out.tumour_bam_for_deletion
+    normal_bam_index_for_deletion = run_BuildBamIndex_Picard.out.normal_bam_index_for_deletion
+    tumour_bam_index_for_deletion = run_BuildBamIndex_Picard.out.tumour_bam_index_for_deletion
 }
