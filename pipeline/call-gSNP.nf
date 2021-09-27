@@ -53,6 +53,7 @@ include { realign_indels } from './modules/indel-realignment.nf'
 include { recalibrate_base } from './modules/base-recalibration.nf'
 include { reheader_interval_bams; run_MergeSamFiles_Picard } from './modules/bam-processing.nf'
 include { calculate_contamination; run_DepthOfCoverage_GATK } from './modules/summary-processes.nf'
+include { remove_intermediate_files } from './modules/intermediate-cleanup.nf'
 
 // Returns the index file for the given bam or vcf
 def indexFile(bam_or_vcf) {
