@@ -11,10 +11,11 @@ process run_validate_PipeVal {
 
     output:
     path(".command.*")
+    path("input_validation.txt"), emit: val_file
 
     """
     set -euo pipefail
-    python -m validate -t file-input ${file_to_validate}
+    python -m validate -t file-input ${file_to_validate} > 'input_validation.txt'
     """
 }
 

@@ -107,6 +107,11 @@ identifiers.set{ doc_identifiers }
 
 workflow {
     run_validate_PipeVal(input_validation)
+    // Collect and store input validation output
+    run_validate_PipeVal.out.val_file.collectFile(
+      name: 'input_validation.txt',
+      storeDir: "${params.output_dir}/validation"
+      )
 
     if (params.intervals) {
       intervals = params.intervals
