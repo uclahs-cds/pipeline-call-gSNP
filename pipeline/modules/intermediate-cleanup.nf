@@ -21,13 +21,15 @@ process remove_intermediate_files {
 
     script:
     """
-    du -sh /scratch
+    set -euo pipefail
+
+    du -sh /scratch || echo failed
     if [[ -L ${file_to_remove} ]]
     then
         rm `readlink -f ${file_to_remove}`
     fi
     
     rm ${file_to_remove}
-    du -sh /scratch
+    du -sh /scratch || echo failed
     """
 }

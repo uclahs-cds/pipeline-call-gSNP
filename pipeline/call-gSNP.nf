@@ -53,7 +53,7 @@ include { realign_indels } from './modules/indel-realignment.nf'
 include { recalibrate_base } from './modules/base-recalibration.nf'
 include { reheader_interval_bams; run_MergeSamFiles_Picard } from './modules/bam-processing.nf'
 include { calculate_contamination; run_DepthOfCoverage_GATK } from './modules/summary-processes.nf'
-include { remove_intermediate_files as remove_recalibrated_bams; remove_intermediate_files as remove_reheadered_bams } from './modules/intermediate-cleanup.nf'
+include { remove_intermediate_files as remove_realigned_bams; remove_intermediate_files as remove_recalibrated_bams; remove_intermediate_files as remove_reheadered_bams } from './modules/intermediate-cleanup.nf'
 
 // Returns the index file for the given bam or vcf
 def indexFile(bam_or_vcf) {
@@ -147,6 +147,11 @@ workflow {
       realign_indels.out.realigned_bam_index,
       realign_indels.out.associated_interval,
       bqsr_generator_identifiers
+      )
+
+    remove_realigned_bams(
+      recalibrate_base.out.bam_for_deletion.mix(recalibrate_base.out.bam_index_for_deletion),
+      "mergesams_complete" // Decoy signal to let these files be deleted
       )
 
     if (params.is_NT_paired) {// Reheader interval-level bams in NT paired mode
