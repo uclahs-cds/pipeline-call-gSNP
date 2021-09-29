@@ -65,6 +65,10 @@ process run_HaplotypeCaller_GATK {
       path("${normal_id}_${task.index}_raw_variants.g.vcf.gz.tbi"), emit: gvcf_normal_index
       path("${tumour_id}_${task.index}_raw_variants.g.vcf.gz"), emit: gvcf_tumour optional true
       path("${tumour_id}_${task.index}_raw_variants.g.vcf.gz.tbi"), emit: gvcf_tumour_index optional true
+      path(bam), emit: normal_bam_for_deletion
+      path(bam_index), emit: normal_bam_index_for_deletion
+      path(bam_tumour), emit: tumour_bam_for_deletion optional true
+      path(bam_index_tumour), emit: tumour_bam_index_for_deletion optional true
 
     script:
         out_filename_normal = "${normal_id}_${task.index}_raw_variants.g.vcf.gz"
