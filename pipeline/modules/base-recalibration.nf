@@ -1,14 +1,14 @@
 process run_BaseRecalibrator_GATK {
     container params.docker_image_gatk
-    publishDir path: "${params.output_dir}/${task.process.replace(':', '/')}",
+    publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}",
       mode: "copy",
       enabled: params.save_intermediate_files,
       pattern: "*.grp"
 
-    publishDir path: params.log_output_dir,
+    publishDir path: "${params.log_output_dir}/process-log",
       pattern: ".command.*",
       mode: "copy",
-      saveAs: { "run_BaseRecalibrator_GATK/log${file(it).getName()}" }
+      saveAs: { "${task.process.replace(':', '/')}/log${file(it).getName()}" }
 
     input:
     path(reference_fasta)
@@ -49,12 +49,12 @@ process run_BaseRecalibrator_GATK {
 
 process run_ApplyBQSR_GATK {
     container params.docker_image_gatk
-    publishDir path: "${params.output_dir}/${task.process.replace(':', '/')}",
+    publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}",
       mode: "copy",
       enabled: params.save_intermediate_files,
       pattern: "*_recalibrated_*"
 
-    publishDir path: params.log_output_dir,
+    publishDir path: "${params.log_output_dir}/process-log",
       pattern: ".command.*",
       mode: "copy",
       saveAs: { "${task.process.replace(':', '/')}-${task.index}/log${file(it).getName()}" }

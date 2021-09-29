@@ -12,3 +12,4 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Update call-gSNP to DSL2
 - Add GPL2 license
 - Parallelize MergeVcfs
+- Standardize output and log directories

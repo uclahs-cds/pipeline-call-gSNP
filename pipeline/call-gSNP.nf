@@ -46,7 +46,7 @@ Starting workflow...
 ------------------------------------
         """
 
-include { run_validate; calculate_sha512 } from './modules/validation.nf'
+include { run_validate_PipeVal; calculate_sha512 } from './modules/validation.nf'
 include { run_SplitIntervals_GATK; run_HaplotypeCaller_GATK; run_MergeVcfs_Picard as run_MergeVcfs_Picard_VCF; run_MergeVcfs_Picard as run_MergeVcfs_Picard_normal_GVCF; run_MergeVcfs_Picard as run_MergeVcfs_Picard_tumour_GVCF } from './modules/genotype-processes.nf'
 include { recalibrate_snps; recalibrate_indels; filter_gSNP_GATK } from './modules/variant-recalibration.nf'
 include { realign_indels } from './modules/indel-realignment.nf'
@@ -106,7 +106,12 @@ identifiers.set{ contamination_identifiers }
 identifiers.set{ doc_identifiers }
 
 workflow {
-    run_validate(input_validation)
+    run_validate_PipeVal(input_validation)
+    // Collect and store input validation output
+    run_validate_PipeVal.out.val_file.collectFile(
+      name: 'input_validation.txt',
+      storeDir: "${params.output_dir}/validation"
+      )
 
     if (params.intervals) {
       intervals = params.intervals
@@ -266,14 +271,19 @@ workflow {
 
     files_for_sha512 = run_MergeVcfs_Picard_normal_GVCF.out.vcf.flatten().mix(
       run_MergeVcfs_Picard_normal_GVCF.out.vcf_index.flatten(),
-      run_MergeVcfs_Picard_tumour_GVCF.out.vcf.flatten(),
-      run_MergeVcfs_Picard_tumour_GVCF.out.vcf_index.flatten(),
       filter_gSNP_GATK.out.germline_filtered.flatten(),
       run_MergeSamFiles_Picard.out.merged_normal_bam.flatten(),
       run_MergeSamFiles_Picard.out.merged_normal_bam_index.flatten(),
       run_MergeSamFiles_Picard.out.merged_tumour_bam.flatten(),
       run_MergeSamFiles_Picard.out.merged_tumour_bam_index.flatten()
       )
+
+    if (params.is_NT_paired) {
+      files_for_sha512.mix(
+        run_MergeVcfs_Picard_tumour_GVCF.out.vcf.flatten(),
+        run_MergeVcfs_Picard_tumour_GVCF.out.vcf_index.flatten(),
+        )
+    }
 
     calculate_sha512(files_for_sha512)
 }

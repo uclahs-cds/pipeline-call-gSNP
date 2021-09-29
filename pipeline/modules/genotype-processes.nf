@@ -1,14 +1,14 @@
 process run_SplitIntervals_GATK {
     container params.docker_image_gatk
 
-    publishDir params.output_dir,
+    publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}",
                mode: "copy",
                pattern: "interval-files/*-scattered.interval_list",
                enabled: params.save_intermediate_files
-    publishDir params.log_output_dir,
+    publishDir "${params.log_output_dir}/process-log",
                mode: "copy",
                pattern: ".command.*",
-               saveAs: { "${task.process}-${task.index}/log${file(it).getName()}" }
+               saveAs: { "${task.process.replace(':', '/')}/log${file(it).getName()}" }
 
     input:
     path intervals
@@ -33,15 +33,15 @@ process run_SplitIntervals_GATK {
 
 process run_HaplotypeCaller_GATK {
     container params.docker_image_gatk
-    publishDir path: "${params.output_dir}/${task.process.replace(':', '/')}",
+    publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}",
       mode: "copy",
       enabled: params.save_intermediate_files,
       pattern: '*.vcf*'
 
-    publishDir path: params.log_output_dir,
+    publishDir path: "${params.log_output_dir}/process-log",
       pattern: ".command.*",
       mode: "copy",
-      saveAs: { "${task.process}-${task.index}/log${file(it).getName()}" }
+      saveAs: { "${task.process.replace(':', '/')}/${task.process.replace(':', '/')}-${task.index}/log${file(it).getName()}" }
 
     input:
     path(reference_fasta)
@@ -124,14 +124,14 @@ process run_HaplotypeCaller_GATK {
 process run_MergeVcfs_Picard {
     container params.docker_image_picard
 
-    publishDir path: "${params.output_dir}/${task.process.replace(':', '/')}",
+    publishDir path: "${params.output_dir}/output",
       mode: "copy",
       pattern: "*.vcf*"
 
-    publishDir path: params.log_output_dir,
+    publishDir path: "${params.log_output_dir}/process-log",
       pattern: ".command.*",
       mode: "copy",
-      saveAs: { "${task.process}-${task.index}/log${file(it).getName()}" }
+      saveAs: { "${task.process.replace(':', '/')}/log${file(it).getName()}" }
 
     input:
     path(vcfs)

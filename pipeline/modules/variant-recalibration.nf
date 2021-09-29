@@ -1,14 +1,14 @@
 process run_VariantRecalibratorINDEL_GATK {
     container params.docker_image_gatk
-    publishDir path: "${params.output_dir}/${task.process.replace(':', '/')}",
+    publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}",
       mode: "copy",
       enabled: params.save_intermediate_files,
       pattern: "*_output_indel.*"
 
-    publishDir path: params.log_output_dir,
+    publishDir path: "${params.log_output_dir}/process-log",
       pattern: ".command.*",
       mode: "copy",
-      saveAs: { "run_VariantRecalibratorINDEL_GATK/log${file(it).getName()}" }
+      saveAs: { "${task.process.replace(':', '/')}/log${file(it).getName()}" }
 
     input:
     path(reference_fasta)
@@ -60,15 +60,15 @@ process run_VariantRecalibratorINDEL_GATK {
 
 process run_VariantRecalibratorSNP_GATK {
     container params.docker_image_gatk
-    publishDir path: "${params.output_dir}/${task.process.replace(':', '/')}",
+    publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}",
       mode: "copy",
       enabled: params.save_intermediate_files,
       pattern: "*_output_snp.*"
 
-    publishDir path: params.log_output_dir,
+    publishDir path: "${params.log_output_dir}/process-log",
       pattern: ".command.*",
       mode: "copy",
-      saveAs: { "run_VariantRecalibratorSNP_GATK/log${file(it).getName()}" }
+      saveAs: { "${task.process.replace(':', '/')}/log${file(it).getName()}" }
 
     input:
     path(reference_fasta)
@@ -131,15 +131,15 @@ process run_VariantRecalibratorSNP_GATK {
 
 process run_ApplyVQSR_GATK {
     container params.docker_image_gatk
-    publishDir path: "${params.output_dir}/${task.process.replace(':', '/')}",
+    publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}",
       mode: "copy",
       enabled: params.save_intermediate_files,
       pattern: "*_merged_recalibrated_${suffix}.vcf.gz{,.tbi}"
 
-    publishDir path: params.log_output_dir,
+    publishDir path: "${params.log_output_dir}/process-log",
       pattern: ".command.*",
       mode: "copy",
-      saveAs: { "run_ApplyVQSR_GATK/log${file(it).getName()}" }
+      saveAs: { "${task.process.replace(':', '/')}/log${file(it).getName()}" }
 
     input:
     val(mode)
@@ -172,14 +172,14 @@ process run_ApplyVQSR_GATK {
 
 process filter_gSNP_GATK {
     container params.docker_image_gatkfilter
-    publishDir path: "${params.output_dir}/${task.process.replace(':', '/')}",
+    publishDir path: "${params.output_dir}/output",
       mode: "copy",
       pattern: "filtered_germline_*"
 
-    publishDir path: params.log_output_dir,
+    publishDir path: "${params.log_output_dir}/process-log",
       pattern: ".command.*",
       mode: "copy",
-      saveAs: { "filter_gSNP_GATK/log${file(it).getName()}" }
+      saveAs: { "${task.process.replace(':', '/')}/log${file(it).getName()}" }
 
     input:
     path(reference_fasta)
@@ -217,14 +217,14 @@ process filter_gSNP_GATK {
 
 process run_vcfstats_RTG {
     container params.docker_image_rtg
-    publishDir path: params.output_dir,
+    publishDir path: "${params.output_dir}/output",
       mode: "copy",
       pattern: "*.txt"
 
-    publishDir path: params.log_output_dir,
+    publishDir path: "${params.log_output_dir}/process-log",
       pattern: ".command.*",
       mode: "copy",
-      saveAs: { "run_vcfstats_RTG/log${file(it).getName()}" }
+      saveAs: { "${task.process.replace(':', '/')}/log${file(it).getName()}" }
 
     input:
     tuple(path(cohort_vcf), path(cohort_vcf_tbi))

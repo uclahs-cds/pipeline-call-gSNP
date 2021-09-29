@@ -1,11 +1,11 @@
 process run_reheader_SAMtools {
     container params.docker_image_samtools
-    publishDir path: "${params.output_dir}/${task.process.replace(':', '/')}",
+    publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}",
         mode: "copy",
         enabled: params.save_intermediate_files,
         pattern: "*_reheadered_*"
 
-    publishDir path: params.log_output_dir,
+    publishDir path: "${params.log_output_dir}/process-log",
         pattern: ".command.*",
         mode: "copy",
         saveAs: { "${task.process.replace(':', '/')}-${task.index}/log${file(it).getName()}" }
@@ -42,12 +42,12 @@ process run_reheader_SAMtools {
 
 process run_BuildBamIndex_Picard {
     container params.docker_image_picard
-    publishDir path: "${params.output_dir}/${task.process.replace(':', '/')}",
+    publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}",
         mode: "copy",
         enabled: params.save_intermediate_files,
         pattern: "*_reheadered_*"
 
-    publishDir path: params.log_output_dir,
+    publishDir path: "${params.log_output_dir}/process-log",
         pattern: ".command.*",
         mode: "copy",
         saveAs: { "${task.process.replace(':', '/')}-${task.index}/log${file(it).getName()}" }
@@ -84,14 +84,14 @@ process run_BuildBamIndex_Picard {
 
 process run_MergeSamFiles_Picard {
     container params.docker_image_picard
-    publishDir path: "${params.output_dir}/${task.process.replace(':', '/')}",
+    publishDir path: "${params.output_dir}/output",
         mode: "copy",
         pattern: "*_merged*"
 
-    publishDir path: params.log_output_dir,
+    publishDir path: "${params.log_output_dir}/process-log",
         pattern: ".command.*",
         mode: "copy",
-        saveAs: { "${task.process.replace(':', '/')}-${task.index}/log${file(it).getName()}" }
+        saveAs: { "${task.process.replace(':', '/')}/log${file(it).getName()}" }
 
     input:
     path(normal_bams)
