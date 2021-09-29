@@ -265,7 +265,7 @@ workflow {
 
     remove_reheadered_bams(
       reheadered_bams_to_delete,
-      run_MergeSamFiles_Picard.out.merged_normal_bam
+      run_MergeSamFiles_Picard_normal.out.merged_bam
       )
 
     run_MergeVcfs_Picard_VCF(
