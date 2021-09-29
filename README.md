@@ -127,7 +127,7 @@ Generate sha512 checksum for final BAM, filtered VCF, and GVCFs for SNPs and IND
 | `java_temp_dir` | Yes | string | Store Java temp files; set to `/scratch` in production |
 | `temp_dir` | Yes | string | Store Nextflow workDir intermediate files; set to `/scratch` in production |
 | `input_csv` | Yes | path | Absolute path to input CSV file |
-| `save_intermediate_files` | Yes | boolean | Set to false to disable publishing of intermediate files; true otherwise |
+| `save_intermediate_files` | Yes | boolean | Set to false to disable publishing of intermediate files; true otherwise; disabling option will delete intermediate files to allow for processing of large BAMs |
 | `is_emit_original_quals` | Yes | boolean | Set to true to emit original quality scores; false to omit |
 | `is_NT_paired` | Yes | boolean | Set to true for normal-tumour paired mode, and to false for normal only mode |
 | `is_DOC_run` | Yes | boolean | Set to true to run GATK DepthOfCoverage (very time-consuming for large BAMs); false otherwise |
