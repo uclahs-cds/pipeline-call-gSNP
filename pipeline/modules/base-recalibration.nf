@@ -76,6 +76,8 @@ process run_ApplyBQSR_GATK {
     path("${normal_id}_recalibrated_${task.index}.bai"), emit: recalibrated_normal_bam_index
     path("${tumour_id}_recalibrated_${task.index}.bam"), emit: recalibrated_tumour_bam optional true
     path("${tumour_id}_recalibrated_${task.index}.bai"), emit: recalibrated_tumour_bam_index optional true
+    path(indelrealigned_bam), emit: bam_for_deletion
+    path(indelrealigned_bam_index), emit: bam_index_for_deletion
 
     script:
     unmapped_interval_option = (task.index == 1) ? "--intervals unmapped" : ""
@@ -150,5 +152,6 @@ workflow recalibrate_base {
     recalibrated_tumour_bam = run_ApplyBQSR_GATK.out.recalibrated_tumour_bam
     recalibrated_tumour_bam_index = run_ApplyBQSR_GATK.out.recalibrated_tumour_bam_index
     associated_interval = run_ApplyBQSR_GATK.out.associated_interval
-    
+    bam_for_deletion = run_ApplyBQSR_GATK.out.bam_for_deletion
+    bam_index_for_deletion = run_ApplyBQSR_GATK.out.bam_index_for_deletion
 }

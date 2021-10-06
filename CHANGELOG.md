@@ -13,3 +13,4 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Add GPL2 license
 - Parallelize MergeVcfs
 - Standardize output and log directories
+- Add process to remove intermediate files when save_intermediate_files is disabled
