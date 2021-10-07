@@ -146,11 +146,7 @@ workflow reheader_interval_bams {
     run_BuildBamIndex_Picard(
         run_reheader_SAMtools.out.normal_bam_reheadered,
         run_reheader_SAMtools.out.tumour_bam_reheadered,
-        run_reheader_SAMtools.out.associated_interval,
-        run_reheader_SAMtools.out.normal_bam_for_deletion,
-        run_reheader_SAMtools.out.tumour_bam_for_deletion,
-        run_reheader_SAMtools.out.normal_bam_index_for_deletion,
-        run_reheader_SAMtools.out.tumour_bam_index_for_deletion
+        run_reheader_SAMtools.out.associated_interval
         )
 
     emit:
