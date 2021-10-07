@@ -60,10 +60,6 @@ process run_BuildBamIndex_Picard {
     path(normal_bam)
     path(tumour_bam)
     path(interval)
-    path(normal_bam_del)
-    path(tumour_bam_del)
-    path(normal_bam_index_del)
-    path(tumour_bam_index_del)
 
     output:
     path(".command.*")
@@ -72,10 +68,6 @@ process run_BuildBamIndex_Picard {
     path(tumour_bam), emit: tumour_bam_reheadered
     path("${tumour_bam}.bai"), emit: tumour_bam_reheadered_index
     path(interval), emit: associated_interval
-    path(normal_bam_del), emit: normal_bam_for_deletion
-    path(tumour_bam_del), emit: tumour_bam_for_deletion
-    path(normal_bam_index_del), emit: normal_bam_index_for_deletion
-    path(tumour_bam_index_del), emit: tumour_bam_index_for_deletion
 
     script:
     """
