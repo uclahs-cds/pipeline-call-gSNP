@@ -1,3 +1,26 @@
+/*
+    Nextflow module for generating realignment targets
+
+    input:
+        reference_fasta: path to reference genome fasta file
+        reference_fasta_fai: path to index for reference fasta
+        reference_fasta_dict: path to dictionary for reference fasta
+        bundle_mills_and_1000g_gold_standards_vcf_gz: path to standard Mills and 1000 genomes variants
+        bundle_mills_and_1000g_gold_standards_vcf_gz_tbi: path to index file for Mills and 1000g variants
+        bundle_known_indels_vcf_gz: path to set of known indels
+        bundle_known_indels_vcf_gz_tbi: path to index of known indels VCF
+        (sample_id, normal_id, tumour_id, bam, bam_index, bam_tumour, bam_index_tumour, interval):  
+          tuples of string identifiers for the samples, input BAM and index files, and target interval
+        
+    params:
+        params.output_dir: string(path)
+        params.log_output_dir: string(path)
+        params.save_intermediate_files: bool.
+        params.docker_image_gatk3: string
+        params.is_targeted: bool. Indicator of whether in targeted exome mode or in WGS mode
+        params.is_NT_paired: bool. Indicator of whether input has normal and tumour samples
+        params.gatk_command_mem_diff: float(memory)
+*/
 process run_RealignerTargetCreator_GATK {
     container params.docker_image_gatk3
     publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}",
@@ -45,6 +68,31 @@ process run_RealignerTargetCreator_GATK {
     """
 }
 
+/*
+    Nextflow module for realigning indels
+
+    input:
+        reference_fasta: path to reference genome fasta file
+        reference_fasta_fai: path to index for reference fasta
+        reference_fasta_dict: path to dictionary for reference fasta
+        bundle_mills_and_1000g_gold_standards_vcf_gz: path to standard Mills and 1000 genomes variants
+        bundle_mills_and_1000g_gold_standards_vcf_gz_tbi: path to index file for Mills and 1000g variants
+        bundle_known_indels_vcf_gz: path to set of known indels
+        bundle_known_indels_vcf_gz_tbi: path to index of known indels VCF
+        (sample_id, normal_id, tumour_id, bam, bam_index, bam_tumour, bam_index_tumour, interval): 
+          tuples of string identifiers for the samples, input BAM and index files, and target interval
+        target_intervals_RTC: path to realignment target intervals
+        scatter_intervals: path to intervals being operated on
+        
+    params:
+        params.output_dir: string(path)
+        params.log_output_dir: string(path)
+        params.save_intermediate_files: bool.
+        params.docker_image_gatk3: string
+        params.is_targeted: bool. Indicator of whether in targeted exome mode or in WGS mode
+        params.is_NT_paired: bool. Indicator of whether input has normal and tumour samples
+        params.gatk_command_mem_diff: float(memory)
+*/
 process run_IndelRealigner_GATK {
     container params.docker_image_gatk3
     publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}",
@@ -72,12 +120,14 @@ process run_IndelRealigner_GATK {
     output:
     path(".command.*")
     path(scatter_intervals), emit: associated_interval
+    val(has_unmapped), emit: includes_unmapped
     path("${sample_id}_indelrealigned_${task.index}.bam"), emit: realigned_indels_bam
     path("${sample_id}_indelrealigned_${task.index}.bai"), emit: realigned_indels_bam_index
 
     script:
     bam_input_str = params.is_NT_paired ? "--input_file ${bam} --input_file ${bam_tumour}" : "--input_file ${bam}"
     unmapped_interval_option = (task.index == 1) ? "--intervals unmapped" : ""
+    has_unmapped = (task.index == 1) ? true : false
     combined_interval_options = (params.is_targeted) ? "" : "--intervals ${scatter_intervals} ${unmapped_interval_option}"
     """
     set -euo pipefail
@@ -128,6 +178,7 @@ workflow realign_indels {
 
     emit:
     associated_interval = run_IndelRealigner_GATK.out.associated_interval
+    includes_unmapped = run_IndelRealigner_GATK.out.includes_unmapped
     realigned_bam = run_IndelRealigner_GATK.out.realigned_indels_bam
     realigned_bam_index = run_IndelRealigner_GATK.out.realigned_indels_bam_index
 }

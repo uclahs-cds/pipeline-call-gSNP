@@ -12,5 +12,6 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Update call-gSNP to DSL2
 - Add GPL2 license
 - Parallelize MergeVcfs
+- Parallelize MergeSamFiles
 - Standardize output and log directories
 - Add process to remove intermediate files when save_intermediate_files is disabled

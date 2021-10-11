@@ -1,3 +1,26 @@
+/*
+    Nextflow module for getting pileup summaries of BAMs
+
+    input:
+        reference_fasta: path to reference genome fasta file
+        reference_fasta_fai: path to index for reference fasta
+        reference_fasta_dict: path to dictionary for reference fasta
+        bundle_contest_hapmap_3p3_vcf_gz: path to contamination estimate variants
+        bundle_contest_hapmap_3p3_vcf_gz_tbi: path to index of contamination estimate VCFs
+        all_intervals: path to set of full target intervals
+        normal_bam: path to normal BAM
+        normal_bam_index: path to normal BAM index
+        tumour_bam: path to tumour BAM
+        tumour_bam_index: path to tumour BAM index
+        (sample_id, normal_id, tumour_id): tuples of string identifiers for the samples
+        
+    params:
+        params.output_dir: string(path)
+        params.log_output_dir: string(path)
+        params.docker_image_gatk: string
+        params.is_NT_paired: bool. Indicator of whether input has normal and tumour samples
+        params.gatk_command_mem_diff: float(memory)
+*/
 process run_GetPileupSummaries_GATK {
     container params.docker_image_gatk
     publishDir path: "${params.output_dir}/QC/${task.process.replace(':', '/')}",
@@ -53,6 +76,21 @@ process run_GetPileupSummaries_GATK {
     """
 }
 
+/*
+    Nextflow module for calculating contamination
+
+    input:
+        normal_pileupsummaries: path to pileup summary for normal BAM
+        tumour_pileupsummaries: path to pileup summary for tumour BAM
+        (sample_id, normal_id, tumour_id): tuples of string identifiers for the samples
+        
+    params:
+        params.output_dir: string(path)
+        params.log_output_dir: string(path)
+        params.docker_image_gatk: string
+        params.is_NT_paired: bool. Indicator of whether input has normal and tumour samples
+        params.gatk_command_mem_diff: float(memory)
+*/
 process run_CalculateContamination_GATK {
     container params.docker_image_gatk
     publishDir path: "${params.output_dir}/QC/${task.process.replace(':', '/')}",
@@ -100,6 +138,28 @@ process run_CalculateContamination_GATK {
     """
 }
 
+/*
+    Nextflow module for calculating depth of coverage
+
+    input:
+        reference_fasta: path to reference genome fasta file
+        reference_fasta_fai: path to index for reference fasta
+        reference_fasta_dict: path to dictionary for reference fasta
+        all_intervals: path to set of full target intervals
+        normal_bam: path to normal BAM
+        normal_bam_index: path to normal BAM index
+        tumour_bam: path to tumour BAM
+        tumour_bam_index: path to tumour BAM index
+        (sample_id, normal_id, tumour_id): tuples of string identifiers for the samples
+        
+    params:
+        params.output_dir: string(path)
+        params.log_output_dir: string(path)
+        params.docker_image_gatk: string
+        params.is_NT_paired: bool. Indicator of whether input has normal and tumour samples
+        params.gatk_command_mem_diff: float(memory)
+        params.is_DOC_run: bool. Indicator of whether to run depth of coverage process
+*/
 process run_DepthOfCoverage_GATK {
     container params.docker_image_gatk
     publishDir path: "${params.output_dir}/QC/${task.process.replace(':', '/')}",

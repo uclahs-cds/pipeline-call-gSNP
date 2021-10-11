@@ -51,7 +51,7 @@ include { run_SplitIntervals_GATK; run_HaplotypeCaller_GATK; run_MergeVcfs_Picar
 include { recalibrate_snps; recalibrate_indels; filter_gSNP_GATK } from './modules/variant-recalibration.nf'
 include { realign_indels } from './modules/indel-realignment.nf'
 include { recalibrate_base } from './modules/base-recalibration.nf'
-include { reheader_interval_bams; run_MergeSamFiles_Picard } from './modules/bam-processing.nf'
+include { reheader_interval_bams; run_MergeSamFiles_Picard as run_MergeSamFiles_Picard_normal; run_MergeSamFiles_Picard as run_MergeSamFiles_Picard_tumour } from './modules/bam-processing.nf'
 include { calculate_contamination; run_DepthOfCoverage_GATK } from './modules/summary-processes.nf'
 include { remove_intermediate_files as remove_realigned_bams; remove_intermediate_files as remove_recalibrated_bams; remove_intermediate_files as remove_reheadered_bams } from './modules/intermediate-cleanup.nf'
 
@@ -131,12 +131,14 @@ workflow {
 
 
     if (params.is_targeted) {
-      ir_input = input_ch_input_csv.combine(Channel.of(params.intervals)) // Cross the input files with all the exome targets
+      // Cross the input files with all the exome targets
+      ir_input = input_ch_input_csv.combine(Channel.of(params.intervals))
           .map{ input_csv,interval -> [input_csv.sample_id, input_csv.normal_id, input_csv.tumour_id, input_csv.normal_BAM, input_csv.normal_index, input_csv.tumour_BAM, input_csv.tumour_index, interval] }
       ir_input_no_interval = input_ch_input_csv.combine(Channel.of(params.intervals))
           .map{ input_csv,interval -> [input_csv.sample_id, input_csv.normal_id, input_csv.tumour_id, input_csv.normal_BAM, input_csv.normal_index, input_csv.tumour_BAM, input_csv.tumour_index] }
     } else {
-      ir_input = input_ch_input_csv.combine(split_intervals) // Cross the input files with all the chr list
+      // Cross the input files with all the chr list
+      ir_input = input_ch_input_csv.combine(split_intervals)
           .map{ input_csv,interval -> [input_csv.sample_id, input_csv.normal_id, input_csv.tumour_id, input_csv.normal_BAM, input_csv.normal_index, input_csv.tumour_BAM, input_csv.tumour_index, interval] }
       ir_input_no_interval = input_ch_input_csv.combine(split_intervals)
           .map{ input_csv,interval -> [input_csv.sample_id, input_csv.normal_id, input_csv.tumour_id, input_csv.normal_BAM, input_csv.normal_index, input_csv.tumour_BAM, input_csv.tumour_index] }
@@ -151,6 +153,7 @@ workflow {
       realign_indels.out.realigned_bam,
       realign_indels.out.realigned_bam_index,
       realign_indels.out.associated_interval,
+      realign_indels.out.includes_unmapped,
       bqsr_generator_identifiers
       )
 
@@ -159,7 +162,8 @@ workflow {
       "mergesams_complete" // Decoy signal to let these files be deleted
       )
 
-    if (params.is_NT_paired) {// Reheader interval-level bams in NT paired mode
+    // Reheader interval-level bams in NT paired mode
+    if (params.is_NT_paired) {
       reheader_interval_bams(
         bam_reheadering_identifiers,
         recalibrate_base.out.recalibrated_normal_bam,
@@ -185,7 +189,8 @@ workflow {
         recalibrated_bams_to_delete,
         "mergesams_complete" // Decoy signal to let these files be deleted
         )
-    } else {// Generate decoy tumour bam and index channels for single sample mode
+    } else {
+      // Generate decoy tumour bam and index channels for single sample mode
       normal_bam_ch = recalibrate_base.out.recalibrated_normal_bam
       normal_bam_index_ch = recalibrate_base.out.recalibrated_normal_bam_index
       tumour_bam_ch = Channel.of(1..params.scatter_count).map{"/scratch/placeholder_${it}.txt"}
@@ -193,17 +198,31 @@ workflow {
       hc_interval = recalibrate_base.out.associated_interval
     }
 
-    run_MergeSamFiles_Picard(
+    run_MergeSamFiles_Picard_normal(
       normal_bam_ch.collect(),
-      tumour_bam_ch.collect(),
+      "normal",
       merge_bams_identifiers
       )
+    
+    if (params.is_NT_paired) {
+      run_MergeSamFiles_Picard_tumour(
+        tumour_bam_ch.collect(),
+        "tumour",
+        merge_bams_identifiers
+        )
+
+      merged_tumour_bam = run_MergeSamFiles_Picard_tumour.out.merged_bam
+      merged_tumour_bam_index = run_MergeSamFiles_Picard_tumour.out.merged_bam_index
+    } else {
+      merged_tumour_bam = Channel.of("/scratch/placeholder.txt")
+      merged_tumour_bam_index = Channel.of("/scratch/placeholder_index.txt")
+    }
 
     calculate_contamination(
-      run_MergeSamFiles_Picard.out.merged_normal_bam,
-      run_MergeSamFiles_Picard.out.merged_normal_bam_index,
-      run_MergeSamFiles_Picard.out.merged_tumour_bam.ifEmpty("/scratch/placeholder.txt"),
-      run_MergeSamFiles_Picard.out.merged_tumour_bam_index.ifEmpty("/scratch/placeholder_index.txt"),
+      run_MergeSamFiles_Picard_normal.out.merged_bam,
+      run_MergeSamFiles_Picard_normal.out.merged_bam_index,
+      merged_tumour_bam,
+      merged_tumour_bam_index,
       split_intervals,
       contamination_identifiers
       )
@@ -213,18 +232,18 @@ workflow {
       "${params.reference_fasta}.fai",
       params.reference_dict,
       split_intervals.collect(),
-      run_MergeSamFiles_Picard.out.merged_normal_bam,
-      run_MergeSamFiles_Picard.out.merged_normal_bam_index,
-      run_MergeSamFiles_Picard.out.merged_tumour_bam.ifEmpty("/scratch/placeholder.txt"),
-      run_MergeSamFiles_Picard.out.merged_tumour_bam_index.ifEmpty("/scratch/placeholder_index.txt"),
+      run_MergeSamFiles_Picard_normal.out.merged_bam,
+      run_MergeSamFiles_Picard_normal.out.merged_bam_index,
+      merged_tumour_bam,
+      merged_tumour_bam_index,
       doc_identifiers
       )
 
     if (params.is_targeted) {
-      normal_bam_ch = run_MergeSamFiles_Picard.out.merged_normal_bam
-      normal_bam_index_ch = run_MergeSamFiles_Picard.out.merged_normal_bam_index
-      tumour_bam_ch = run_MergeSamFiles_Picard.out.merged_tumour_bam.ifEmpty("/scratch/placeholder.txt")
-      tumour_bam_index_ch = run_MergeSamFiles_Picard.out.merged_tumour_bam_index.ifEmpty("/scratch/placeholder_index.txt")
+      normal_bam_ch = run_MergeSamFiles_Picard_normal.out.merged_bam
+      normal_bam_index_ch = run_MergeSamFiles_Picard_normal.out.merged_bam_index
+      tumour_bam_ch = merged_tumour_bam
+      tumour_bam_index_ch = merged_tumour_bam_index
       hc_interval = split_intervals
     }
 
@@ -250,7 +269,7 @@ workflow {
 
     remove_reheadered_bams(
       reheadered_bams_to_delete,
-      run_MergeSamFiles_Picard.out.merged_normal_bam
+      run_MergeSamFiles_Picard_normal.out.merged_bam
       )
 
     run_MergeVcfs_Picard_VCF(
@@ -300,16 +319,16 @@ workflow {
     files_for_sha512 = run_MergeVcfs_Picard_normal_GVCF.out.vcf.flatten().mix(
       run_MergeVcfs_Picard_normal_GVCF.out.vcf_index.flatten(),
       filter_gSNP_GATK.out.germline_filtered.flatten(),
-      run_MergeSamFiles_Picard.out.merged_normal_bam.flatten(),
-      run_MergeSamFiles_Picard.out.merged_normal_bam_index.flatten(),
-      run_MergeSamFiles_Picard.out.merged_tumour_bam.flatten(),
-      run_MergeSamFiles_Picard.out.merged_tumour_bam_index.flatten()
+      run_MergeSamFiles_Picard_normal.out.merged_bam.flatten(),
+      run_MergeSamFiles_Picard_normal.out.merged_bam_index.flatten()
       )
 
     if (params.is_NT_paired) {
       files_for_sha512.mix(
         run_MergeVcfs_Picard_tumour_GVCF.out.vcf.flatten(),
         run_MergeVcfs_Picard_tumour_GVCF.out.vcf_index.flatten(),
+        run_MergeSamFiles_Picard_tumour.out.merged_bam.flatten(),
+        run_MergeSamFiles_Picard_tumour.out.merged_bam_index.flatten()
         )
     }
 

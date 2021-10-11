@@ -1,3 +1,13 @@
+/*
+    Nextflow module for validating files
+
+    input:
+        file_to_validate: path to file to validate
+        
+    params:
+        params.log_output_dir: string(path)
+        params.docker_image_validate: string
+*/
 process run_validate_PipeVal {
     container params.docker_image_validate
 
@@ -19,6 +29,17 @@ process run_validate_PipeVal {
     """
 }
 
+/*
+  Nextflow module for calculating SHA512 checksum
+
+  input:
+      file_for_calc: path to file for whichc to calculate checksum
+
+  params:
+      params.output_dir: string(path)
+      params.log_output_dir: string(path)
+      params.docker_image_validate: string
+*/
 process calculate_sha512 {
     container params.docker_image_validate
     publishDir path: "${params.output_dir}/output",
