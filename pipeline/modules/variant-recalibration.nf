@@ -1,3 +1,23 @@
+/*
+    Nextflow module for generating INDEL variant recalibration
+
+    input:
+        reference_fasta: path to reference genome fasta file
+        reference_fasta_fai: path to index for reference fasta
+        reference_fasta_dict: path to dictionary for reference fasta
+        bundle_mills_and_1000g_gold_standards_vcf_gz: path to standard Mills and 1000 genomes variants
+        bundle_mills_and_1000g_gold_standards_vcf_gz_tbi: path to index file for Mills and 1000g variants
+        (sample_id, normal_id, tumour_id): tuples of string identifiers for the samples
+        sample_vcf: path to VCF to recalibrate
+        sample_vcf_tbi: path to index of VCF to recalibrate
+        
+    params:
+        params.output_dir: string(path)
+        params.log_output_dir: string(path)
+        params.save_intermediate_files: bool.
+        params.docker_image_gatk: string
+        params.is_NT_paired: bool. Indicator of whether input has normal and tumour samples
+*/
 process run_VariantRecalibratorINDEL_GATK {
     container params.docker_image_gatk
     publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}",
@@ -58,6 +78,30 @@ process run_VariantRecalibratorINDEL_GATK {
     """
 }
 
+/*
+    Nextflow module for generating SNP variant recalibration
+
+    input:
+        reference_fasta: path to reference genome fasta file
+        reference_fasta_fai: path to index for reference fasta
+        reference_fasta_dict: path to dictionary for reference fasta
+        bundle_hapmap_3p3_vcf_gz: path to hapmap variants
+        bundle_hapmap_3p3_vcf_gz_tbi: path to index of hapmap variants
+        bundle_omni_1000g_2p5_vcf_gz: path to omni variants
+        bundle_omni_1000g_2p5_vcf_gz_tbi: path to index of omni variants
+        bundle_phase1_1000g_snps_high_conf_vcf_gz: path to high confidence SNPs
+        bundle_phase1_1000g_snps_high_conf_vcf_gz_tbi: path to index of high confidence SNPs
+        (sample_id, normal_id, tumour_id): tuples of string identifiers for the samples
+        sample_vcf: path to VCF to recalibrate
+        sample_vcf_tbi: path to index of VCF to recalibrate
+        
+    params:
+        params.output_dir: string(path)
+        params.log_output_dir: string(path)
+        params.save_intermediate_files: bool.
+        params.docker_image_gatk: string
+        params.is_NT_paired: bool. Indicator of whether input has normal and tumour samples
+*/
 process run_VariantRecalibratorSNP_GATK {
     container params.docker_image_gatk
     publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}",
@@ -129,6 +173,24 @@ process run_VariantRecalibratorSNP_GATK {
     """
 }
 
+/*
+    Nextflow module for applying variant recalibration
+
+    input:
+        mode: string to indicate SNP or INDEL mode
+        suffix: string to indicate which of SNP and INDELs are recalibrated
+        reference_fasta: path to reference genome fasta file
+        reference_fasta_fai: path to index for reference fasta
+        reference_fasta_dict: path to dictionary for reference fasta
+        (sample_vcf, sample_vcf_tbi, recal_file, recal_index_file, tranches_file, sample_id):
+          tuple of input VCF and index, recalibration files, and sample ID
+        
+    params:
+        params.output_dir: string(path)
+        params.log_output_dir: string(path)
+        params.save_intermediate_files: bool.
+        params.docker_image_gatk: string
+*/
 process run_ApplyVQSR_GATK {
     container params.docker_image_gatk
     publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}",
@@ -170,6 +232,23 @@ process run_ApplyVQSR_GATK {
     """
 }
 
+/*
+    Nextflow module for filtering GATK variant calls
+
+    input:
+        reference_fasta: path to reference genome fasta file
+        reference_fasta_fai: path to index for reference fasta
+        reference_fasta_dict: path to dictionary for reference fasta
+        sample_vcf: path to VCF to filter
+        sample_vcf_tbi: path to index of VCF to filter
+        (sample_id, normal_id, tumour_id): tuples of string identifiers for the samples
+        
+    params:
+        params.output_dir: string(path)
+        params.log_output_dir: string(path)
+        params.docker_image_gatkfilter: string
+        params.is_NT_paired: bool. Indicator of whether input has normal and tumour samples
+*/
 process filter_gSNP_GATK {
     container params.docker_image_gatkfilter
     publishDir path: "${params.output_dir}/output",
@@ -215,6 +294,17 @@ process filter_gSNP_GATK {
     """
 }
 
+/*
+    Nextflow module for generating VCF stats
+
+    input:
+        (cohort_vcf, cohort_vcf_tbi): tuple of paths to VCF and index
+
+    params:
+        params.output_dir: string(path)
+        params.log_output_dir: string(path)
+        params.docker_image_rtg: string
+*/
 process run_vcfstats_RTG {
     container params.docker_image_rtg
     publishDir path: "${params.output_dir}/output",

@@ -131,12 +131,14 @@ workflow {
 
 
     if (params.is_targeted) {
-      ir_input = input_ch_input_csv.combine(Channel.of(params.intervals)) // Cross the input files with all the exome targets
+      // Cross the input files with all the exome targets
+      ir_input = input_ch_input_csv.combine(Channel.of(params.intervals))
           .map{ input_csv,interval -> [input_csv.sample_id, input_csv.normal_id, input_csv.tumour_id, input_csv.normal_BAM, input_csv.normal_index, input_csv.tumour_BAM, input_csv.tumour_index, interval] }
       ir_input_no_interval = input_ch_input_csv.combine(Channel.of(params.intervals))
           .map{ input_csv,interval -> [input_csv.sample_id, input_csv.normal_id, input_csv.tumour_id, input_csv.normal_BAM, input_csv.normal_index, input_csv.tumour_BAM, input_csv.tumour_index] }
     } else {
-      ir_input = input_ch_input_csv.combine(split_intervals) // Cross the input files with all the chr list
+      // Cross the input files with all the chr list
+      ir_input = input_ch_input_csv.combine(split_intervals)
           .map{ input_csv,interval -> [input_csv.sample_id, input_csv.normal_id, input_csv.tumour_id, input_csv.normal_BAM, input_csv.normal_index, input_csv.tumour_BAM, input_csv.tumour_index, interval] }
       ir_input_no_interval = input_ch_input_csv.combine(split_intervals)
           .map{ input_csv,interval -> [input_csv.sample_id, input_csv.normal_id, input_csv.tumour_id, input_csv.normal_BAM, input_csv.normal_index, input_csv.tumour_BAM, input_csv.tumour_index] }
@@ -160,7 +162,8 @@ workflow {
       "mergesams_complete" // Decoy signal to let these files be deleted
       )
 
-    if (params.is_NT_paired) {// Reheader interval-level bams in NT paired mode
+    // Reheader interval-level bams in NT paired mode
+    if (params.is_NT_paired) {
       reheader_interval_bams(
         bam_reheadering_identifiers,
         recalibrate_base.out.recalibrated_normal_bam,
@@ -186,7 +189,8 @@ workflow {
         recalibrated_bams_to_delete,
         "mergesams_complete" // Decoy signal to let these files be deleted
         )
-    } else {// Generate decoy tumour bam and index channels for single sample mode
+    } else {
+      // Generate decoy tumour bam and index channels for single sample mode
       normal_bam_ch = recalibrate_base.out.recalibrated_normal_bam
       normal_bam_index_ch = recalibrate_base.out.recalibrated_normal_bam_index
       tumour_bam_ch = Channel.of(1..params.scatter_count).map{"/scratch/placeholder_${it}.txt"}

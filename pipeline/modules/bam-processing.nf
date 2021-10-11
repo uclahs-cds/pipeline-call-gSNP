@@ -1,3 +1,20 @@
+/*
+    Nextflow module for reheadering BAM files
+
+    input:
+        (sample_id, normal_id, tumour_id):  tuples of string identifiers for the samples
+        normal_bam: path to input normal BAM
+        normal_bam_index: path to input normal BAM index
+        tumour_bam: path to input tumour BAM
+        tumour_bam_index: path to input tumour BAM index
+        interval: path to associated intervals file to propagate
+
+    params:
+        params.output_dir: string(path)
+        params.log_output_dir: string(path)
+        params.save_intermediate_files: bool.
+        params.docker_image_samtools: string
+*/
 process run_reheader_SAMtools {
     container params.docker_image_samtools
     publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}",
@@ -44,6 +61,21 @@ process run_reheader_SAMtools {
     """
 }
 
+/*
+    Nextflow module for indexing BAM files
+
+    input:
+        normal_bam: path to input normal BAM
+        tumour_bam_index: path to input tumour BAM index
+        interval: path to associated intervals file to propagate
+
+    params:
+        params.output_dir: string(path)
+        params.log_output_dir: string(path)
+        params.save_intermediate_files: bool.
+        params.docker_image_picard: string
+        params.gatk_command_mem_diff: float(memory)
+*/
 process run_BuildBamIndex_Picard {
     container params.docker_image_picard
     publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}",
@@ -86,6 +118,21 @@ process run_BuildBamIndex_Picard {
     """
 }
 
+/*
+    Nextflow module for merging BAM files
+
+    input:
+        bams: list or tuple of paths to BAMs to be merged
+        sample_type: string. Indicator of normal or tumour samples
+        (sample_id, normal_id, tumour_id):  tuples of string identifiers for the samples
+
+    params:
+        params.output_dir: string(path)
+        params.log_output_dir: string(path)
+        params.save_intermediate_files: bool.
+        params.docker_image_picard: string
+        params.gatk_command_mem_diff: float(memory)
+*/
 process run_MergeSamFiles_Picard {
     container params.docker_image_picard
     publishDir path: "${params.output_dir}/output",

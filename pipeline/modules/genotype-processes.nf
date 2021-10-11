@@ -1,3 +1,20 @@
+/*
+    Nextflow module for splitting input intervals into multiple intervals for parallelization
+
+    input:
+        intervals: path to set of target intervals to split
+        reference: path to reference genome fasta file
+        reference_index: path to index for reference fasta
+        reference_dict: path to dictionary for reference fasta
+
+    params:
+        params.output_dir: string(path)
+        params.log_output_dir: string(path)
+        params.save_intermediate_files: bool.
+        params.docker_image_gatk: string
+        params.scatter_count: integer. Number of intervals to split into
+        params.split_intervals_extra_args: string. Additional arguments for splitting intervals
+*/
 process run_SplitIntervals_GATK {
     container params.docker_image_gatk
 
@@ -31,6 +48,31 @@ process run_SplitIntervals_GATK {
     """
 }
 
+/*
+    Nextflow module for calling haplotypes
+
+    input:
+        reference_fasta: path to reference genome fasta file
+        reference_fasta_fai: path to index for reference fasta
+        reference_fasta_dict: path to dictionary for reference fasta
+        dbsnp_bundle: path to dbSNP variants
+        dbsnp_bundle_index: path to index of dbSNP variants
+        (sample_id, normal_id, tumour_id):  tuples of string identifiers for the samples
+        bam: path to normal BAM for calling
+        bam_index: path to index of normal BAM
+        bam_tumour: path to tumour BAM for calling
+        bam_tumour_index: path to index of tumour BAM
+        interval: path to specific intervals for calling
+        
+    params:
+        params.output_dir: string(path)
+        params.log_output_dir: string(path)
+        params.save_intermediate_files: bool.
+        params.docker_image_gatk: string
+        params.is_targeted: bool. Indicator of whether in targeted exome mode or in WGS mode
+        params.is_NT_paired: bool. Indicator of whether input has normal and tumour samples
+        params.gatk_command_mem_diff: float(memory)
+*/
 process run_HaplotypeCaller_GATK {
     container params.docker_image_gatk
     publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}",
@@ -125,6 +167,21 @@ process run_HaplotypeCaller_GATK {
     """
 }
 
+/*
+    Nextflow module for merging input VCFs
+
+    input:
+        vcfs: list or tuples of inputs VCFs to merge
+        vcf_type: string to indicate whether calling in germline mode
+        sample_type: string to indicate whether merging normal or tumour files
+        (sample_id, normal_id, tumour_id):  tuples of string identifiers for the samples
+        
+    params:
+        params.output_dir: string(path)
+        params.log_output_dir: string(path)
+        params.docker_image_picard: string
+        params.gatk_command_mem_diff: float(memory)
+*/
 process run_MergeVcfs_Picard {
     container params.docker_image_picard
 

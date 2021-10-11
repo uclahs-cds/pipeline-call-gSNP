@@ -1,6 +1,14 @@
 /*
-    Removes intermediate files as they're no longer needed.
-    Follows symlinks to remove the original file and also the symlink.
+    Nextflow module for removing intermediate files. Follows symlinks to remove original files.
+
+    input:
+        file_to_remove: path to file to be removed
+        merge_sams_completion_signal: val to indicate that merge SAMs process has completed
+
+    params:
+        params.log_output_dir: string(path)
+        params.save_intermediate_files: bool.
+        params.docker_image_validate: string
 */
 process remove_intermediate_files {
     container params.docker_image_validate
