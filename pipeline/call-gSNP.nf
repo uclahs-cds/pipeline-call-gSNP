@@ -52,7 +52,7 @@ include { recalibrate_snps; recalibrate_indels; filter_gSNP_GATK } from './modul
 include { realign_indels } from './modules/indel-realignment.nf'
 include { recalibrate_base } from './modules/base-recalibration.nf'
 include { reheader_interval_bams; run_MergeSamFiles_Picard as run_MergeSamFiles_Picard_normal; run_MergeSamFiles_Picard as run_MergeSamFiles_Picard_tumour } from './modules/bam-processing.nf'
-include { calculate_contamination; run_DepthOfCoverage_GATK } from './modules/summary-processes.nf'
+include { calculate_contamination_normal; calculate_contamination_tumour; run_DepthOfCoverage_GATK as run_DepthOfCoverage_GATK_normal; run_DepthOfCoverage_GATK as run_DepthOfCoverage_GATK_tumour } from './modules/summary-processes.nf'
 include { remove_intermediate_files as remove_realigned_bams; remove_intermediate_files as remove_recalibrated_bams; remove_intermediate_files as remove_reheadered_bams } from './modules/intermediate-cleanup.nf'
 
 // Returns the index file for the given bam or vcf
@@ -218,26 +218,46 @@ workflow {
       merged_tumour_bam_index = Channel.of("/scratch/placeholder_index.txt")
     }
 
-    calculate_contamination(
+    calculate_contamination_normal(
       run_MergeSamFiles_Picard_normal.out.merged_bam,
       run_MergeSamFiles_Picard_normal.out.merged_bam_index,
-      merged_tumour_bam,
-      merged_tumour_bam_index,
       split_intervals,
       contamination_identifiers
       )
 
-    run_DepthOfCoverage_GATK(
+    if (params.is_NT_paired) {
+      calculate_contamination_tumour(
+        merged_tumour_bam,
+        merged_tumour_bam_index,
+        split_intervals,
+        contamination_identifiers,
+        calculate_contamination_normal.out.pileupsummaries
+        )
+    }
+
+    run_DepthOfCoverage_GATK_normal(
       params.reference_fasta,
       "${params.reference_fasta}.fai",
       params.reference_dict,
       split_intervals.collect(),
       run_MergeSamFiles_Picard_normal.out.merged_bam,
       run_MergeSamFiles_Picard_normal.out.merged_bam_index,
-      merged_tumour_bam,
-      merged_tumour_bam_index,
+      "normal",
       doc_identifiers
       )
+    
+    if (params.is_NT_paired) {
+      run_DepthOfCoverage_GATK_tumour(
+        params.reference_fasta,
+        "${params.reference_fasta}.fai",
+        params.reference_dict,
+        split_intervals.collect(),
+        merged_tumour_bam,
+        merged_tumour_bam_index,
+        "tumour",
+        doc_identifiers
+        )
+    }
 
     if (params.is_targeted) {
       normal_bam_ch = run_MergeSamFiles_Picard_normal.out.merged_bam
