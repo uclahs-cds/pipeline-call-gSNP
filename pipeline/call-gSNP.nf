@@ -344,7 +344,7 @@ workflow {
       )
 
     if (params.is_NT_paired) {
-      files_for_sha512.mix(
+      files_for_sha512 = files_for_sha512.mix(
         run_MergeVcfs_Picard_tumour_GVCF.out.vcf.flatten(),
         run_MergeVcfs_Picard_tumour_GVCF.out.vcf_index.flatten(),
         run_MergeSamFiles_Picard_tumour.out.merged_bam.flatten(),
