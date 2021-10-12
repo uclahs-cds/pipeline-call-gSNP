@@ -15,4 +15,4 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Parallelize MergeSamFiles
 - Standardize output and log directories
 - Add process to remove intermediate files when save_intermediate_files is disabled
-- Parallelize summary and DepthOfCoverage processes
+- Parallelize GetPileupSummaries, CalculateContamination, and DepthOfCoverage processes
