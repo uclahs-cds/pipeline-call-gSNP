@@ -8,10 +8,8 @@
         bundle_contest_hapmap_3p3_vcf_gz: path to contamination estimate variants
         bundle_contest_hapmap_3p3_vcf_gz_tbi: path to index of contamination estimate VCFs
         all_intervals: path to set of full target intervals
-        normal_bam: path to normal BAM
-        normal_bam_index: path to normal BAM index
-        tumour_bam: path to tumour BAM
-        tumour_bam_index: path to tumour BAM index
+        bam: path to normal BAM
+        bam_index: path to normal BAM index
         (sample_id, normal_id, tumour_id): tuples of string identifiers for the samples
         
     params:
@@ -67,8 +65,9 @@ process run_GetPileupSummaries_GATK {
     Nextflow module for calculating contamination
 
     input:
-        normal_pileupsummaries: path to pileup summary for normal BAM
-        tumour_pileupsummaries: path to pileup summary for tumour BAM
+        sample_type: string to indicate whether processing normal or tumour sample
+        matched_normal_pileupsummaries: path to matched pileup summary for normal BAM
+        pileupsummaries: path to pileup summary for BAM
         (sample_id, normal_id, tumour_id): tuples of string identifiers for the samples
         
     params:
@@ -130,10 +129,9 @@ process run_CalculateContamination_GATK {
         reference_fasta_fai: path to index for reference fasta
         reference_fasta_dict: path to dictionary for reference fasta
         all_intervals: path to set of full target intervals
-        normal_bam: path to normal BAM
-        normal_bam_index: path to normal BAM index
-        tumour_bam: path to tumour BAM
-        tumour_bam_index: path to tumour BAM index
+        bam: path to normal BAM
+        bam_index: path to normal BAM index
+        sample_type: string to indicate whether processing normal or tumour sample
         (sample_id, normal_id, tumour_id): tuples of string identifiers for the samples
         
     params:
