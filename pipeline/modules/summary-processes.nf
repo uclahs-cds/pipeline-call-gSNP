@@ -101,14 +101,14 @@ process run_CalculateContamination_GATK {
 
     script:
     output_id = (sample_type == "normal") ? "${normal_id}" : "${tumour_id}"
-    single_output_filename = "${output_id}_calculatecontamination_${sample_type}_alone.table"
+    single_output_filename = "${output_id}_calculatecontamination_${sample_type}"
     calc_matched = (sample_type == "normal") ? false : true
     """
     set -euo pipefail
     gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=/scratch" \
         CalculateContamination \
         --input ${pileupsummaries} \
-        --output ${output_id}_calculatecontamination_normal_alone.table
+        --output ${single_output_filename}_alone.table
 
     if ${calc_matched}
     then
@@ -116,7 +116,7 @@ process run_CalculateContamination_GATK {
           CalculateContamination \
           --input ${pileupsummaries} \
           --matched-normal ${matched_normal_pileupsummaries} \
-          --output ${output_id}_calculatecontamination_tumour_with_matched_normal.table
+          --output ${single_output_filename}_with_matched_normal.table
     fi
     """
 }
