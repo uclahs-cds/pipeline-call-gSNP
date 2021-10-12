@@ -214,7 +214,7 @@ workflow calculate_contamination_normal {
 
     run_CalculateContamination_GATK(
         "normal",
-        "/scratch/summaryplaceholder.txt",
+        "/scratch/summaryplaceholder.txt", // Decoy since processing normal sample
         run_GetPileupSummaries_GATK.out.pileupsummaries,
         identifiers
         )
