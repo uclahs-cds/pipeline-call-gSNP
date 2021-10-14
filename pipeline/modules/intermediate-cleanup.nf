@@ -3,7 +3,9 @@
 
     input:
         file_to_remove: path to file to be removed
-        merge_sams_completion_signal: val to indicate that merge SAMs process has completed
+        ready_for_deletion_signal: val to indicate that the file can be removed. For example, 
+            if multiple processes need to use the file to be deleted, the signal allows for a
+            way to wait until all of those processes have completed before deleting the file.
 
     params:
         params.log_output_dir: string(path)
@@ -19,7 +21,7 @@ process remove_intermediate_files {
 
     input:
     path(file_to_remove)
-    val(merge_sams_completion_signal)
+    val(ready_for_deletion_signal)
 
     output:
     path(".command.*")
