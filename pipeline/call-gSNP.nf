@@ -47,7 +47,7 @@ Starting workflow...
         """
 
 include { run_validate_PipeVal; calculate_sha512 } from './modules/validation.nf'
-include { run_SplitIntervals_GATK; run_HaplotypeCaller_GATK; run_MergeVcfs_Picard as run_MergeVcfs_Picard_VCF; run_MergeVcfs_Picard as run_MergeVcfs_Picard_normal_GVCF; run_MergeVcfs_Picard as run_MergeVcfs_Picard_tumour_GVCF } from './modules/genotype-processes.nf'
+include { run_SplitIntervals_GATK; run_HaplotypeCallerVCF_GATK; run_HaplotypeCallerGVCF_GATK as run_HaplotypeCallerGVCF_GATK_normal; run_HaplotypeCallerGVCF_GATK as run_HaplotypeCallerGVCF_GATK_tumour; run_MergeVcfs_Picard as run_MergeVcfs_Picard_VCF; run_MergeVcfs_Picard as run_MergeVcfs_Picard_normal_GVCF; run_MergeVcfs_Picard as run_MergeVcfs_Picard_tumour_GVCF } from './modules/genotype-processes.nf'
 include { recalibrate_snps; recalibrate_indels; filter_gSNP_GATK } from './modules/variant-recalibration.nf'
 include { realign_indels } from './modules/indel-realignment.nf'
 include { recalibrate_base } from './modules/base-recalibration.nf'
@@ -267,7 +267,7 @@ workflow {
       hc_interval = split_intervals
     }
 
-    run_HaplotypeCaller_GATK(
+    run_HaplotypeCallerVCF_GATK(
       params.reference_fasta,
       "${params.reference_fasta}.fai",
       params.reference_dict,
@@ -281,26 +281,71 @@ workflow {
       hc_interval
       )
 
-    reheadered_bams_to_delete = run_HaplotypeCaller_GATK.out.normal_bam_for_deletion.mix(
-      run_HaplotypeCaller_GATK.out.normal_bam_index_for_deletion,
-      run_HaplotypeCaller_GATK.out.tumour_bam_for_deletion,
-      run_HaplotypeCaller_GATK.out.tumour_bam_index_for_deletion
+    run_HaplotypeCallerGVCF_GATK_normal(
+      params.reference_fasta,
+      "${params.reference_fasta}.fai",
+      params.reference_dict,
+      params.bundle_v0_dbsnp138_vcf_gz,
+      "${params.bundle_v0_dbsnp138_vcf_gz}.tbi",
+      hc_identifiers,
+      normal_bam_ch,
+      normal_bam_index_ch,
+      hc_interval,
+      "normal"
       )
+
+    if (params.is_NT_paired) {
+      run_HaplotypeCallerGVCF_GATK_tumour(
+        params.reference_fasta,
+        "${params.reference_fasta}.fai",
+        params.reference_dict,
+        params.bundle_v0_dbsnp138_vcf_gz,
+        "${params.bundle_v0_dbsnp138_vcf_gz}.tbi",
+        hc_identifiers,
+        tumour_bam_ch,
+        tumour_bam_index_ch,
+        hc_interval,
+        "tumour"
+        )
+
+      hc_completion_signal = run_HaplotypeCallerVCF_GATK.out.vcf.collect().mix(
+        run_HaplotypeCallerGVCF_GATK_normal.out.gvcf.collect(),
+        run_HaplotypeCallerGVCF_GATK_tumour.out.gvcf.collect()
+        )
+        .collect()
+    } else {
+      hc_completion_signal = run_HaplotypeCallerVCF_GATK.out.vcf.collect().mix(
+        run_HaplotypeCallerGVCF_GATK_normal.out.gvcf.collect()
+        )
+        .collect()
+    }
+
+    reheadered_bams_to_delete = run_HaplotypeCallerVCF_GATK.out.normal_bam_for_deletion.mix(
+      run_HaplotypeCallerVCF_GATK.out.normal_bam_index_for_deletion,
+      run_HaplotypeCallerVCF_GATK.out.tumour_bam_for_deletion,
+      run_HaplotypeCallerVCF_GATK.out.tumour_bam_index_for_deletion
+      )
+    
+    reheadered_deletion_signal = run_MergeSamFiles_Picard_normal.out.merged_bam.mix(
+      merged_tumour_bam,
+      hc_completion_signal
+      )
+      .collect()
 
     remove_reheadered_bams(
       reheadered_bams_to_delete,
-      run_MergeSamFiles_Picard_normal.out.merged_bam
+      reheadered_deletion_signal
       )
 
     run_MergeVcfs_Picard_VCF(
-      run_HaplotypeCaller_GATK.out.vcf.collect(),
+      run_HaplotypeCallerVCF_GATK.out.vcf.collect(),
       "VCF",
       "-",
       merge_identifiers
       )
 
     run_MergeVcfs_Picard_normal_GVCF(
-      run_HaplotypeCaller_GATK.out.gvcf_normal.collect(),
+      run_HaplotypeCallerGVCF_GATK_normal.out.gvcf.collect(),
       "GVCF",
       "normal",
       merge_identifiers
@@ -308,7 +353,7 @@ workflow {
 
     if (params.is_NT_paired) {
       run_MergeVcfs_Picard_tumour_GVCF(
-        run_HaplotypeCaller_GATK.out.gvcf_tumour.collect(),
+        run_HaplotypeCallerGVCF_GATK_tumour.out.gvcf.collect(),
         "GVCF",
         "tumour",
         merge_identifiers

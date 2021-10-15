@@ -16,3 +16,6 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Standardize output and log directories
 - Add process to remove intermediate files when save_intermediate_files is disabled
 - Parallelize GetPileupSummaries, CalculateContamination, and DepthOfCoverage processes
+- Split HaplotypeCaller process into process for VCF and GVCF modes
+- Parallelize GVCF HC process
+- Adjust static resource allocation to be more efficient
