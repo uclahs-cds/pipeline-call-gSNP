@@ -124,7 +124,7 @@ workflow {
       intervals,
       params.reference_fasta,
       "${params.reference_fasta}.fai",
-      params.reference_dict
+      "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict"
     )
 
     split_intervals = run_SplitIntervals_GATK.out.interval_list.flatten()
@@ -238,7 +238,7 @@ workflow {
     run_DepthOfCoverage_GATK_normal(
       params.reference_fasta,
       "${params.reference_fasta}.fai",
-      params.reference_dict,
+      "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
       split_intervals.collect(),
       run_MergeSamFiles_Picard_normal.out.merged_bam,
       run_MergeSamFiles_Picard_normal.out.merged_bam_index,
@@ -250,7 +250,7 @@ workflow {
       run_DepthOfCoverage_GATK_tumour(
         params.reference_fasta,
         "${params.reference_fasta}.fai",
-        params.reference_dict,
+        "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
         split_intervals.collect(),
         merged_tumour_bam,
         merged_tumour_bam_index,
@@ -270,7 +270,7 @@ workflow {
     run_HaplotypeCallerVCF_GATK(
       params.reference_fasta,
       "${params.reference_fasta}.fai",
-      params.reference_dict,
+      "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
       params.bundle_v0_dbsnp138_vcf_gz,
       "${params.bundle_v0_dbsnp138_vcf_gz}.tbi",
       hc_identifiers,
@@ -284,7 +284,7 @@ workflow {
     run_HaplotypeCallerGVCF_GATK_normal(
       params.reference_fasta,
       "${params.reference_fasta}.fai",
-      params.reference_dict,
+      "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
       params.bundle_v0_dbsnp138_vcf_gz,
       "${params.bundle_v0_dbsnp138_vcf_gz}.tbi",
       hc_identifiers,
@@ -298,7 +298,7 @@ workflow {
       run_HaplotypeCallerGVCF_GATK_tumour(
         params.reference_fasta,
         "${params.reference_fasta}.fai",
-        params.reference_dict,
+        "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
         params.bundle_v0_dbsnp138_vcf_gz,
         "${params.bundle_v0_dbsnp138_vcf_gz}.tbi",
         hc_identifiers,
@@ -375,7 +375,7 @@ workflow {
     filter_gSNP_GATK(
       params.reference_fasta,
       "${params.reference_fasta}.fai",
-      params.reference_dict,
+      "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
       recalibrate_indels.out.vcf,
       recalibrate_indels.out.vcf_index,
       filter_gSNP_identifiers

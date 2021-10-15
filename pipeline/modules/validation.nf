@@ -44,7 +44,8 @@ process calculate_sha512 {
     container params.docker_image_validate
     publishDir path: "${params.output_dir}/output",
       mode: "copy",
-      pattern: "*.sha512"
+      pattern: "*.sha512",
+      saveAs: { filename -> (filename.endsWith(".bai.sha512") && !filename.endsWith(".bam.bai.sha512")) ? "${file(file(filename).baseName).baseName}.bam.bai.sha512" : "${filename}"}
 
     publishDir path: "${params.log_output_dir}/process-log",
       pattern: ".command.*",

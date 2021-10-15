@@ -137,7 +137,8 @@ process run_MergeSamFiles_Picard {
     container params.docker_image_picard
     publishDir path: "${params.output_dir}/output",
         mode: "copy",
-        pattern: "*_merged*"
+        pattern: "*_merged*",
+        saveAs: { filename -> (file(filename).getExtension() == "bai") ? "${file(filename).baseName}.bam.bai" : "${filename}" }
 
     publishDir path: "${params.log_output_dir}/process-log",
         pattern: ".command.*",

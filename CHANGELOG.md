@@ -18,4 +18,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Parallelize GetPileupSummaries, CalculateContamination, and DepthOfCoverage processes
 - Split HaplotypeCaller process into process for VCF and GVCF modes
 - Parallelize GVCF HC process
+
+### Changed
 - Adjust static resource allocation to be more efficient
+- Auto-detect reference fasta dictionary
+- Rename ".bai" output files to ".bam.bai"
