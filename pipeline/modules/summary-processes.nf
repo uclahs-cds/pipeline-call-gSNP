@@ -202,7 +202,7 @@ workflow calculate_contamination_normal {
     run_GetPileupSummaries_GATK(
         params.reference_fasta,
         "${params.reference_fasta}.fai",
-        params.reference_dict,
+        "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
         params.bundle_contest_hapmap_3p3_vcf_gz,
         "${params.bundle_contest_hapmap_3p3_vcf_gz}.tbi",
         all_intervals.collect(),

@@ -98,7 +98,8 @@ process run_IndelRealigner_GATK {
     publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}",
       mode: "copy",
       enabled: params.save_intermediate_files,
-      pattern: "*_indelrealigned_*"
+      pattern: "*_indelrealigned_*",
+      saveAs: { filename -> (file(filename).getExtension() == "bai") ? "${file(filename).baseName}.bam.bai" : "${filename}" }
 
     publishDir path: "${params.log_output_dir}/process-log",
       pattern: ".command.*",
@@ -155,7 +156,7 @@ workflow realign_indels {
     run_RealignerTargetCreator_GATK(
         params.reference_fasta,
         "${params.reference_fasta}.fai",
-        params.reference_dict,
+        "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
         params.bundle_mills_and_1000g_gold_standard_indels_vcf_gz,
         "${params.bundle_mills_and_1000g_gold_standard_indels_vcf_gz}.tbi",
         params.bundle_known_indels_vcf_gz,
@@ -166,7 +167,7 @@ workflow realign_indels {
     run_IndelRealigner_GATK(
         params.reference_fasta,
         "${params.reference_fasta}.fai",
-        params.reference_dict,
+        "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
         params.bundle_mills_and_1000g_gold_standard_indels_vcf_gz,
         "${params.bundle_mills_and_1000g_gold_standard_indels_vcf_gz}.tbi",
         params.bundle_known_indels_vcf_gz,

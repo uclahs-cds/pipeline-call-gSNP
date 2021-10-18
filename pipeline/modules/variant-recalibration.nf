@@ -342,7 +342,7 @@ workflow recalibrate_snps {
   run_VariantRecalibratorSNP_GATK(
       params.reference_fasta,
       "${params.reference_fasta}.fai",
-      params.reference_dict,
+      "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
       params.bundle_v0_dbsnp138_vcf_gz,
       "${params.bundle_v0_dbsnp138_vcf_gz}.tbi",
       params.bundle_hapmap_3p3_vcf_gz,
@@ -361,7 +361,7 @@ workflow recalibrate_snps {
       'SNP',
       params.reference_fasta,
       "${params.reference_fasta}.fai",
-      params.reference_dict,
+      "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
       run_VariantRecalibratorSNP_GATK.out.snp_recal
   )
 
@@ -380,7 +380,7 @@ workflow recalibrate_indels {
   run_VariantRecalibratorINDEL_GATK(
       params.reference_fasta,
       "${params.reference_fasta}.fai",
-      params.reference_dict,
+      "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
       params.bundle_mills_and_1000g_gold_standard_indels_vcf_gz,
       "${params.bundle_mills_and_1000g_gold_standard_indels_vcf_gz}.tbi",
       merge_identifiers,
@@ -393,7 +393,7 @@ workflow recalibrate_indels {
       'SNP_AND_INDEL',
       params.reference_fasta,
       "${params.reference_fasta}.fai",
-      params.reference_dict,
+      "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
       run_VariantRecalibratorINDEL_GATK.out.indel_recal
   )
 
