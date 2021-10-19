@@ -47,7 +47,7 @@ process run_GetPileupSummaries_GATK {
     path("*_getpileupsummaries.table"), emit: pileupsummaries
 
     script:
-    interval_options = all_intervals.collect{ "--intervals '$it'" }.join(' ')
+    interval_options = params.is_targeted ? "--intervals ${params.intervals}" : all_intervals.collect{ "--intervals '$it'" }.join(' ')
     output_filename = (sample_type == "normal") ? "${normal_id}_getpileupsummaries.table" : "${tumour_id}_getpileupsummaries.table"
     """
     set -euo pipefail
@@ -171,7 +171,7 @@ process run_DepthOfCoverage_GATK {
     params.is_DOC_run
 
     script:
-    interval_options = all_intervals.collect{ "--intervals '$it'" }.join(' ')
+    interval_options = params.is_targeted ? "--intervals ${params.intervals}" : all_intervals.collect{ "--intervals '$it'" }.join(' ')
     output_id = (sample_type == "normal") ? "${normal_id}" : "${tumour_id}"
     """
     set -euo pipefail
@@ -235,7 +235,7 @@ workflow calculate_contamination_tumour {
     run_GetPileupSummaries_GATK(
         params.reference_fasta,
         "${params.reference_fasta}.fai",
-        params.reference_dict,
+        "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
         params.bundle_contest_hapmap_3p3_vcf_gz,
         "${params.bundle_contest_hapmap_3p3_vcf_gz}.tbi",
         all_intervals.collect(),

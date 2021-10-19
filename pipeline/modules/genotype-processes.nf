@@ -111,6 +111,7 @@ process run_HaplotypeCallerVCF_GATK {
     script:
     output_filename = "${sample_id}_${task.index}.vcf"
     interval_str = "--intervals ${interval}"
+    targeted_interval_options = params.is_targeted ? "--intervals ${params.intervals} --interval-set-rule INTERSECTION" : ""
     bam_input_str = params.is_NT_paired ? "--input ${bam} --input ${bam_tumour}" : "--input ${bam}"
     interval_padding = params.is_targeted ? "--interval-padding 100" : ""
 
@@ -128,6 +129,7 @@ process run_HaplotypeCallerVCF_GATK {
         --sample-ploidy 2 \
         --standard-min-confidence-threshold-for-calling 50 \
         ${interval_str} \
+        ${targeted_interval_options} \
         ${interval_padding}
     """
 }

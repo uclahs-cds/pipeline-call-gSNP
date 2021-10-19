@@ -121,7 +121,7 @@ workflow {
     }
 
     run_SplitIntervals_GATK(
-      intervals,
+      params.all_intervals,
       params.reference_fasta,
       "${params.reference_fasta}.fai",
       "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict"
@@ -130,19 +130,25 @@ workflow {
     split_intervals = run_SplitIntervals_GATK.out.interval_list.flatten()
 
 
-    if (params.is_targeted) {
-      // Cross the input files with all the exome targets
-      ir_input = input_ch_input_csv.combine(Channel.of(params.intervals))
-          .map{ input_csv,interval -> [input_csv.sample_id, input_csv.normal_id, input_csv.tumour_id, input_csv.normal_BAM, input_csv.normal_index, input_csv.tumour_BAM, input_csv.tumour_index, interval] }
-      ir_input_no_interval = input_ch_input_csv.combine(Channel.of(params.intervals))
-          .map{ input_csv,interval -> [input_csv.sample_id, input_csv.normal_id, input_csv.tumour_id, input_csv.normal_BAM, input_csv.normal_index, input_csv.tumour_BAM, input_csv.tumour_index] }
-    } else {
-      // Cross the input files with all the chr list
-      ir_input = input_ch_input_csv.combine(split_intervals)
-          .map{ input_csv,interval -> [input_csv.sample_id, input_csv.normal_id, input_csv.tumour_id, input_csv.normal_BAM, input_csv.normal_index, input_csv.tumour_BAM, input_csv.tumour_index, interval] }
-      ir_input_no_interval = input_ch_input_csv.combine(split_intervals)
-          .map{ input_csv,interval -> [input_csv.sample_id, input_csv.normal_id, input_csv.tumour_id, input_csv.normal_BAM, input_csv.normal_index, input_csv.tumour_BAM, input_csv.tumour_index] }
-    }
+    // if (params.is_targeted) {
+    //   // Cross the input files with all the exome targets
+    //   ir_input = input_ch_input_csv.combine(Channel.of(params.intervals))
+    //       .map{ input_csv,interval -> [input_csv.sample_id, input_csv.normal_id, input_csv.tumour_id, input_csv.normal_BAM, input_csv.normal_index, input_csv.tumour_BAM, input_csv.tumour_index, interval] }
+    //   ir_input_no_interval = input_ch_input_csv.combine(Channel.of(params.intervals))
+    //       .map{ input_csv,interval -> [input_csv.sample_id, input_csv.normal_id, input_csv.tumour_id, input_csv.normal_BAM, input_csv.normal_index, input_csv.tumour_BAM, input_csv.tumour_index] }
+    // } else {
+    //   // Cross the input files with all the chr list
+    //   ir_input = input_ch_input_csv.combine(split_intervals)
+    //       .map{ input_csv,interval -> [input_csv.sample_id, input_csv.normal_id, input_csv.tumour_id, input_csv.normal_BAM, input_csv.normal_index, input_csv.tumour_BAM, input_csv.tumour_index, interval] }
+    //   ir_input_no_interval = input_ch_input_csv.combine(split_intervals)
+    //       .map{ input_csv,interval -> [input_csv.sample_id, input_csv.normal_id, input_csv.tumour_id, input_csv.normal_BAM, input_csv.normal_index, input_csv.tumour_BAM, input_csv.tumour_index] }
+    // }
+
+    ir_input = input_ch_input_csv.combine(split_intervals)
+        .map{ input_csv,interval -> [input_csv.sample_id, input_csv.normal_id, input_csv.tumour_id, input_csv.normal_BAM, input_csv.normal_index, input_csv.tumour_BAM, input_csv.tumour_index, interval] }
+    ir_input_no_interval = input_ch_input_csv.combine(split_intervals)
+        .map{ input_csv,interval -> [input_csv.sample_id, input_csv.normal_id, input_csv.tumour_id, input_csv.normal_BAM, input_csv.normal_index, input_csv.tumour_BAM, input_csv.tumour_index] }
+
 
     realign_indels(
         ir_input,
@@ -259,13 +265,13 @@ workflow {
         )
     }
 
-    if (params.is_targeted) {
-      normal_bam_ch = run_MergeSamFiles_Picard_normal.out.merged_bam
-      normal_bam_index_ch = run_MergeSamFiles_Picard_normal.out.merged_bam_index
-      tumour_bam_ch = merged_tumour_bam
-      tumour_bam_index_ch = merged_tumour_bam_index
-      hc_interval = split_intervals
-    }
+    // if (params.is_targeted) {
+    //   normal_bam_ch = run_MergeSamFiles_Picard_normal.out.merged_bam
+    //   normal_bam_index_ch = run_MergeSamFiles_Picard_normal.out.merged_bam_index
+    //   tumour_bam_ch = merged_tumour_bam
+    //   tumour_bam_index_ch = merged_tumour_bam_index
+    //   hc_interval = split_intervals
+    // }
 
     run_HaplotypeCallerVCF_GATK(
       params.reference_fasta,
