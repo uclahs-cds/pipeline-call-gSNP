@@ -47,7 +47,7 @@ process run_GetPileupSummaries_GATK {
     path("*_getpileupsummaries.table"), emit: pileupsummaries
 
     script:
-    interval_options = params.is_targeted ? "--intervals ${params.intervals}" : all_intervals.collect{ "--intervals '$it'" }.join(' ')
+    interval_options = all_intervals.collect{ "--intervals '$it'" }.join(' ')
     output_filename = (sample_type == "normal") ? "${normal_id}_getpileupsummaries.table" : "${tumour_id}_getpileupsummaries.table"
     """
     set -euo pipefail

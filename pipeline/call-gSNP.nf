@@ -47,7 +47,7 @@ Starting workflow...
         """
 
 include { run_validate_PipeVal; calculate_sha512 } from './modules/validation.nf'
-include { run_SplitIntervals_GATK; run_HaplotypeCallerVCF_GATK; run_HaplotypeCallerGVCF_GATK as run_HaplotypeCallerGVCF_GATK_normal; run_HaplotypeCallerGVCF_GATK as run_HaplotypeCallerGVCF_GATK_tumour; run_MergeVcfs_Picard as run_MergeVcfs_Picard_VCF; run_MergeVcfs_Picard as run_MergeVcfs_Picard_normal_GVCF; run_MergeVcfs_Picard as run_MergeVcfs_Picard_tumour_GVCF } from './modules/genotype-processes.nf'
+include { run_SplitIntervals_GATK; run_SplitIntervals_GATK as run_SplitIntervals_GATK_targeted; run_HaplotypeCallerVCF_GATK; run_HaplotypeCallerGVCF_GATK as run_HaplotypeCallerGVCF_GATK_normal; run_HaplotypeCallerGVCF_GATK as run_HaplotypeCallerGVCF_GATK_tumour; run_MergeVcfs_Picard as run_MergeVcfs_Picard_VCF; run_MergeVcfs_Picard as run_MergeVcfs_Picard_normal_GVCF; run_MergeVcfs_Picard as run_MergeVcfs_Picard_tumour_GVCF } from './modules/genotype-processes.nf'
 include { recalibrate_snps; recalibrate_indels; filter_gSNP_GATK } from './modules/variant-recalibration.nf'
 include { realign_indels } from './modules/indel-realignment.nf'
 include { recalibrate_base } from './modules/base-recalibration.nf'
@@ -124,10 +124,20 @@ workflow {
       params.all_intervals,
       params.reference_fasta,
       "${params.reference_fasta}.fai",
-      "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict"
+      "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
+      "genome-intervals"
+    )
+
+    run_SplitIntervals_GATK_targeted(
+      params.intervals,
+      params.reference_fasta,
+      "${params.reference_fasta}.fai",
+      "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
+      "targeted-intervals"
     )
 
     split_intervals = run_SplitIntervals_GATK.out.interval_list.flatten()
+    split_targeted_intervals = run_SplitIntervals_GATK_targeted.out.interval_list.flatten()
 
 
     // if (params.is_targeted) {
@@ -224,10 +234,23 @@ workflow {
       merged_tumour_bam_index = Channel.of("/scratch/placeholder_index.txt")
     }
 
+
+    if (params.is_targeted) {
+      hc_interval = split_targeted_intervals
+      summary_intervals = split_targeted_intervals
+
+      normal_bam_ch = run_MergeSamFiles_Picard_normal.out.merged_bam
+      normal_bam_index_ch = run_MergeSamFiles_Picard_normal.out.merged_bam_index
+      tumour_bam_ch = merged_tumour_bam
+      tumour_bam_index_ch = merged_tumour_bam_index
+    } else {
+      summary_intervals = split_intervals
+    }
+
     calculate_contamination_normal(
       run_MergeSamFiles_Picard_normal.out.merged_bam,
       run_MergeSamFiles_Picard_normal.out.merged_bam_index,
-      split_intervals,
+      summary_intervals,
       contamination_identifiers
       )
 
@@ -235,7 +258,7 @@ workflow {
       calculate_contamination_tumour(
         merged_tumour_bam,
         merged_tumour_bam_index,
-        split_intervals,
+        summary_intervals,
         contamination_identifiers,
         calculate_contamination_normal.out.pileupsummaries
         )
@@ -245,7 +268,7 @@ workflow {
       params.reference_fasta,
       "${params.reference_fasta}.fai",
       "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
-      split_intervals.collect(),
+      summary_intervals.collect(),
       run_MergeSamFiles_Picard_normal.out.merged_bam,
       run_MergeSamFiles_Picard_normal.out.merged_bam_index,
       "normal",
@@ -264,14 +287,6 @@ workflow {
         doc_identifiers
         )
     }
-
-    // if (params.is_targeted) {
-    //   normal_bam_ch = run_MergeSamFiles_Picard_normal.out.merged_bam
-    //   normal_bam_index_ch = run_MergeSamFiles_Picard_normal.out.merged_bam_index
-    //   tumour_bam_ch = merged_tumour_bam
-    //   tumour_bam_index_ch = merged_tumour_bam_index
-    //   hc_interval = split_intervals
-    // }
 
     run_HaplotypeCallerVCF_GATK(
       params.reference_fasta,

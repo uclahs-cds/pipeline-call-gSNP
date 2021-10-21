@@ -20,7 +20,7 @@ process run_SplitIntervals_GATK {
 
     publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}",
                mode: "copy",
-               pattern: "interval-files/*-scattered.interval_list",
+               pattern: "${out_folder_name}/*-scattered.interval_list",
                enabled: params.save_intermediate_files
     publishDir "${params.log_output_dir}/process-log",
                mode: "copy",
@@ -32,9 +32,10 @@ process run_SplitIntervals_GATK {
     path reference
     path reference_index
     path reference_dict
+    val out_folder_name
 
     output:
-    path 'interval-files/*-scattered.interval_list', emit: interval_list
+    path "${out_folder_name}/*-scattered.interval_list", emit: interval_list
     path ".command.*"
 
     """
@@ -44,7 +45,7 @@ process run_SplitIntervals_GATK {
         -L $intervals \
         --scatter-count ${params.scatter_count} \
         ${params.split_intervals_extra_args} \
-        -O interval-files
+        -O ${out_folder_name}
     """
 }
 
@@ -111,7 +112,6 @@ process run_HaplotypeCallerVCF_GATK {
     script:
     output_filename = "${sample_id}_${task.index}.vcf"
     interval_str = "--intervals ${interval}"
-    targeted_interval_options = params.is_targeted ? "--intervals ${params.intervals} --interval-set-rule INTERSECTION" : ""
     bam_input_str = params.is_NT_paired ? "--input ${bam} --input ${bam_tumour}" : "--input ${bam}"
     interval_padding = params.is_targeted ? "--interval-padding 100" : ""
 
@@ -129,7 +129,6 @@ process run_HaplotypeCallerVCF_GATK {
         --sample-ploidy 2 \
         --standard-min-confidence-threshold-for-calling 50 \
         ${interval_str} \
-        ${targeted_interval_options} \
         ${interval_padding}
     """
 }
