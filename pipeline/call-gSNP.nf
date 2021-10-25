@@ -54,6 +54,7 @@ include { recalibrate_base } from './modules/base-recalibration.nf'
 include { reheader_interval_bams; run_MergeSamFiles_Picard as run_MergeSamFiles_Picard_normal; run_MergeSamFiles_Picard as run_MergeSamFiles_Picard_tumour } from './modules/bam-processing.nf'
 include { calculate_contamination_normal; calculate_contamination_tumour; run_DepthOfCoverage_GATK as run_DepthOfCoverage_GATK_normal; run_DepthOfCoverage_GATK as run_DepthOfCoverage_GATK_tumour } from './modules/summary-processes.nf'
 include { remove_intermediate_files as remove_realigned_bams; remove_intermediate_files as remove_recalibrated_bams; remove_intermediate_files as remove_reheadered_bams } from './modules/intermediate-cleanup.nf'
+include { extract_GenomeIntervals } from './modules/extract-intervals.nf'
 
 // Returns the index file for the given bam or vcf
 def indexFile(bam_or_vcf) {
@@ -94,6 +95,9 @@ if (params.is_NT_paired) {
     input_ch_input_csv.flatMap{it -> [it.normal_BAM, it.normal_index]}.set{input_validation}
 }
 
+// Detect whether the job is for a targeted sample
+params.is_targeted = (params.intervals) ? true : false
+
 identifiers = input_ch_input_csv.map{it -> [it.sample_id, it.normal_id, it.tumour_id]}.collect()
 identifiers.set{ merge_identifiers }
 identifiers.set{ recal_snp_identifiers }
@@ -114,10 +118,14 @@ workflow {
       storeDir: "${params.output_dir}/validation"
       )
 
-    if (params.intervals) {
+    if (params.is_targeted) {
       intervals = params.intervals
     } else {
-      intervals = "${projectDir}/config/hg38_decoy_chromosomes_canonical.list"
+      extract_GenomeIntervals(
+        "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict"
+        )
+      
+      intervals = extract_GenomeIntervals.out.genomic_intervals
     }
 
     run_SplitIntervals_GATK(
@@ -154,7 +162,8 @@ workflow {
       realign_indels.out.realigned_bam_index,
       realign_indels.out.associated_interval,
       realign_indels.out.includes_unmapped,
-      bqsr_generator_identifiers
+      bqsr_generator_identifiers,
+      intervals
       )
 
     remove_realigned_bams(
