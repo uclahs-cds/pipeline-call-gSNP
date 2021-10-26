@@ -95,9 +95,6 @@ if (params.is_NT_paired) {
     input_ch_input_csv.flatMap{it -> [it.normal_BAM, it.normal_index]}.set{input_validation}
 }
 
-// Detect whether the job is for a targeted sample
-params.is_targeted = (params.intervals) ? true : false
-
 identifiers = input_ch_input_csv.map{it -> [it.sample_id, it.normal_id, it.tumour_id]}.collect()
 identifiers.set{ merge_identifiers }
 identifiers.set{ recal_snp_identifiers }
