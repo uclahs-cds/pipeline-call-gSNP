@@ -25,13 +25,13 @@ Raw GVCF comparison:
 |7.0.0|51962094|3234 (0.0062%)|
 |DSL1-5.4.5|51962094|3454 (0.0066%)|
 
-Filtered SNV GCVF:
+Filtered SNV GVCF:
 |Version|VCF (Common)|VCF (Unique)|
 |:---:|:---:|:---:|
 |7.0.0|3265039|24550 (0.74%)|
 |DSL1-5.4.5|3265039|17728 (0.54%)|
 
-Filtered INDEL GCVF:
+Filtered INDEL GVCF:
 |Version|VCF (Common)|VCF (Unique)|
 |:---:|:---:|:---:|
 |7.0.0|811214|2875 (0.35%)|
@@ -65,13 +65,13 @@ Raw GVCF comparison:
 |7.0.0|51588596|3653326 (6.61%)|
 |DSL1-5.4.3|51588596|7506 (0.014%)|
 
-Filtered SNV GCVF:
+Filtered SNV GVCF:
 |Version|VCF (Common)|VCF (Unique)|
 |:---:|:---:|:---:|
 |7.0.0|3035126|130500 (4.02%)|
 |DSL1-5.4.3|3035126|77095 (2.38%)|
 
-Filtered INDEL GCVF:
+Filtered INDEL GVCF:
 |Version|VCF (Common)|VCF (Unique)|
 |:---:|:---:|:---:|
 |7.0.0|844167|6042 (0.71%)|

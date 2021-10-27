@@ -7,6 +7,11 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
+## [Unreleased]
+### Added
+
+### Changed
+
 ## [7.0.0] - 2021-10-27
 ### Added
 - Update call-gSNP to DSL2
@@ -25,8 +30,3 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Auto-detect reference fasta dictionary
 - Rename ".bai" output files to ".bam.bai"
 - Auto-detect when in targeted mode and when in WGS mode
-
-## [Unreleased]
-### Added
-
-### Changed
