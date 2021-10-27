@@ -9,6 +9,11 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 ### Added
+
+### Changed
+
+## [7.0.0] - 2021-10-27
+### Added
 - Update call-gSNP to DSL2
 - Add GPL2 license
 - Parallelize MergeVcfs
