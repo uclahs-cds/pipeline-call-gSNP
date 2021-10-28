@@ -9,6 +9,11 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 ### Added
+
+### Changed
+
+## [7.0.0] - 2021-10-27
+### Added
 - Update call-gSNP to DSL2
 - Add GPL2 license
 - Parallelize MergeVcfs
@@ -18,8 +23,10 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Parallelize GetPileupSummaries, CalculateContamination, and DepthOfCoverage processes
 - Split HaplotypeCaller process into process for VCF and GVCF modes
 - Parallelize GVCF HC process
+- Extract genome intervals from reference dictionary
 
 ### Changed
 - Adjust static resource allocation to be more efficient
 - Auto-detect reference fasta dictionary
 - Rename ".bai" output files to ".bam.bai"
+- Auto-detect when in targeted mode and when in WGS mode

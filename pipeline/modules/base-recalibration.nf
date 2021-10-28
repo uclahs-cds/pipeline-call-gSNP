@@ -171,6 +171,7 @@ workflow recalibrate_base {
     associated_interval
     includes_unmapped
     bqsr_generator_identifiers
+    intervals
 
     main:
     run_BaseRecalibrator_GATK(
@@ -183,7 +184,7 @@ workflow recalibrate_base {
       "${params.bundle_known_indels_vcf_gz}.tbi",
       params.bundle_v0_dbsnp138_vcf_gz,
       "${params.bundle_v0_dbsnp138_vcf_gz}.tbi",
-      params.intervals,
+      intervals,
       realigned_bam.collect(),
       realigned_bam_index.collect(),
       bqsr_generator_identifiers
