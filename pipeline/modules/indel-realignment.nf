@@ -131,7 +131,6 @@ process run_IndelRealigner_GATK {
     bam_input_str = params.is_NT_paired ? "--input_file ${bam} --input_file ${bam_tumour}" : "--input_file ${bam}"
     unmapped_interval_option = (task.index == 1) ? "--intervals unmapped" : ""
     has_unmapped = (task.index == 1) ? true : false
-    // combined_interval_options = (params.is_targeted) ? "" : "--intervals ${scatter_intervals} ${unmapped_interval_option}"
     combined_interval_options = "--intervals ${scatter_intervals} ${unmapped_interval_option}"
     """
     set -euo pipefail

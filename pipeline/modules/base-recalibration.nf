@@ -133,7 +133,6 @@ process run_ApplyBQSR_GATK {
 
     script:
     unmapped_interval_option = (includes_unmapped) ? "--intervals unmapped" : ""
-    // combined_interval_options = (params.is_targeted) ? "" : "--intervals ${interval} ${unmapped_interval_option}"
     combined_interval_options = "--intervals ${interval} ${unmapped_interval_option}"
     """
     set -euo pipefail
