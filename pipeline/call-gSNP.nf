@@ -143,20 +143,6 @@ workflow {
       split_targeted_intervals = run_SplitIntervals_GATK_targeted.out.interval_list.flatten()
     }
 
-    // if (params.is_targeted) {
-    //   // Cross the input files with all the exome targets
-    //   ir_input = input_ch_input_csv.combine(Channel.of(params.intervals))
-    //       .map{ input_csv,interval -> [input_csv.sample_id, input_csv.normal_id, input_csv.tumour_id, input_csv.normal_BAM, input_csv.normal_index, input_csv.tumour_BAM, input_csv.tumour_index, interval] }
-    //   ir_input_no_interval = input_ch_input_csv.combine(Channel.of(params.intervals))
-    //       .map{ input_csv,interval -> [input_csv.sample_id, input_csv.normal_id, input_csv.tumour_id, input_csv.normal_BAM, input_csv.normal_index, input_csv.tumour_BAM, input_csv.tumour_index] }
-    // } else {
-    //   // Cross the input files with all the chr list
-    //   ir_input = input_ch_input_csv.combine(split_intervals)
-    //       .map{ input_csv,interval -> [input_csv.sample_id, input_csv.normal_id, input_csv.tumour_id, input_csv.normal_BAM, input_csv.normal_index, input_csv.tumour_BAM, input_csv.tumour_index, interval] }
-    //   ir_input_no_interval = input_ch_input_csv.combine(split_intervals)
-    //       .map{ input_csv,interval -> [input_csv.sample_id, input_csv.normal_id, input_csv.tumour_id, input_csv.normal_BAM, input_csv.normal_index, input_csv.tumour_BAM, input_csv.tumour_index] }
-    // }
-
     ir_input = input_ch_input_csv.combine(split_intervals)
         .map{ input_csv,interval -> [input_csv.sample_id, input_csv.normal_id, input_csv.tumour_id, input_csv.normal_BAM, input_csv.normal_index, input_csv.tumour_BAM, input_csv.tumour_index, interval] }
     ir_input_no_interval = input_ch_input_csv.combine(split_intervals)
