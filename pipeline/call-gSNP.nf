@@ -115,35 +115,33 @@ workflow {
       storeDir: "${params.output_dir}/validation"
       )
 
-    if (params.is_targeted) {
-      intervals = params.intervals
-    } else {
-      extract_GenomeIntervals(
-        "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict"
-        )
-      
-      intervals = extract_GenomeIntervals.out.genomic_intervals
-    }
+    extract_GenomeIntervals(
+      "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict"
+      )
+    
+    intervals = extract_GenomeIntervals.out.genomic_intervals
 
     run_SplitIntervals_GATK(
-      params.all_intervals,
+      intervals,
       params.reference_fasta,
       "${params.reference_fasta}.fai",
       "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
       "genome-intervals"
     )
 
-    run_SplitIntervals_GATK_targeted(
-      params.intervals,
-      params.reference_fasta,
-      "${params.reference_fasta}.fai",
-      "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
-      "targeted-intervals"
-    )
-
     split_intervals = run_SplitIntervals_GATK.out.interval_list.flatten()
-    split_targeted_intervals = run_SplitIntervals_GATK_targeted.out.interval_list.flatten()
 
+    if (params.is_targeted) {
+      run_SplitIntervals_GATK_targeted(
+        params.intervals,
+        params.reference_fasta,
+        "${params.reference_fasta}.fai",
+        "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
+        "targeted-intervals"
+      )
+
+      split_targeted_intervals = run_SplitIntervals_GATK_targeted.out.interval_list.flatten()
+    }
 
     // if (params.is_targeted) {
     //   // Cross the input files with all the exome targets
@@ -169,6 +167,12 @@ workflow {
         ir_input,
         ir_input_no_interval
         )
+    
+    if (params.is_targeted) {
+      base_recal_intervals = params.intervals
+    } else {
+      base_recal_intervals = intervals
+    }
 
     recalibrate_base(
       realign_indels.out.realigned_bam,
@@ -176,7 +180,7 @@ workflow {
       realign_indels.out.associated_interval,
       realign_indels.out.includes_unmapped,
       bqsr_generator_identifiers,
-      intervals
+      base_recal_intervals
       )
 
     remove_realigned_bams(
