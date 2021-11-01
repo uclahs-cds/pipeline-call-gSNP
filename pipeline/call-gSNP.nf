@@ -126,7 +126,8 @@ workflow {
       params.reference_fasta,
       "${params.reference_fasta}.fai",
       "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
-      "genome-intervals"
+      "genome-intervals",
+      false
     )
 
     split_intervals = run_SplitIntervals_GATK.out.interval_list.flatten()
@@ -137,7 +138,8 @@ workflow {
         params.reference_fasta,
         "${params.reference_fasta}.fai",
         "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
-        "targeted-intervals"
+        "targeted-intervals",
+        true
       )
 
       split_targeted_intervals = run_SplitIntervals_GATK_targeted.out.interval_list.flatten()
