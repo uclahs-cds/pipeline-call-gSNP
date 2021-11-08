@@ -339,12 +339,18 @@ workflow {
         .collect()
     }
 
-    reheadered_bams_to_delete = run_HaplotypeCallerVCF_GATK.out.normal_bam_for_deletion.mix(
-      run_HaplotypeCallerVCF_GATK.out.normal_bam_index_for_deletion,
-      run_HaplotypeCallerVCF_GATK.out.tumour_bam_for_deletion,
-      run_HaplotypeCallerVCF_GATK.out.tumour_bam_index_for_deletion
-      )
-    
+    if (params.is_NT_paired) {
+      reheadered_bams_to_delete = reheader_interval_bams.out.reheadered_normal_bam.mix(
+        reheader_interval_bams.out.reheadered_normal_bam_index,
+        reheader_interval_bams.out.reheadered_tumour_bam,
+        reheader_interval_bams.out.reheadered_normal_bam_index
+        )
+    } else {
+      reheadered_bams_to_delete = recalibrate_base.out.recalibrated_normal_bam.mix(
+        recalibrate_base.out.recalibrated_normal_bam_index
+        )
+    }
+      
     reheadered_deletion_signal = run_MergeSamFiles_Picard_normal.out.merged_bam.mix(
       merged_tumour_bam,
       hc_completion_signal
@@ -355,7 +361,7 @@ workflow {
       reheadered_bams_to_delete,
       reheadered_deletion_signal
       )
-
+    
     run_MergeVcfs_Picard_VCF(
       run_HaplotypeCallerVCF_GATK.out.vcf.collect(),
       "VCF",
