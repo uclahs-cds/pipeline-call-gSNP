@@ -228,8 +228,8 @@ workflow {
       merged_tumour_bam = run_MergeSamFiles_Picard_tumour.out.merged_bam
       merged_tumour_bam_index = run_MergeSamFiles_Picard_tumour.out.merged_bam_index
     } else {
-      merged_tumour_bam = Channel.of("/scratch/placeholder.txt")
-      merged_tumour_bam_index = Channel.of("/scratch/placeholder_index.txt")
+      merged_tumour_bam = Channel.of(1..params.scatter_count).map{"/scratch/placeholder_${it}.txt"}
+      merged_tumour_bam_index = Channel.of(1..params.scatter_count).map{"/scratch/placeholder_${it}_index.txt"}
     }
 
 
