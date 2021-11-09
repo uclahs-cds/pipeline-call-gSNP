@@ -15,7 +15,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### Added
 - Parallelize IR and BQSR in WXS/WES mode
 
-### Changed
+### Fixed
 - Fix targeted, single sample mode bugs
 
 ---
