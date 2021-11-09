@@ -171,7 +171,7 @@ process run_DepthOfCoverage_GATK {
     params.is_DOC_run
 
     script:
-    interval_options = all_intervals.collect{ "--intervals '$it'" }.join(' ')
+    interval_options = params.is_targeted ? "--intervals ${params.intervals}" : all_intervals.collect{ "--intervals '$it'" }.join(' ')
     output_id = (sample_type == "normal") ? "${normal_id}" : "${tumour_id}"
     """
     set -euo pipefail

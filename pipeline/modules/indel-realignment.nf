@@ -51,6 +51,7 @@ process run_RealignerTargetCreator_GATK {
     script:
     bam_input_str = params.is_NT_paired ? "--input_file ${bam} --input_file ${bam_tumour}" : "--input_file ${bam}"
     interval_padding = params.is_targeted ? "--interval_padding 100" : ""
+    targeted_interval_params = params.is_targeted ? "--intervals ${params.intervals} --interval_set_rule INTERSECTION" : ""
     """
     set -euo pipefail
     java -Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=/scratch \
@@ -64,7 +65,8 @@ process run_RealignerTargetCreator_GATK {
         --out ${sample_id}_RTC_${task.index}.intervals \
         --allow_potentially_misencoded_quality_scores \
         --num_threads 2 \
-        ${interval_padding}
+        ${interval_padding} \
+        ${targeted_interval_params} || touch ${sample_id}_RTC_${task.index}.intervals
     """
 }
 
@@ -129,7 +131,7 @@ process run_IndelRealigner_GATK {
     bam_input_str = params.is_NT_paired ? "--input_file ${bam} --input_file ${bam_tumour}" : "--input_file ${bam}"
     unmapped_interval_option = (task.index == 1) ? "--intervals unmapped" : ""
     has_unmapped = (task.index == 1) ? true : false
-    combined_interval_options = (params.is_targeted) ? "" : "--intervals ${scatter_intervals} ${unmapped_interval_option}"
+    combined_interval_options = "--intervals ${scatter_intervals} ${unmapped_interval_option}"
     """
     set -euo pipefail
     java -Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=/scratch \

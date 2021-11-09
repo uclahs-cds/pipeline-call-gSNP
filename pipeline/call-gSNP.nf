@@ -47,7 +47,7 @@ Starting workflow...
         """
 
 include { run_validate_PipeVal; calculate_sha512 } from './modules/validation.nf'
-include { run_SplitIntervals_GATK; run_HaplotypeCallerVCF_GATK; run_HaplotypeCallerGVCF_GATK as run_HaplotypeCallerGVCF_GATK_normal; run_HaplotypeCallerGVCF_GATK as run_HaplotypeCallerGVCF_GATK_tumour; run_MergeVcfs_Picard as run_MergeVcfs_Picard_VCF; run_MergeVcfs_Picard as run_MergeVcfs_Picard_normal_GVCF; run_MergeVcfs_Picard as run_MergeVcfs_Picard_tumour_GVCF } from './modules/genotype-processes.nf'
+include { run_SplitIntervals_GATK; run_SplitIntervals_GATK as run_SplitIntervals_GATK_targeted; run_HaplotypeCallerVCF_GATK; run_HaplotypeCallerGVCF_GATK as run_HaplotypeCallerGVCF_GATK_normal; run_HaplotypeCallerGVCF_GATK as run_HaplotypeCallerGVCF_GATK_tumour; run_MergeVcfs_Picard as run_MergeVcfs_Picard_VCF; run_MergeVcfs_Picard as run_MergeVcfs_Picard_normal_GVCF; run_MergeVcfs_Picard as run_MergeVcfs_Picard_tumour_GVCF } from './modules/genotype-processes.nf'
 include { recalibrate_snps; recalibrate_indels; filter_gSNP_GATK } from './modules/variant-recalibration.nf'
 include { realign_indels } from './modules/indel-realignment.nf'
 include { recalibrate_base } from './modules/base-recalibration.nf'
@@ -115,44 +115,52 @@ workflow {
       storeDir: "${params.output_dir}/validation"
       )
 
-    if (params.is_targeted) {
-      intervals = params.intervals
-    } else {
-      extract_GenomeIntervals(
-        "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict"
-        )
-      
-      intervals = extract_GenomeIntervals.out.genomic_intervals
-    }
+    extract_GenomeIntervals(
+      "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict"
+      )
+    
+    intervals = extract_GenomeIntervals.out.genomic_intervals
 
     run_SplitIntervals_GATK(
       intervals,
       params.reference_fasta,
       "${params.reference_fasta}.fai",
-      "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict"
+      "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
+      "genome-intervals",
+      false
     )
 
     split_intervals = run_SplitIntervals_GATK.out.interval_list.flatten()
 
-
     if (params.is_targeted) {
-      // Cross the input files with all the exome targets
-      ir_input = input_ch_input_csv.combine(Channel.of(params.intervals))
-          .map{ input_csv,interval -> [input_csv.sample_id, input_csv.normal_id, input_csv.tumour_id, input_csv.normal_BAM, input_csv.normal_index, input_csv.tumour_BAM, input_csv.tumour_index, interval] }
-      ir_input_no_interval = input_ch_input_csv.combine(Channel.of(params.intervals))
-          .map{ input_csv,interval -> [input_csv.sample_id, input_csv.normal_id, input_csv.tumour_id, input_csv.normal_BAM, input_csv.normal_index, input_csv.tumour_BAM, input_csv.tumour_index] }
-    } else {
-      // Cross the input files with all the chr list
-      ir_input = input_ch_input_csv.combine(split_intervals)
-          .map{ input_csv,interval -> [input_csv.sample_id, input_csv.normal_id, input_csv.tumour_id, input_csv.normal_BAM, input_csv.normal_index, input_csv.tumour_BAM, input_csv.tumour_index, interval] }
-      ir_input_no_interval = input_ch_input_csv.combine(split_intervals)
-          .map{ input_csv,interval -> [input_csv.sample_id, input_csv.normal_id, input_csv.tumour_id, input_csv.normal_BAM, input_csv.normal_index, input_csv.tumour_BAM, input_csv.tumour_index] }
+      run_SplitIntervals_GATK_targeted(
+        params.intervals,
+        params.reference_fasta,
+        "${params.reference_fasta}.fai",
+        "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
+        "targeted-intervals",
+        true
+      )
+
+      split_targeted_intervals = run_SplitIntervals_GATK_targeted.out.interval_list.flatten()
     }
+
+    ir_input = input_ch_input_csv.combine(split_intervals)
+        .map{ input_csv,interval -> [input_csv.sample_id, input_csv.normal_id, input_csv.tumour_id, input_csv.normal_BAM, input_csv.normal_index, input_csv.tumour_BAM, input_csv.tumour_index, interval] }
+    ir_input_no_interval = input_ch_input_csv.combine(split_intervals)
+        .map{ input_csv,interval -> [input_csv.sample_id, input_csv.normal_id, input_csv.tumour_id, input_csv.normal_BAM, input_csv.normal_index, input_csv.tumour_BAM, input_csv.tumour_index] }
+
 
     realign_indels(
         ir_input,
         ir_input_no_interval
         )
+    
+    if (params.is_targeted) {
+      base_recal_intervals = params.intervals
+    } else {
+      base_recal_intervals = intervals
+    }
 
     recalibrate_base(
       realign_indels.out.realigned_bam,
@@ -160,7 +168,7 @@ workflow {
       realign_indels.out.associated_interval,
       realign_indels.out.includes_unmapped,
       bqsr_generator_identifiers,
-      intervals
+      base_recal_intervals
       )
 
     remove_realigned_bams(
@@ -220,14 +228,27 @@ workflow {
       merged_tumour_bam = run_MergeSamFiles_Picard_tumour.out.merged_bam
       merged_tumour_bam_index = run_MergeSamFiles_Picard_tumour.out.merged_bam_index
     } else {
-      merged_tumour_bam = Channel.of("/scratch/placeholder.txt")
-      merged_tumour_bam_index = Channel.of("/scratch/placeholder_index.txt")
+      merged_tumour_bam = Channel.of(1..params.scatter_count).map{"/scratch/placeholder_${it}.txt"}
+      merged_tumour_bam_index = Channel.of(1..params.scatter_count).map{"/scratch/placeholder_${it}_index.txt"}
+    }
+
+
+    if (params.is_targeted) {
+      hc_interval = split_targeted_intervals
+      summary_intervals = split_targeted_intervals
+
+      normal_bam_ch = run_MergeSamFiles_Picard_normal.out.merged_bam
+      normal_bam_index_ch = run_MergeSamFiles_Picard_normal.out.merged_bam_index
+      tumour_bam_ch = merged_tumour_bam
+      tumour_bam_index_ch = merged_tumour_bam_index
+    } else {
+      summary_intervals = split_intervals
     }
 
     calculate_contamination_normal(
       run_MergeSamFiles_Picard_normal.out.merged_bam,
       run_MergeSamFiles_Picard_normal.out.merged_bam_index,
-      split_intervals,
+      summary_intervals,
       contamination_identifiers
       )
 
@@ -235,7 +256,7 @@ workflow {
       calculate_contamination_tumour(
         merged_tumour_bam,
         merged_tumour_bam_index,
-        split_intervals,
+        summary_intervals,
         contamination_identifiers,
         calculate_contamination_normal.out.pileupsummaries
         )
@@ -245,7 +266,7 @@ workflow {
       params.reference_fasta,
       "${params.reference_fasta}.fai",
       "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
-      split_intervals.collect(),
+      summary_intervals.collect(),
       run_MergeSamFiles_Picard_normal.out.merged_bam,
       run_MergeSamFiles_Picard_normal.out.merged_bam_index,
       "normal",
@@ -263,14 +284,6 @@ workflow {
         "tumour",
         doc_identifiers
         )
-    }
-
-    if (params.is_targeted) {
-      normal_bam_ch = run_MergeSamFiles_Picard_normal.out.merged_bam
-      normal_bam_index_ch = run_MergeSamFiles_Picard_normal.out.merged_bam_index
-      tumour_bam_ch = merged_tumour_bam
-      tumour_bam_index_ch = merged_tumour_bam_index
-      hc_interval = split_intervals
     }
 
     run_HaplotypeCallerVCF_GATK(
@@ -326,12 +339,18 @@ workflow {
         .collect()
     }
 
-    reheadered_bams_to_delete = run_HaplotypeCallerVCF_GATK.out.normal_bam_for_deletion.mix(
-      run_HaplotypeCallerVCF_GATK.out.normal_bam_index_for_deletion,
-      run_HaplotypeCallerVCF_GATK.out.tumour_bam_for_deletion,
-      run_HaplotypeCallerVCF_GATK.out.tumour_bam_index_for_deletion
-      )
-    
+    if (params.is_NT_paired) {
+      reheadered_bams_to_delete = reheader_interval_bams.out.reheadered_normal_bam.mix(
+        reheader_interval_bams.out.reheadered_normal_bam_index,
+        reheader_interval_bams.out.reheadered_tumour_bam,
+        reheader_interval_bams.out.reheadered_normal_bam_index
+        )
+    } else {
+      reheadered_bams_to_delete = recalibrate_base.out.recalibrated_normal_bam.mix(
+        recalibrate_base.out.recalibrated_normal_bam_index
+        )
+    }
+      
     reheadered_deletion_signal = run_MergeSamFiles_Picard_normal.out.merged_bam.mix(
       merged_tumour_bam,
       hc_completion_signal
@@ -342,7 +361,7 @@ workflow {
       reheadered_bams_to_delete,
       reheadered_deletion_signal
       )
-
+    
     run_MergeVcfs_Picard_VCF(
       run_HaplotypeCallerVCF_GATK.out.vcf.collect(),
       "VCF",

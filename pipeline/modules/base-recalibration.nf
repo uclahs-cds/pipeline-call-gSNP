@@ -46,7 +46,7 @@ process run_BaseRecalibrator_GATK {
     path(bundle_known_indels_vcf_gz_tbi)
     path(bundle_v0_dbsnp138_vcf_gz)
     path(bundle_v0_dbsnp138_vcf_gz_tbi)
-    path(all_intervals)
+    path(all_target_intervals)
     path(indelrealigned_bams)
     path(indelrealigned_bams_bai)
     tuple val(sample_id), val(normal_id), val(tumour_id)
@@ -57,7 +57,7 @@ process run_BaseRecalibrator_GATK {
 
     script:
     all_ir_bams = indelrealigned_bams.collect{ "--input '$it'" }.join(' ')
-    targeted_options = params.is_targeted ? "--intervals ${all_intervals} --interval-padding 100" : ""
+    targeted_options = params.is_targeted ? "--intervals ${all_target_intervals} --interval-padding 100" : ""
     """
     set -euo pipefail
     gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=/scratch" \
@@ -133,7 +133,7 @@ process run_ApplyBQSR_GATK {
 
     script:
     unmapped_interval_option = (includes_unmapped) ? "--intervals unmapped" : ""
-    combined_interval_options = (params.is_targeted) ? "" : "--intervals ${interval} ${unmapped_interval_option}"
+    combined_interval_options = "--intervals ${interval} ${unmapped_interval_option}"
     """
     set -euo pipefail
     gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=/scratch" \

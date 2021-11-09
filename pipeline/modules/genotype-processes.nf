@@ -6,6 +6,8 @@
         reference: path to reference genome fasta file
         reference_index: path to index for reference fasta
         reference_dict: path to dictionary for reference fasta
+        out_folder_name: name of output folder for storing scattered intervals
+        targeted_intervals: bool. to indicate whether the intervals are specifically targeted
 
     params:
         params.output_dir: string(path)
@@ -20,7 +22,7 @@ process run_SplitIntervals_GATK {
 
     publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}",
                mode: "copy",
-               pattern: "interval-files/*-scattered.interval_list",
+               pattern: "${out_folder_name}/*-scattered.interval_list",
                enabled: params.save_intermediate_files
     publishDir "${params.log_output_dir}/process-log",
                mode: "copy",
@@ -32,19 +34,24 @@ process run_SplitIntervals_GATK {
     path reference
     path reference_index
     path reference_dict
+    val out_folder_name
+    val targeted_intervals
 
     output:
-    path 'interval-files/*-scattered.interval_list', emit: interval_list
+    path "${out_folder_name}/*-scattered.interval_list", emit: interval_list
     path ".command.*"
 
+    script:
+    subdivision_mode = targeted_intervals ? "--subdivision-mode BALANCING_WITHOUT_INTERVAL_SUBDIVISION" : ""
     """
     set -euo pipefail
     gatk SplitIntervals \
         -R $reference \
         -L $intervals \
         --scatter-count ${params.scatter_count} \
+        ${subdivision_mode} \
         ${params.split_intervals_extra_args} \
-        -O interval-files
+        -O ${out_folder_name}
     """
 }
 
