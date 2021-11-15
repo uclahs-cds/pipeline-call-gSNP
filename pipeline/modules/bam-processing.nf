@@ -167,7 +167,7 @@ process run_MergeSamFiles_Picard {
         -CREATE_INDEX true \
         -SORT_ORDER coordinate \
         -ASSUME_SORTED false \
-        -USE_THREADING false \
+        -USE_THREADING true \
         -VALIDATION_STRINGENCY LENIENT
     """
 }
