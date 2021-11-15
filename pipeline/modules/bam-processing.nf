@@ -29,35 +29,28 @@ process run_reheader_SAMtools {
 
     input:
     tuple val(sample_id), val(normal_id), val(tumour_id)
-    path(normal_bam)
-    path(normal_bam_index)
-    path(tumour_bam)
-    path(tumour_bam_index)
+    path(bam)
+    path(bam_index)
     path(interval)
+    val(bam_type)
 
     output:
     path(".command.*")
-    path("${normal_id}_recalibrated_reheadered_${task.index}.bam"), emit: normal_bam_reheadered
-    path("${tumour_id}_recalibrated_reheadered_${task.index}.bam"), emit: tumour_bam_reheadered
+    path("${keep_id}_recalibrated_reheadered_${task.index}.bam"), emit: bam_reheadered
     path(interval), emit: associated_interval
-    path(normal_bam), emit: normal_bam_for_deletion
-    path(tumour_bam), emit: tumour_bam_for_deletion
-    path(normal_bam_index), emit: normal_bam_index_for_deletion
-    path(tumour_bam_index), emit: tumour_bam_index_for_deletion
+    path(bam), emit: bam_for_deletion
+    path(bam_index), emit: bam_index_for_deletion
 
     script:
+    keep_id = (bam_type == 'normal') ? normal_id : tumour_id
+    remove_id = (bam_type == 'normal') ? tumour_id : normal_id
     """
     set -euo pipefail
 
-    samtools view -H ${normal_bam} | \
-    grep -v -P "^@RG.*SM:${tumour_id}" | \
-    samtools reheader - ${normal_bam} \
-        > ${normal_id}_recalibrated_reheadered_${task.index}.bam
-
-    samtools view -H ${tumour_bam} | \
-    grep -v -P "^@RG.*SM:${normal_id}" | \
-    samtools reheader - ${tumour_bam} \
-        > ${tumour_id}_recalibrated_reheadered_${task.index}.bam
+    samtools view -H ${bam} | \
+    grep -v -P "^@RG.*SM:${remove_id}" | \
+    samtools reheader - ${bam} \
+        > ${keep_id}_recalibrated_reheadered_${task.index}.bam
     """
 }
 
@@ -89,17 +82,12 @@ process run_BuildBamIndex_Picard {
         saveAs: { "${task.process.replace(':', '/')}-${task.index}/log${file(it).getName()}" }
 
     input:
-    path(normal_bam)
-    path(tumour_bam)
+    path(bam)
     path(interval)
 
     output:
     path(".command.*")
-    path(normal_bam), emit: normal_bam_reheadered
-    path("${normal_bam}.bai"), emit: normal_bam_reheadered_index
-    path(tumour_bam), emit: tumour_bam_reheadered
-    path("${tumour_bam}.bai"), emit: tumour_bam_reheadered_index
-    path(interval), emit: associated_interval
+    tuple path(bam), path("${bam}.bai"), path(interval), emit: indexed_out
 
     script:
     """
@@ -107,14 +95,8 @@ process run_BuildBamIndex_Picard {
     java -Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -Djava.io.tmpdir=/scratch \
         -jar /picard-tools/picard.jar BuildBamIndex \
         -VALIDATION_STRINGENCY LENIENT \
-        -INPUT ${normal_bam} \
-        -OUTPUT ${normal_bam}.bai \
-
-    java -Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -Djava.io.tmpdir=/scratch \
-        -jar /picard-tools/picard.jar BuildBamIndex \
-        -VALIDATION_STRINGENCY LENIENT \
-        -INPUT ${tumour_bam} \
-        -OUTPUT ${tumour_bam}.bai \
+        -INPUT ${bam} \
+        -OUTPUT ${bam}.bai \
     """
 }
 
@@ -170,41 +152,4 @@ process run_MergeSamFiles_Picard {
         -USE_THREADING true \
         -VALIDATION_STRINGENCY LENIENT
     """
-}
-
-workflow reheader_interval_bams {
-    take:
-    identifiers
-    normal_bams
-    normal_bams_index
-    tumour_bams
-    tumour_bams_index
-    intervals
-
-    main:
-    run_reheader_SAMtools(
-        identifiers,
-        normal_bams,
-        normal_bams_index,
-        tumour_bams,
-        tumour_bams_index,
-        intervals
-        )
-
-    run_BuildBamIndex_Picard(
-        run_reheader_SAMtools.out.normal_bam_reheadered,
-        run_reheader_SAMtools.out.tumour_bam_reheadered,
-        run_reheader_SAMtools.out.associated_interval
-        )
-
-    emit:
-    reheadered_normal_bam = run_BuildBamIndex_Picard.out.normal_bam_reheadered
-    reheadered_normal_bam_index = run_BuildBamIndex_Picard.out.normal_bam_reheadered_index
-    reheadered_tumour_bam = run_BuildBamIndex_Picard.out.tumour_bam_reheadered
-    reheadered_tumour_bam_index = run_BuildBamIndex_Picard.out.tumour_bam_reheadered_index
-    associated_interval = run_BuildBamIndex_Picard.out.associated_interval
-    normal_bam_for_deletion = run_reheader_SAMtools.out.normal_bam_for_deletion
-    tumour_bam_for_deletion = run_reheader_SAMtools.out.tumour_bam_for_deletion
-    normal_bam_index_for_deletion = run_reheader_SAMtools.out.normal_bam_index_for_deletion
-    tumour_bam_index_for_deletion = run_reheader_SAMtools.out.tumour_bam_index_for_deletion
 }
