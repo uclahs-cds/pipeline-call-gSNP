@@ -344,7 +344,7 @@ workflow {
       reheadered_bams_to_delete = reheader_interval_bams.out.reheadered_normal_bam.mix(
         reheader_interval_bams.out.reheadered_normal_bam_index,
         reheader_interval_bams.out.reheadered_tumour_bam,
-        reheader_interval_bams.out.reheadered_normal_bam_index
+        reheader_interval_bams.out.reheadered_tumour_bam_index
         )
     } else {
       reheadered_bams_to_delete = recalibrate_base.out.recalibrated_normal_bam.mix(

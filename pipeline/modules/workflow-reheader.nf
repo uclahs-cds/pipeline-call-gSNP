@@ -40,14 +40,24 @@ workflow reheader_interval_bams {
         )
 
     // Merge the reheadered, indexed output based on the associated interval
-    run_BuildBamIndex_Picard_normal.out.indexed_out
-        .join(run_BuildBamIndex_Picard_tumour.out.indexed_out, by: 2)
+    normal_for_match = run_BuildBamIndex_Picard_normal.out.indexed_out
+        .map{ it ->
+            [it[0], it[1], it[2], it[2].getFileName()]
+            }
+
+    tumour_for_match = run_BuildBamIndex_Picard_tumour.out.indexed_out
+        .map{ it ->
+            [it[0], it[1], it[2], it[2].getFileName()]
+            }
+
+    normal_for_match
+        .join(tumour_for_match, by: 3)
         .multiMap { it ->
-            associated_interval: it[0]
+            associated_interval: it[3]
             normal_bam_reheadered: it[1]
             normal_bam_reheadered_index: it[2]
-            tumour_bam_reheadered: it[3]
-            tumour_bam_reheadered_index: it[4]
+            tumour_bam_reheadered: it[4]
+            tumour_bam_reheadered_index: it[5]
             }
         .set { matched_output_channel }
 
