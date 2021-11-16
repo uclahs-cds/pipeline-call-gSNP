@@ -3,11 +3,10 @@
 
     input:
         (sample_id, normal_id, tumour_id):  tuples of string identifiers for the samples
-        normal_bam: path to input normal BAM
-        normal_bam_index: path to input normal BAM index
-        tumour_bam: path to input tumour BAM
-        tumour_bam_index: path to input tumour BAM index
+        bam: path to input BAM
+        bam_index: path to input BAM index
         interval: path to associated intervals file to propagate
+        bam_type: indicator of whether processing normal or tumour BAM
 
     params:
         params.output_dir: string(path)
@@ -58,8 +57,7 @@ process run_reheader_SAMtools {
     Nextflow module for indexing BAM files
 
     input:
-        normal_bam: path to input normal BAM
-        tumour_bam_index: path to input tumour BAM index
+        bam: path to input normal BAM
         interval: path to associated intervals file to propagate
 
     params:
