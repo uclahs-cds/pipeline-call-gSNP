@@ -47,9 +47,9 @@ process run_reheader_SAMtools {
     """
     set -euo pipefail
 
-    samtools view -H ${bam} | \
-    grep -v -P "^@RG.*SM:${remove_id}" | \
-    samtools reheader - ${bam} \
+    samtools reheader \
+        -c 'grep -v -P "^@RG.*SM:${remove_id}"' \
+        ${bam} \
         > ${keep_id}_recalibrated_reheadered_${task.index}.bam
     """
 }
@@ -151,5 +151,39 @@ process run_MergeSamFiles_Picard {
         -ASSUME_SORTED false \
         -USE_THREADING true \
         -VALIDATION_STRINGENCY LENIENT
+    """
+}
+
+process run_GatherBamFiles_GATK {
+    container params.docker_image_gatk
+    publishDir path: "${params.output_dir}/output",
+        mode: "copy",
+        pattern: "_merged*",
+        saveAs: { filename -> (file(filename).getExtension() == "bai") ? "${file(filename).baseName}.bam.bai" : "${filename}" }
+
+    publishDir path: "${params.log_output_dir}/process-log",
+        pattern: ".command.*",
+        mode: "copy",
+        saveAs: { "${task.process.replace(':', '/')}/log${file(it).getName()}" }
+
+    input:
+    val(bams)
+    val(sample_type)
+    tuple val(sample_id), val(normal_id), val(tumour_id)
+
+    output:
+    path(".command.*")
+    path("${output_id}_realigned_recalibrated_merged.bam"), emit: merged_bam
+    path("${output_id}_realigned_recalibrated_merged.bai"), emit: merged_bam_index
+
+    script:
+    all_bams = bams.collect{ "-I '${it[0]}'" }.join(' ')
+    output_id = (sample_type == "normal") ? "${normal_id}" : "${tumour_id}"
+    """
+    set -euo pipefail
+    gatk GatherBamFiles \
+        ${all_bams} \
+        -O ${output_id}_realigned_recalibrated_merged.bam \
+        --CREATE_INDEX true
     """
 }
