@@ -182,7 +182,7 @@ process run_GatherBamFiles_GATK {
         saveAs: { "${task.process.replace(':', '/')}/log${file(it).getName()}" }
 
     input:
-    val(bams)
+    path(bams)
     val(sample_type)
     tuple val(sample_id), val(normal_id), val(tumour_id)
 
@@ -192,7 +192,7 @@ process run_GatherBamFiles_GATK {
     path("${output_id}_realigned_recalibrated_merged.bai"), emit: merged_bam_index
 
     script:
-    all_bams = bams.collect{ "-I '${it[0]}'" }.join(' ')
+    all_bams = bams.collect{ "-I '$it'" }.join(' ')
     output_id = (sample_type == "normal") ? "${normal_id}" : "${tumour_id}"
     """
     set -euo pipefail

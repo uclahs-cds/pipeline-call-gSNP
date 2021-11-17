@@ -23,17 +23,18 @@ workflow gather_bams {
             [counter_intervals = counter_intervals + 1, it.getFileName()]
             }
     
-    // Merge the channels for sorting by interval
-    bam_interval_merged_sorted = bams_with_index
+    // Merge and sort channels by interval and extract only the BAMs
+    sorted_bams = bams_with_index
         .join(intervals_with_index, by: 0)
         .map{ it ->
             [it[1], it[2]]
             }
         .toSortedList( { a, b -> a[1] <=> b[1] } )
-
+        .flatten()
+        .filter{ it.toString().endsWith('.bam') }
     
     run_GatherBamFiles_GATK(
-        bam_interval_merged_sorted,
+        sorted_bams.collect(),
         bam_type,
         identifiers
         )
