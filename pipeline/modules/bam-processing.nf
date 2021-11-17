@@ -154,6 +154,21 @@ process run_MergeSamFiles_Picard {
     """
 }
 
+/*
+    Nextflow module for concatenating BAM files
+
+    input:
+        bams: List of sorted BAMs and associated intervals
+        sample_type: string. Indicator of normal or tumour samples
+        (sample_id, normal_id, tumour_id):  tuples of string identifiers for the samples
+
+    params:
+        params.output_dir: string(path)
+        params.log_output_dir: string(path)
+        params.save_intermediate_files: bool.
+        params.docker_image_gatk: string
+        params.gatk_command_mem_diff: float(memory)
+*/
 process run_GatherBamFiles_GATK {
     container params.docker_image_gatk
     publishDir path: "${params.output_dir}/output",
@@ -181,7 +196,8 @@ process run_GatherBamFiles_GATK {
     output_id = (sample_type == "normal") ? "${normal_id}" : "${tumour_id}"
     """
     set -euo pipefail
-    gatk GatherBamFiles \
+    gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=/scratch" \
+        GatherBamFiles \
         ${all_bams} \
         -O ${output_id}_realigned_recalibrated_merged.bam \
         --CREATE_INDEX true
