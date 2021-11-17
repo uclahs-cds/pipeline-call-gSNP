@@ -1,7 +1,9 @@
 nextflow.enable.dsl=2
 
 include { run_reheader_SAMtools as run_reheader_SAMtools_normal; run_reheader_SAMtools as run_reheader_SAMtools_tumour } from './bam-processing.nf'
-include { run_BuildBamIndex_Picard as run_BuildBamIndex_Picard_normal; run_BuildBamIndex_Picard as run_BuildBamIndex_Picard_tumour } from './bam-processing.nf'
+include { run_BuildBamIndex_Picard as run_BuildBamIndex_Picard_normal; run_BuildBamIndex_Picard as run_BuildBamIndex_Picard_tumour } from './bam-processing.nf' addParams(
+    is_output_bam: false
+    )
 
 workflow reheader_interval_bams {
     take:

@@ -73,8 +73,13 @@ process run_BuildBamIndex_Picard {
     container params.docker_image_picard
     publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}",
         mode: "copy",
-        enabled: params.save_intermediate_files,
-        pattern: "*_reheadered_*"
+        enabled: params.save_intermediate_files && !params.is_output_bam,
+        pattern: "*.bai"
+
+    publishDir path: "${params.output_dir}/output",
+        mode: "copy",
+        enabled: params.is_output_bam,
+        pattern: "*.bai"
 
     publishDir path: "${params.log_output_dir}/process-log",
         pattern: ".command.*",
@@ -173,8 +178,7 @@ process run_GatherBamFiles_GATK {
     container params.docker_image_gatk
     publishDir path: "${params.output_dir}/output",
         mode: "copy",
-        pattern: "_merged*",
-        saveAs: { filename -> (file(filename).getExtension() == "bai") ? "${file(filename).baseName}.bam.bai" : "${filename}" }
+        pattern: "*_merged*"
 
     publishDir path: "${params.log_output_dir}/process-log",
         pattern: ".command.*",
@@ -189,7 +193,6 @@ process run_GatherBamFiles_GATK {
     output:
     path(".command.*")
     path("${output_id}_realigned_recalibrated_merged.bam"), emit: merged_bam
-    path("${output_id}_realigned_recalibrated_merged.bai"), emit: merged_bam_index
 
     script:
     all_bams = bams.collect{ "-I '$it'" }.join(' ')
@@ -200,6 +203,5 @@ process run_GatherBamFiles_GATK {
         GatherBamFiles \
         ${all_bams} \
         -O ${output_id}_realigned_recalibrated_merged.bam \
-        --CREATE_INDEX true
     """
 }

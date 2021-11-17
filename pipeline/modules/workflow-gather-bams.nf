@@ -1,6 +1,8 @@
 nextflow.enable.dsl=2
 
-include { run_GatherBamFiles_GATK } from './bam-processing.nf'
+include { run_GatherBamFiles_GATK; run_BuildBamIndex_Picard } from './bam-processing.nf' addParams(
+    is_output_bam: true
+    )
 
 workflow gather_bams {
     take:
@@ -39,7 +41,16 @@ workflow gather_bams {
         identifiers
         )
 
+    // Build the merged BAM index. The intervals parameter is just a placeholder
+    run_BuildBamIndex_Picard(
+        run_GatherBamFiles_GATK.out.merged_bam,
+        intervals.collect().map{ it -> it[0] }
+        )
+
     emit:
     merged_bam = run_GatherBamFiles_GATK.out.merged_bam
-    merged_bam_index = run_GatherBamFiles_GATK.out.merged_bam_index
+    merged_bam_index = run_BuildBamIndex_Picard.out.indexed_out
+        .map{ it ->
+            it[1]
+            }
 }
