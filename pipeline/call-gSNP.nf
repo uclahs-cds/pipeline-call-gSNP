@@ -51,7 +51,8 @@ include { run_SplitIntervals_GATK; run_SplitIntervals_GATK as run_SplitIntervals
 include { recalibrate_snps; recalibrate_indels; filter_gSNP_GATK } from './modules/variant-recalibration.nf'
 include { realign_indels } from './modules/indel-realignment.nf'
 include { recalibrate_base } from './modules/base-recalibration.nf'
-include { reheader_interval_bams; run_MergeSamFiles_Picard as run_MergeSamFiles_Picard_normal; run_MergeSamFiles_Picard as run_MergeSamFiles_Picard_tumour } from './modules/bam-processing.nf'
+include { reheader_interval_bams } from './modules/workflow-reheader.nf'
+include { run_MergeSamFiles_Picard as run_MergeSamFiles_Picard_normal; run_MergeSamFiles_Picard as run_MergeSamFiles_Picard_tumour } from './modules/bam-processing.nf'
 include { calculate_contamination_normal; calculate_contamination_tumour; run_DepthOfCoverage_GATK as run_DepthOfCoverage_GATK_normal; run_DepthOfCoverage_GATK as run_DepthOfCoverage_GATK_tumour } from './modules/summary-processes.nf'
 include { remove_intermediate_files as remove_realigned_bams; remove_intermediate_files as remove_recalibrated_bams; remove_intermediate_files as remove_reheadered_bams } from './modules/intermediate-cleanup.nf'
 include { extract_GenomeIntervals } from './modules/extract-intervals.nf'
@@ -343,7 +344,7 @@ workflow {
       reheadered_bams_to_delete = reheader_interval_bams.out.reheadered_normal_bam.mix(
         reheader_interval_bams.out.reheadered_normal_bam_index,
         reheader_interval_bams.out.reheadered_tumour_bam,
-        reheader_interval_bams.out.reheadered_normal_bam_index
+        reheader_interval_bams.out.reheadered_tumour_bam_index
         )
     } else {
       reheadered_bams_to_delete = recalibrate_base.out.recalibrated_normal_bam.mix(
