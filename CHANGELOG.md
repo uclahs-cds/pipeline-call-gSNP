@@ -11,6 +11,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### Changed
 - Enable threading for MergeSamFiles
 - Parallelize reheadering and indexing processes
+- Update reheadering to use -c option
 
 ---
 
