@@ -46,9 +46,9 @@ process run_reheader_SAMtools {
     """
     set -euo pipefail
 
-    samtools view -H ${bam} | \
-    grep -v -P "^@RG.*SM:${remove_id}" | \
-    samtools reheader - ${bam} \
+    samtools reheader \
+        -c 'grep -v -P "^@RG.*SM:${remove_id}"' \
+        ${bam} \
         > ${keep_id}_recalibrated_reheadered_${task.index}.bam
     """
 }
