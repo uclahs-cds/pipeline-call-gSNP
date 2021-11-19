@@ -200,6 +200,35 @@ process run_GatherBamFiles_GATK {
     gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=/scratch" \
         GatherBamFiles \
         ${all_bams} \
-        -O ${output_id}_realigned_recalibrated_merged.bam \
+        -O ${output_id}_realigned_recalibrated_merged.bam
+    """
+}
+
+process run_view_SAMtools {
+    container params.docker_image_samtools
+    publishDir path: "${params.output_dir}/output",
+        mode: "copy",
+        pattern: "*_converted*"
+
+    publishDir path: "${params.log_output_dir}/process-log",
+        pattern: ".command.*",
+        mode: "copy",
+        saveAs: { "${task.process.replace(':', '/')}-${task.index}/log${file(it).getName()}" }
+
+    input:
+    path(bam)
+
+    output:
+    path(".command.*")
+    path("*_converted*"), emit: bam
+
+    script:
+    converted_bam_name = "${bam.baseName}_converted.bam"
+    """
+    set -euo pipefail
+
+    samtools view -b \
+        ${bam} \
+        > ${converted_bam_name}
     """
 }

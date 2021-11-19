@@ -1,7 +1,10 @@
 nextflow.enable.dsl=2
 
-include { run_GatherBamFiles_GATK; run_BuildBamIndex_Picard } from './bam-processing.nf' addParams(
+include { run_GatherBamFiles_GATK; run_BuildBamIndex_Picard; run_view_SAMtools } from './bam-processing.nf' addParams(
     is_output_bam: true
+    )
+include { remove_intermediate_files } from './intermediate-cleanup.nf' addParams(
+    save_intermediate_files: false
     )
 
 workflow gather_bams {
@@ -40,15 +43,25 @@ workflow gather_bams {
         bam_type,
         identifiers
         )
+    
+    run_view_SAMtools(
+        run_GatherBamFiles_GATK.out.merged_bam
+        )
+    
+    // Delete the unconverted, gathered BAM after conversion
+    remove_intermediate_files(
+        run_GatherBamFiles_GATK.out.merged_bam,
+        run_view_SAMtools.out.bam
+        )
 
     // Build the merged BAM index. The intervals parameter is just a placeholder
     run_BuildBamIndex_Picard(
-        run_GatherBamFiles_GATK.out.merged_bam,
+        run_view_SAMtools.out.bam,
         intervals.collect().map{ it -> it[0] }
         )
 
     emit:
-    merged_bam = run_GatherBamFiles_GATK.out.merged_bam
+    merged_bam = run_view_SAMtools.out.bam
     merged_bam_index = run_BuildBamIndex_Picard.out.indexed_out
         .map{ it ->
             it[1]
