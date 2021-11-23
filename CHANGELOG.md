@@ -13,6 +13,9 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Parallelize reheadering and indexing processes
 - Update reheadering to use -c option
 
+### Added
+- Add and enable GatherBamFiles in WGS mode
+
 ---
 
 ## [7.1.0] - 2021-11-09

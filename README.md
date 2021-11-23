@@ -66,7 +66,7 @@ In paired mode, reheader the interval-level BAMs.
 Index each reheadered interval-level BAM. After this step, the workflow splits into two: one path (7-10) merges the BAMs for Depth of Coverage and contamination calculations while the other path proceeds with the HaplotypeCaller (11-17).
 
 ### 7. Merge interval-level BAMs
-Merge BAMs from each interval to generate whole sample BAM.
+Merge BAMs from each interval to generate whole sample BAM. In WGS mode, Picard's GatherBamFiles is used for performance improvements. In targeted WXS or WES mode, Picard's MergeSamFiles is used due to interval padding causing read overlap between split BAMs.
 
 ### 8. Get pileup summaries
 Summarizes counts of reads that support reference, alternate and other alleles for given sites. Results will be used in the next Calculate Contamination step.
