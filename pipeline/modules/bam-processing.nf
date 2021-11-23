@@ -174,9 +174,11 @@ process run_MergeSamFiles_Picard {
 */
 process run_GatherBamFiles_GATK {
     container params.docker_image_gatk
-    publishDir path: "${params.output_dir}/output",
+    publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}",
         mode: "copy",
-        pattern: "*_merged*"
+        pattern: "*_merged*",
+        enabled: params.save_intermediate_files,
+        saveAs: { filename -> (file(filename).getExtension() == "bai") ? "${file(filename).baseName}.bam.bai" : "${filename}" }
 
     publishDir path: "${params.log_output_dir}/process-log",
         pattern: ".command.*",
@@ -192,6 +194,7 @@ process run_GatherBamFiles_GATK {
     path(".command.*")
     path("${output_id}_realigned_recalibrated_merged.bam"), emit: merged_bam
 
+
     script:
     all_bams = bams.collect{ "-I '$it'" }.join(' ')
     output_id = (sample_type == "normal") ? "${normal_id}" : "${tumour_id}"
@@ -204,6 +207,17 @@ process run_GatherBamFiles_GATK {
     """
 }
 
+/*
+    Nextflow module for preparing concatenated BAM file for indexing
+
+    input:
+        bam: Path to BAM file for conversion
+
+    params:
+        params.output_dir: string(path)
+        params.log_output_dir: string(path)
+        params.docker_image_samtools: string
+*/
 process run_view_SAMtools {
     container params.docker_image_samtools
     publishDir path: "${params.output_dir}/output",
