@@ -1,14 +1,38 @@
 nextflow.enable.dsl=2
 
 include { calculate_sha512 } from './validation.nf'
-include { run_SplitIntervals_GATK as run_SplitIntervals_GATK_targeted; run_HaplotypeCallerVCF_GATK; run_HaplotypeCallerGVCF_GATK as run_HaplotypeCallerGVCF_GATK_normal; run_HaplotypeCallerGVCF_GATK as run_HaplotypeCallerGVCF_GATK_tumour; run_MergeVcfs_Picard as run_MergeVcfs_Picard_VCF; run_MergeVcfs_Picard as run_MergeVcfs_Picard_normal_GVCF; run_MergeVcfs_Picard as run_MergeVcfs_Picard_tumour_GVCF } from './genotype-processes.nf'
-include { recalibrate_snps; recalibrate_indels; filter_gSNP_GATK } from './variant-recalibration.nf'
+include {
+    run_SplitIntervals_GATK as run_SplitIntervals_GATK_targeted
+    run_HaplotypeCallerVCF_GATK
+    run_HaplotypeCallerGVCF_GATK as run_HaplotypeCallerGVCF_GATK_normal
+    run_HaplotypeCallerGVCF_GATK as run_HaplotypeCallerGVCF_GATK_tumour
+    run_MergeVcfs_Picard as run_MergeVcfs_Picard_VCF
+    run_MergeVcfs_Picard as run_MergeVcfs_Picard_normal_GVCF
+    run_MergeVcfs_Picard as run_MergeVcfs_Picard_tumour_GVCF
+    } from './genotype-processes.nf'
+include {
+    recalibrate_snps
+    recalibrate_indels
+    filter_gSNP_GATK
+    } from './variant-recalibration.nf'
 include { realign_indels } from './indel-realignment.nf'
 include { recalibrate_base } from './base-recalibration.nf'
 include { reheader_interval_bams } from './workflow-reheader.nf'
-include { run_MergeSamFiles_Picard as run_MergeSamFiles_Picard_normal; run_MergeSamFiles_Picard as run_MergeSamFiles_Picard_tumour } from './bam-processing.nf'
-include { calculate_contamination_normal; calculate_contamination_tumour; run_DepthOfCoverage_GATK as run_DepthOfCoverage_GATK_normal; run_DepthOfCoverage_GATK as run_DepthOfCoverage_GATK_tumour } from './summary-processes.nf'
-include { remove_intermediate_files as remove_realigned_bams; remove_intermediate_files as remove_recalibrated_bams; remove_intermediate_files as remove_reheadered_bams } from './intermediate-cleanup.nf'
+include {
+    run_MergeSamFiles_Picard as run_MergeSamFiles_Picard_normal
+    run_MergeSamFiles_Picard as run_MergeSamFiles_Picard_tumour
+    } from './bam-processing.nf'
+include {
+    calculate_contamination_normal
+    calculate_contamination_tumour
+    run_DepthOfCoverage_GATK as run_DepthOfCoverage_GATK_normal
+    run_DepthOfCoverage_GATK as run_DepthOfCoverage_GATK_tumour
+    } from './summary-processes.nf'
+include {
+    remove_intermediate_files as remove_realigned_bams
+    remove_intermediate_files as remove_recalibrated_bams
+    remove_intermediate_files as remove_reheadered_bams
+    } from './intermediate-cleanup.nf'
 
 workflow paired_sample_targeted {
     take:

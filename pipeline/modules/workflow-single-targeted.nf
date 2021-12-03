@@ -1,13 +1,30 @@
 nextflow.enable.dsl=2
 
 include { calculate_sha512 } from './validation.nf'
-include { run_SplitIntervals_GATK as run_SplitIntervals_GATK_targeted; run_HaplotypeCallerVCF_GATK; run_HaplotypeCallerGVCF_GATK as run_HaplotypeCallerGVCF_GATK_normal; run_MergeVcfs_Picard as run_MergeVcfs_Picard_VCF; run_MergeVcfs_Picard as run_MergeVcfs_Picard_normal_GVCF } from './genotype-processes.nf'
-include { recalibrate_snps; recalibrate_indels; filter_gSNP_GATK } from './variant-recalibration.nf'
+include {
+    run_SplitIntervals_GATK as run_SplitIntervals_GATK_targeted
+    run_HaplotypeCallerVCF_GATK
+    run_HaplotypeCallerGVCF_GATK as run_HaplotypeCallerGVCF_GATK_normal
+    run_MergeVcfs_Picard as run_MergeVcfs_Picard_VCF
+    run_MergeVcfs_Picard as run_MergeVcfs_Picard_normal_GVCF
+    } from './genotype-processes.nf'
+include {
+    recalibrate_snps
+    recalibrate_indels
+    filter_gSNP_GATK
+    } from './variant-recalibration.nf'
 include { realign_indels } from './indel-realignment.nf'
 include { recalibrate_base } from './base-recalibration.nf'
 include { run_MergeSamFiles_Picard as run_MergeSamFiles_Picard_normal } from './bam-processing.nf'
-include { calculate_contamination_normal; run_DepthOfCoverage_GATK as run_DepthOfCoverage_GATK_normal } from './summary-processes.nf'
-include { remove_intermediate_files as remove_realigned_bams; remove_intermediate_files as remove_recalibrated_bams; remove_intermediate_files as remove_reheadered_bams } from './intermediate-cleanup.nf'
+include {
+    calculate_contamination_normal
+    run_DepthOfCoverage_GATK as run_DepthOfCoverage_GATK_normal
+    } from './summary-processes.nf'
+include {
+    remove_intermediate_files as remove_realigned_bams
+    remove_intermediate_files as remove_recalibrated_bams
+    remove_intermediate_files as remove_reheadered_bams
+    } from './intermediate-cleanup.nf'
 
 workflow single_sample_targeted {
     take:
