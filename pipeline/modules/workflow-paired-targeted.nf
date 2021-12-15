@@ -16,7 +16,7 @@ include {
     filter_gSNP_GATK
     } from './variant-recalibration.nf'
 include { realign_indels } from './indel-realignment.nf'
-include { recalibrate_base } from './base-recalibration.nf'
+include { recalibrate_base } from './workflow-bqsr.nf'
 include { reheader_interval_bams } from './workflow-reheader.nf'
 include {
     run_MergeSamFiles_Picard as run_MergeSamFiles_Picard_normal
