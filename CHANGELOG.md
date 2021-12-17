@@ -14,6 +14,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Update reheadering to use -c option
 - Modularize workflows for different modes (single vs. paired, WGS vs targeted)
 - Update GATK to 4.2.4.0 to address Log4j critical vulnerability (https://github.com/advisories/GHSA-jfh8-c2jp-5v3q)
+- Update Picard to 2.26.8 to address Log4j critical vulnerability (https://github.com/advisories/GHSA-jfh8-c2jp-5v3q) 
 
 ---
 
