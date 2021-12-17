@@ -8,6 +8,10 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ---
 
 ## [Unreleased]
+
+---
+
+## [7.2.0] - 2021-12-17
 ### Changed
 - Enable threading for MergeSamFiles
 - Parallelize reheadering and indexing processes
