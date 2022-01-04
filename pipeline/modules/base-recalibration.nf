@@ -115,21 +115,23 @@ process run_ApplyBQSR_GATK {
     path(reference_fasta_fai)
     path(reference_fasta_dict)
     path(recalibration_table)
-    path(indelrealigned_bam)
-    path(indelrealigned_bam_index)
-    path(interval)
-    val(includes_unmapped)
-    tuple val(sample_id), val(normal_id), val(tumour_id)
+    tuple path(indelrealigned_bam),
+          path(indelrealigned_bam_index),
+          path(interval),
+          val(includes_unmapped),
+          val(id),
+          val(type)
 
     output:
     path(".command.*")
-    path(interval), emit: associated_interval
-    path("${normal_id}_recalibrated_${task.index}.bam"), emit: recalibrated_normal_bam
-    path("${normal_id}_recalibrated_${task.index}.bai"), emit: recalibrated_normal_bam_index
-    path("${tumour_id}_recalibrated_${task.index}.bam"), emit: recalibrated_tumour_bam optional true
-    path("${tumour_id}_recalibrated_${task.index}.bai"), emit: recalibrated_tumour_bam_index optional true
-    path(indelrealigned_bam), emit: bam_for_deletion
-    path(indelrealigned_bam_index), emit: bam_index_for_deletion
+    tuple val(id),
+          val(type),
+          path(interval),
+          path("${id}_recalibrated_${task.index}.bam"),
+          path("${id}_recalibrated_${task.index}.bai"), emit: apply_bqsr_och
+    tuple val(type),
+          path(indelrealigned_bam),
+          path(indelrealigned_bam_index), emit: deletion_och
 
     script:
     unmapped_interval_option = (includes_unmapped) ? "--intervals unmapped" : ""
@@ -141,72 +143,10 @@ process run_ApplyBQSR_GATK {
         --input ${indelrealigned_bam} \
         --bqsr-recal-file ${recalibration_table} \
         --reference ${reference_fasta} \
-        --output ${normal_id}_recalibrated_${task.index}.bam \
+        --output ${id}_recalibrated_${task.index}.bam \
         --read-filter SampleReadFilter \
-        --sample ${normal_id} \
+        --sample ${id} \
         ${combined_interval_options} \
         --emit-original-quals ${params.is_emit_original_quals}
-
-    if ${params.is_NT_paired}
-    then
-        gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=/scratch" \
-            ApplyBQSR \
-            --input ${indelrealigned_bam} \
-            --bqsr-recal-file ${recalibration_table} \
-            --reference ${reference_fasta} \
-            --output ${tumour_id}_recalibrated_${task.index}.bam \
-            --read-filter SampleReadFilter \
-            --sample ${tumour_id} \
-            ${combined_interval_options} \
-            --emit-original-quals ${params.is_emit_original_quals}
-    fi
     """
-}
-
-workflow recalibrate_base {
-    take:
-    realigned_bam
-    realigned_bam_index
-    associated_interval
-    includes_unmapped
-    bqsr_generator_identifiers
-    intervals
-
-    main:
-    run_BaseRecalibrator_GATK(
-      params.reference_fasta,
-      "${params.reference_fasta}.fai",
-      "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
-      params.bundle_mills_and_1000g_gold_standard_indels_vcf_gz,
-      "${params.bundle_mills_and_1000g_gold_standard_indels_vcf_gz}.tbi",
-      params.bundle_known_indels_vcf_gz,
-      "${params.bundle_known_indels_vcf_gz}.tbi",
-      params.bundle_v0_dbsnp138_vcf_gz,
-      "${params.bundle_v0_dbsnp138_vcf_gz}.tbi",
-      intervals,
-      realigned_bam.collect(),
-      realigned_bam_index.collect(),
-      bqsr_generator_identifiers
-      )
-
-    run_ApplyBQSR_GATK(
-      params.reference_fasta,
-      "${params.reference_fasta}.fai",
-      "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
-      run_BaseRecalibrator_GATK.out.recalibration_table,
-      realigned_bam,
-      realigned_bam_index,
-      associated_interval,
-      includes_unmapped,
-      bqsr_generator_identifiers
-      )
-
-    emit:
-    recalibrated_normal_bam = run_ApplyBQSR_GATK.out.recalibrated_normal_bam
-    recalibrated_normal_bam_index = run_ApplyBQSR_GATK.out.recalibrated_normal_bam_index
-    recalibrated_tumour_bam = run_ApplyBQSR_GATK.out.recalibrated_tumour_bam
-    recalibrated_tumour_bam_index = run_ApplyBQSR_GATK.out.recalibrated_tumour_bam_index
-    associated_interval = run_ApplyBQSR_GATK.out.associated_interval
-    bam_for_deletion = run_ApplyBQSR_GATK.out.bam_for_deletion
-    bam_index_for_deletion = run_ApplyBQSR_GATK.out.bam_index_for_deletion
 }

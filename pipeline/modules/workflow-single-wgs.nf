@@ -13,7 +13,7 @@ include {
     filter_gSNP_GATK
     } from './variant-recalibration.nf'
 include { realign_indels } from './indel-realignment.nf'
-include { recalibrate_base } from './base-recalibration.nf'
+include { recalibrate_base } from './workflow-bqsr.nf'
 include { run_MergeSamFiles_Picard as run_MergeSamFiles_Picard_normal } from './bam-processing.nf'
 include {
     calculate_contamination_normal
@@ -52,7 +52,7 @@ workflow single_sample_wgs {
 
     remove_realigned_bams(
         recalibrate_base.out.bam_for_deletion.mix(recalibrate_base.out.bam_index_for_deletion),
-        "mergesams_complete" // Decoy signal to let these files be deleted
+        recalibrate_base.out.recalibrated_normal_bam.collect().mix(recalibrate_base.out.recalibrated_tumour_bam.collect()) // Let BQSR finish before deletion
         )
 
     // Generate decoy tumour bam and index channels for single sample mode
