@@ -10,7 +10,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ## [Unreleased]
 ### Changed
 - Parallelize BQSR
-- Update GATK to 4.2.4.1 to address Log4j critical vulnerability (https://github.com/advisories/GHSA-jfh8-c3jp-5v3q)
+- Update GATK to 4.2.4.1 to address Log4j critical vulnerability (https://github.com/advisories/GHSA-8489-44mv-ggj8, https://github.com/advisories/GHSA-p6xc-xr62-6r2g)
 
 ---
 
