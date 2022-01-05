@@ -6,6 +6,6 @@ Contributors: ["Yash Patel", "Shu Tao", "Stefan Eng"]
 Languages: ["Nextflow", "Docker"]
 Dependencies: ["Java", "Nextflow", "Docker"]
 References: "https://confluence.mednet.ucla.edu/display/BOUTROSLAB/Guide+to+Nextflow"
-Tools: ["SAMtools:1.10", "Picard:2.26.8", "GATK:3.7.0", "GATK:4.2.4.0"]
+Tools: ["SAMtools:1.10", "Picard:2.26.8", "GATK:3.7.0", "GATK:4.2.4.1"]
 Engineering_Owner: ["Yash Patel", "Shu Tao", "Stefan Eng"]
 Scientific_Owner: ["Yash Patel", "Shu Tao", "Stefan Eng"]
