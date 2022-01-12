@@ -49,7 +49,8 @@ process run_RealignerTargetCreator_GATK {
     path("${sample_id}_RTC_${task.index}.intervals"), emit: intervals_RTC
 
     script:
-    bam_input_str = params.is_NT_paired ? "--input_file ${bam} --input_file ${bam_tumour}" : "--input_file ${bam}"
+    tumour_bams = bam_tumour.collect{ "--input_file '$it'" }.join(' ')
+    bam_input_str = params.is_NT_paired ? "--input_file ${bam} ${tumour_bams}" : "--input_file ${bam}"
     interval_padding = params.is_targeted ? "--interval_padding 100" : ""
     targeted_interval_params = params.is_targeted ? "--intervals ${params.intervals} --interval_set_rule INTERSECTION" : ""
     """
@@ -128,7 +129,8 @@ process run_IndelRealigner_GATK {
     path("${sample_id}_indelrealigned_${task.index}.bai"), emit: realigned_indels_bam_index
 
     script:
-    bam_input_str = params.is_NT_paired ? "--input_file ${bam} --input_file ${bam_tumour}" : "--input_file ${bam}"
+    tumour_bams = bam_tumour.collect{ "--input_file '$it'" }.join(' ')
+    bam_input_str = params.is_NT_paired ? "--input_file ${bam} ${tumour_bams}" : "--input_file ${bam}"
     unmapped_interval_option = (task.index == 1) ? "--intervals unmapped" : ""
     has_unmapped = (task.index == 1) ? true : false
     combined_interval_options = "--intervals ${scatter_intervals} ${unmapped_interval_option}"

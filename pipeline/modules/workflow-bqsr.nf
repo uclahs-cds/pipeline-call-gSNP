@@ -112,30 +112,64 @@ workflow recalibrate_base {
     apply_bqsr_split_och.tumour
       .map{it ->
         [it[2].getFileName(), it]
-        }.set{ tumour_with_key }
+        }
+        .groupTuple()
+        .set{ tumour_with_key }
       
     // Split up the output channels
     if (params.is_NT_paired) {
       normal_with_key
         .join(tumour_with_key, by: 0) // Join on interval
-        .view()
         .multiMap{it ->
           assoc_intervals_och: it[1][2]
-          normal_bam_och: it[1][3]
-          normal_bam_index_och: it[1][4]
-          tumour_bam_och: it[2][3]
-          tumour_bam_index_och: it[2][4]
+          normal_bam_och: it[1][0,3,2]
+          normal_bam_index_och: it[1][0,4]
+          tumour_bam_raw: it[2]
+          tumour_bam_index_raw: it[2]
           }.set{ bqsr_och }
+
+          bqsr_och.tumour_bam_raw.map{ it ->
+            mapped_it = []
+            s = it.size
+            while (!(s instanceof Integer)) {
+              s = s.size
+              }
+            for(i = 0; i < s; i = i + 1) {
+              mapped_it = mapped_it + [it[i][0,3,2]]
+              }
+            mapped_it
+            }.set{ tumour_bam_och }
+
+          bqsr_och.tumour_bam_index_raw.map{ it ->
+            mapped_it = []
+            s = it.size
+            while (!(s instanceof Integer)) {
+              s = s.size
+              }
+            // print(s)
+            // print(it)
+            for(i = 0; i < s; i = i + 1) {
+              // print('after')
+              // print(s)
+              // print(it[i])
+              // print('end')
+              mapped_it = mapped_it + [it[i][0,4]]
+              }
+            mapped_it
+            }.set{ tumour_bam_index_och }
     } else {
       normal_with_key
         .join(tumour_with_key, by: 0, remainder: true) // Join on interval
         .multiMap{it ->
           assoc_intervals_och: it[1][2]
-          normal_bam_och: it[1][3]
-          normal_bam_index_och: it[1][4]
-          tumour_bam_och: "placeholder_bam"
-          tumour_bam_index_och: "placeholder_index"
+          normal_bam_och: it[1][0,3,2]
+          normal_bam_index_och: it[1][0,4]
+          tumour_bam_raw: "placeholder_bam"
+          tumour_bam_index_raw: "placeholder_index"
           }.set{ bqsr_och }
+
+          tumour_bam_och = bqsr_och.tumour_bam_raw
+          tumour_bam_index_och = bqsr_och.tumour_bam_index_raw
     }
 
     // Filter the deletion channel
@@ -150,8 +184,8 @@ workflow recalibrate_base {
     emit:
     recalibrated_normal_bam = bqsr_och.normal_bam_och
     recalibrated_normal_bam_index = bqsr_och.normal_bam_index_och
-    recalibrated_tumour_bam = bqsr_och.tumour_bam_och
-    recalibrated_tumour_bam_index = bqsr_och.tumour_bam_index_och
+    recalibrated_tumour_bam = tumour_bam_och
+    recalibrated_tumour_bam_index = tumour_bam_index_och
     associated_interval = bqsr_och.assoc_intervals_och
     bam_for_deletion = filtered_deletion_och.bam_deletion_och
     bam_index_for_deletion = filtered_deletion_och.bam_index_deletion_och

@@ -27,29 +27,24 @@ process run_reheader_SAMtools {
         saveAs: { "${task.process.replace(':', '/')}-${task.index}/log${file(it).getName()}" }
 
     input:
-    tuple val(sample_id), val(normal_id), val(tumour_id)
-    path(bam)
-    path(bam_index)
-    path(interval)
-    val(bam_type)
+    tuple val(id), path(bam), path(interval)
+    tuple val(index_id), path(bam_index)
 
     output:
     path(".command.*")
-    path("${keep_id}_recalibrated_reheadered_${task.index}.bam"), emit: bam_reheadered
+    path("${id}_recalibrated_reheadered_${task.index}.bam"), emit: bam_reheadered
     path(interval), emit: associated_interval
     path(bam), emit: bam_for_deletion
     path(bam_index), emit: bam_index_for_deletion
 
     script:
-    keep_id = (bam_type == 'normal') ? normal_id : tumour_id
-    remove_id = (bam_type == 'normal') ? tumour_id : normal_id
     """
     set -euo pipefail
 
     samtools reheader \
-        -c 'grep -v -P "^@RG.*SM:${remove_id}"' \
+        -c 'sed "/^@RG/! s/.*/keep&/" | sed "/^@RG/ s/.*SM:${id}\$/keep&/" | grep "^keep" | sed "s/^keep//g"' \
         ${bam} \
-        > ${keep_id}_recalibrated_reheadered_${task.index}.bam
+        > ${id}_recalibrated_reheadered_${task.index}.bam
     """
 }
 
