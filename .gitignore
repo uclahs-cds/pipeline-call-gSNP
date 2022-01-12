@@ -4,20 +4,80 @@ work/
 *.nextflow.log*
 *.log
 *.error
-pipeline/RTC_bed.nf
-pipeline/RTC_split.nf
-
-filled-regenotype-gSNP-single-node.config
 
 # system
 .DS_Store
 *.swp
 
-# python
-.pytest_cache/
+# R
+.Rhistory
+.Rapp.history
+.Rproj.user
+*.RData
+*.rd[as]
+
+# Python
 __pycache__/
+.pytest_cache/
 .Python
 pip-log.txt
 pip-delete-this-directory.txt
 *.py[cod]
 *$py.class
+venv
+.venv
+.env
+
+# VScode
+.vscode
+
+## Molecular files
+
+# Array file
+*.CEL
+*.cel
+*.OSCHP
+
+# Sequence file (e.g. Reference genome)
+*.fasta
+*.fa
+*.fai
+*.dict
+*.gtf
+
+
+# FASTQ file
+*.fq
+*.fastq
+
+# Proteomics file
+*.raw
+*.mzML
+*.mzXML
+*.mgf
+*.idXML
+*.consensusXML
+*.featureXML
+*.mzid
+*.mzData
+*.dta
+*.dta2d
+
+# DNA/RNA alignment file
+*.sam
+*.bam
+*.bai
+*.cram
+*.crai
+
+# Variant file
+*.bcf
+*.csi
+*.vcf
+*.tbi
+*.maf
+
+# Compressed file
+*.gz
+*.tar
+*.zip
