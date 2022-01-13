@@ -18,15 +18,15 @@ workflow reheader_interval_bams {
 
     // Partially flatten the tumour inputs
     tumour_bams.map{ it ->
-        combined_it = []
-        s = it.size
-        while (!(s instanceof Integer)) {
-            s = s.size
+        combined_it_bam = []
+        s_bam = it.size
+        while (!(s_bam instanceof Integer)) {
+            s_bam = s_bam.size
             }
-        for(i = 0; i < s; i = i + 1) {
-            combined_it = combined_it + [it[i][0] + 'my_reheader_separator' + it[i][1] + 'my_reheader_separator' + it[i][2]]
+        for(i_bam = 0; i_bam < s_bam; i_bam = i_bam + 1) {
+            combined_it_bam = combined_it_bam + [it[i_bam][0] + 'my_reheader_separator' + it[i_bam][1] + 'my_reheader_separator' + it[i_bam][2]]
             }
-        combined_it
+        combined_it_bam
         }
         .flatten()
         .map{ it ->
@@ -42,24 +42,21 @@ workflow reheader_interval_bams {
     //     .set{ tumour_bam_ich }
 
     tumour_bams_index.map{ it ->
-        combined_it = []
-        s = it.size
-        while (!(s instanceof Integer)) {
-            s = s.size
+        combined_it_bai = []
+        s_bai = it.size
+        while (!(s_bai instanceof Integer)) {
+            s_bai = s_bai.size
             }
-        for(i = 0; i < s; i = i + 1) {
-            combined_it = combined_it + [it[i][0] + 'my_reheader_separator' + it[i][1]]
+        for(i_bai = 0; i_bai < s_bai; i_bai = i_bai + 1) {
+            combined_it_bai = combined_it_bai + [it[i_bai][0] + 'my_reheader_separator' + it[i_bai][1]]
             }
-        combined_it
+        combined_it_bai
         }
         .flatten()
         .map{ it ->
             it.split('my_reheader_separator')[0,1]
             }
         .set{ tumour_bams_index_flattened_ich }
-
-    tumour_bams_flattened_ich.map{it -> ['bam', it]}.view()
-    tumour_bams_index_flattened_ich.map{it -> ['index', it]}.view()
 
     run_reheader_SAMtools_tumour(
         tumour_bams_flattened_ich,

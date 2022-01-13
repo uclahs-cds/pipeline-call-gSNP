@@ -154,13 +154,7 @@ workflow recalibrate_base {
             while (!(s_bai instanceof Integer)) {
               s_bai = s_bai.size
               }
-            // print(s)
-            // print(it)
             for(i_bai = 0; i_bai < s_bai; i_bai = i_bai + 1) {
-              // print('after')
-              // print(s)
-              // print(it[i])
-              // print('end')
               mapped_it_bai = mapped_it_bai + [it[i_bai][0,4]]
               }
             mapped_it_bai
@@ -180,26 +174,21 @@ workflow recalibrate_base {
           tumour_bam_index_och = bqsr_och.tumour_bam_index_raw
     }
 
-    bqsr_och.normal_bam_och.view{"nchanbam: $it"}
-    bqsr_och.normal_bam_index_och.view{"nchanbai: $it"}
-    tumour_bam_och.view{"tchanbam: $it"}
-    tumour_bam_index_och.view{"tchanbai: $it"}
+    // Filter the deletion channel
+    run_ApplyBQSR_GATK.out.deletion_och
+      .filter{ it[0] == 'normal' }
+      .multiMap{it ->
+        bam_deletion_och: it[1]
+        bam_index_deletion_och: it[2]
+        }
+      .set{ filtered_deletion_och }
 
-    // // Filter the deletion channel
-    // run_ApplyBQSR_GATK.out.deletion_och
-    //   .filter{ it[0] == 'normal' }
-    //   .multiMap{it ->
-    //     bam_deletion_och: it[1]
-    //     bam_index_deletion_och: it[2]
-    //     }
-    //   .set{ filtered_deletion_och }
-
-    // emit:
-    // recalibrated_normal_bam = bqsr_och.normal_bam_och
-    // recalibrated_normal_bam_index = bqsr_och.normal_bam_index_och
-    // recalibrated_tumour_bam = tumour_bam_och
-    // recalibrated_tumour_bam_index = tumour_bam_index_och
-    // associated_interval = bqsr_och.assoc_intervals_och
-    // bam_for_deletion = filtered_deletion_och.bam_deletion_och
-    // bam_index_for_deletion = filtered_deletion_och.bam_index_deletion_och
+    emit:
+    recalibrated_normal_bam = bqsr_och.normal_bam_och
+    recalibrated_normal_bam_index = bqsr_och.normal_bam_index_och
+    recalibrated_tumour_bam = tumour_bam_och
+    recalibrated_tumour_bam_index = tumour_bam_index_och
+    associated_interval = bqsr_och.assoc_intervals_och
+    bam_for_deletion = filtered_deletion_och.bam_deletion_och
+    bam_index_for_deletion = filtered_deletion_och.bam_index_deletion_och
 }
