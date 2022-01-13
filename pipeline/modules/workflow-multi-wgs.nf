@@ -58,17 +58,17 @@ workflow multi_sample_wgs {
         base_recal_intervals
         )
 
-    remove_realigned_bams(
-        recalibrate_base.out.bam_for_deletion.mix(recalibrate_base.out.bam_index_for_deletion),
-        recalibrate_base.out.recalibrated_normal_bam.collect().mix(recalibrate_base.out.recalibrated_tumour_bam.collect()) // Let BQSR finish before deletion
-        )
+    // remove_realigned_bams(
+    //     recalibrate_base.out.bam_for_deletion.mix(recalibrate_base.out.bam_index_for_deletion),
+    //     recalibrate_base.out.recalibrated_normal_bam.collect().mix(recalibrate_base.out.recalibrated_tumour_bam.collect()) // Let BQSR finish before deletion
+    //     )
 
-    reheader_interval_bams(
-        recalibrate_base.out.recalibrated_normal_bam,
-        recalibrate_base.out.recalibrated_normal_bam_index,
-        recalibrate_base.out.recalibrated_tumour_bam,
-        recalibrate_base.out.recalibrated_tumour_bam_index
-        )
+    // reheader_interval_bams(
+    //     recalibrate_base.out.recalibrated_normal_bam,
+    //     recalibrate_base.out.recalibrated_normal_bam_index,
+    //     recalibrate_base.out.recalibrated_tumour_bam,
+    //     recalibrate_base.out.recalibrated_tumour_bam_index
+    //     )
 
 /*
 
