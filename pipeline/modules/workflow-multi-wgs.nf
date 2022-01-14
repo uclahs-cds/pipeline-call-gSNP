@@ -70,6 +70,9 @@ workflow multi_sample_wgs {
         recalibrate_base.out.recalibrated_tumour_bam_index
         )
 
+    reheader_interval_bams.out.reheadered_normal_bam.view{ "normal: $it" }
+    reheader_interval_bams.out.reheadered_tumour_bam.view{ "tumour: $it" }
+
 /*
 
     normal_bam_ch = reheader_interval_bams.out.reheadered_normal_bam

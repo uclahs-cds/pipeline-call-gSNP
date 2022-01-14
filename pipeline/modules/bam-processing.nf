@@ -32,7 +32,7 @@ process run_reheader_SAMtools {
 
     output:
     path(".command.*")
-    path("${id}_recalibrated_reheadered_${task.index}.bam"), emit: bam_reheadered
+    tuple val(id), path("${id}_recalibrated_reheadered_${task.index}.bam"), emit: bam_reheadered
     path(interval), emit: associated_interval
     path(bam), emit: bam_for_deletion
     path(bam_index), emit: bam_index_for_deletion
@@ -75,12 +75,12 @@ process run_BuildBamIndex_Picard {
         saveAs: { "${task.process.replace(':', '/')}-${task.index}/log${file(it).getName()}" }
 
     input:
-    path(bam)
+    tuple val(id), path(bam)
     path(interval)
 
     output:
     path(".command.*")
-    tuple path(bam), path("${bam}.bai"), path(interval), emit: indexed_out
+    tuple path(bam), path("${bam}.bai"), path(interval), val(id), emit: indexed_out
 
     script:
     """
