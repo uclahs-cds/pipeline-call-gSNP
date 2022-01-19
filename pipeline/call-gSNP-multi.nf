@@ -68,54 +68,91 @@ def indexFile(bam_or_vcf) {
   }
 }
 
-// if (params.is_NT_paired) {
-//     Channel
-//         .fromPath(params.input_csv, checkIfExists: true)
-//         .splitCsv(header:true)
-//         .map{
-//             [normal_index: indexFile(it.normal_BAM)] + [tumour_index: indexFile(it.tumour_BAM)] + it
-//             }
-//         .set { input_ch_input_csv }
+if (params.is_NT_paired) {
+    Channel
+        .fromPath(params.input_csv, checkIfExists: true)
+        .splitCsv(header:true)
+        .map{
+            [normal_index: indexFile(it.normal_BAM)] + [tumour_index: indexFile(it.tumour_BAM)] + it
+            }
+        .set { input_ch_input_csv }
 
-//     // Validation channel    
-//     input_ch_input_csv.flatMap{it -> [it.normal_BAM, it.normal_index, it.tumour_BAM, it.tumour_index]}.set{input_validation}
+    // Validation channel    
+    input_ch_input_csv.flatMap{it -> [it.normal_BAM, it.normal_index, it.tumour_BAM, it.tumour_index]}.set{input_validation}
 
-// } else {
-//     Channel
-//         .fromPath(params.input_csv, checkIfExists: true)
-//         .splitCsv(header:true)
-//         .map{
-//             // Add filler values for tumour sample if in single sample mode
-//             [normal_index: indexFile(it.normal_BAM)] + [tumour_id: 'NA'] + [tumour_BAM: '/scratch/NA.bam'] + [tumour_index: '/scratch/NA.bam.bai'] + it
-//             }
-//         .set { input_ch_input_csv }
+} else {
+    Channel
+        .fromPath(params.input_csv, checkIfExists: true)
+        .splitCsv(header:true)
+        .map{
+            // Add filler values for tumour sample if in single sample mode
+            [normal_index: indexFile(it.normal_BAM)] + [tumour_id: 'NA'] + [tumour_BAM: '/scratch/NA.bam'] + [tumour_index: '/scratch/NA.bam.bai'] + it
+            }
+        .set { input_ch_input_csv }
 
-//     // Validation channel    
-//     input_ch_input_csv.flatMap{it -> [it.normal_BAM, it.normal_index]}.set{input_validation}
-// }
+    // Validation channel    
+    input_ch_input_csv.flatMap{it -> [it.normal_BAM, it.normal_index]}.set{input_validation}
+}
 
-// identifiers = input_ch_input_csv.map{it -> [it.sample_id, it.normal_id, it.tumour_id]}.collect()
+// Gather the inputs into a single emission
+input_ch_input_csv.multiMap{ it ->
+  sample_id: it.sample_id
+  normal_id: it.normal_id
+  normal_BAM: it.normal_BAM
+  normal_index: it.normal_index
+  tumour_id: it.tumour_id
+  tumour_BAM: it.tumour_BAM
+  tumour_index: it.tumour_index
+  }
+  .set{ branched_input }
 
-input_ch_input_csv = Channel.from(1).map{
-    [normal_BAM: '/hot/users/yashpatel/pipeline-call-gSNP/work/multi_inputs/n.bam'] +
-    [normal_index: '/hot/users/yashpatel/pipeline-call-gSNP/work/multi_inputs/n.bam.bai'] + 
-    [tumour_BAM: ['/hot/users/yashpatel/pipeline-call-gSNP/work/multi_inputs/t1_reheadered.bam', '/hot/users/yashpatel/pipeline-call-gSNP/work/multi_inputs/t2_reheadered.bam']] +
-    [tumour_index: ['/hot/users/yashpatel/pipeline-call-gSNP/work/multi_inputs/t1_reheadered.bam.bai', '/hot/users/yashpatel/pipeline-call-gSNP/work/multi_inputs/t2_reheadered.bam.bai']] +
-    [sample_id: 'A-mini-n1'] +
-    [normal_id: 'S2_v1.1.5'] +
-    [tumour_id: ['S2_v1.1.5_t1', 'S2_v1.1.5_t2']]
-    }
+// For the sample ID and the normal input fields, keep only the first since they should be identical for the sample
+branched_input.sample_id.first().collect().map{ it -> [sample_id: it] }.set{formatted_sample_id}
+branched_input.normal_id.first().collect().map{ it -> [normal_id: it] }.set{formatted_normal_id}
+branched_input.normal_BAM.first().collect().map{ it -> [normal_BAM: it] }.set{formatted_normal_BAM}
+branched_input.normal_index.first().collect().map{ it -> [normal_index: it] }.set{formatted_normal_index}
 
-identifiers = Channel.from(1).map{['A-mini-n1', 'S2_v1.1.5', 'S2_v1.1.5_t1', 'S2_v1.1.5_t2']}.collect()
-identifiers_vcfcalling = Channel.from(1).map{'A-mini-n1'}
+// For the tumour input fields, keep all lines from csv
+branched_input.tumour_id.collect().map{ it -> [tumour_id: it] }.set{formatted_tumour_id}
+branched_input.tumour_BAM.collect().map{ it -> [tumour_BAM: it] }.set{formatted_tumour_BAM}
+branched_input.tumour_index.collect().map{ it -> [tumour_index: it] }.set{formatted_tumour_index}
+
+// Mix the formatted channels and gather into single emission
+formatted_sample_id.mix(
+  formatted_normal_id,
+  formatted_normal_BAM,
+  formatted_normal_index,
+  formatted_tumour_id,
+  formatted_tumour_BAM,
+  formatted_tumour_index
+  )
+  .reduce{ a, b -> a + b }
+  .set{ input_csv_formatted_ich }
+
+// Create the identifier channels
+identifiers = input_csv_formatted_ich.map{it -> it.sample_id + it.normal_id + it.tumour_id}.collect()
+identifier_sample = input_csv_formatted_ich.map{it -> it.sample_id}.flatten()
+
+// input_ch_input_csv = Channel.from(1).map{
+//     [normal_BAM: '/hot/users/yashpatel/pipeline-call-gSNP/work/multi_inputs/n.bam'] +
+//     [normal_index: '/hot/users/yashpatel/pipeline-call-gSNP/work/multi_inputs/n.bam.bai'] + 
+//     [tumour_BAM: ['/hot/users/yashpatel/pipeline-call-gSNP/work/multi_inputs/t1_reheadered.bam', '/hot/users/yashpatel/pipeline-call-gSNP/work/multi_inputs/t2_reheadered.bam']] +
+//     [tumour_index: ['/hot/users/yashpatel/pipeline-call-gSNP/work/multi_inputs/t1_reheadered.bam.bai', '/hot/users/yashpatel/pipeline-call-gSNP/work/multi_inputs/t2_reheadered.bam.bai']] +
+//     [sample_id: 'A-mini-n1'] +
+//     [normal_id: 'S2_v1.1.5'] +
+//     [tumour_id: ['S2_v1.1.5_t1', 'S2_v1.1.5_t2']]
+//     }
+
+// identifiers = Channel.from(1).map{['A-mini-n1', 'S2_v1.1.5', 'S2_v1.1.5_t1', 'S2_v1.1.5_t2']}.collect()
+// identifiers_vcfcalling = Channel.from(1).map{'A-mini-n1'}
 
 workflow {
-    // run_validate_PipeVal(input_validation)
-    // // Collect and store input validation output
-    // run_validate_PipeVal.out.val_file.collectFile(
-    //   name: 'input_validation.txt',
-    //   storeDir: "${params.output_dir}/validation"
-    //   )
+    run_validate_PipeVal(input_validation)
+    // Collect and store input validation output
+    run_validate_PipeVal.out.val_file.collectFile(
+      name: 'input_validation.txt',
+      storeDir: "${params.output_dir}/validation"
+      )
 
     extract_GenomeIntervals(
       "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict"
@@ -145,7 +182,7 @@ workflow {
         ir_input,
         ir_input_no_interval,
         identifiers,
-        identifiers_vcfcalling
+        identifier_sample
         )
 
     // if (params.is_NT_paired) {

@@ -12,24 +12,25 @@ workflow recalibrate_base {
     associated_interval
     includes_unmapped
     bqsr_generator_identifiers
+    sample_identifier
     intervals
 
     main:
-    // run_BaseRecalibrator_GATK(
-    //   params.reference_fasta,
-    //   "${params.reference_fasta}.fai",
-    //   "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
-    //   params.bundle_mills_and_1000g_gold_standard_indels_vcf_gz,
-    //   "${params.bundle_mills_and_1000g_gold_standard_indels_vcf_gz}.tbi",
-    //   params.bundle_known_indels_vcf_gz,
-    //   "${params.bundle_known_indels_vcf_gz}.tbi",
-    //   params.bundle_v0_dbsnp138_vcf_gz,
-    //   "${params.bundle_v0_dbsnp138_vcf_gz}.tbi",
-    //   intervals,
-    //   realigned_bam.collect(),
-    //   realigned_bam_index.collect(),
-    //   bqsr_generator_identifiers
-    //   )
+    run_BaseRecalibrator_GATK(
+      params.reference_fasta,
+      "${params.reference_fasta}.fai",
+      "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
+      params.bundle_mills_and_1000g_gold_standard_indels_vcf_gz,
+      "${params.bundle_mills_and_1000g_gold_standard_indels_vcf_gz}.tbi",
+      params.bundle_known_indels_vcf_gz,
+      "${params.bundle_known_indels_vcf_gz}.tbi",
+      params.bundle_v0_dbsnp138_vcf_gz,
+      "${params.bundle_v0_dbsnp138_vcf_gz}.tbi",
+      intervals,
+      realigned_bam.collect(),
+      realigned_bam_index.collect(),
+      sample_identifier
+      )
 
     // Extract the normal and tumour IDs
     bqsr_ids = bqsr_generator_identifiers
@@ -88,21 +89,21 @@ workflow recalibrate_base {
         }
       .combine(bqsr_ids)
 
-    run_ApplyBQSR_GATK(
-      params.reference_fasta,
-      "${params.reference_fasta}.fai",
-      "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
-      "/hot/users/yashpatel/pipeline-call-gSNP/work/recal_table_multi.grp",
-      apply_bqsr_ich
-      )
-
     // run_ApplyBQSR_GATK(
     //   params.reference_fasta,
     //   "${params.reference_fasta}.fai",
     //   "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
-    //   run_BaseRecalibrator_GATK.out.recalibration_table,
+    //   "/hot/users/yashpatel/pipeline-call-gSNP/work/recal_table_multi.grp",
     //   apply_bqsr_ich
     //   )
+
+    run_ApplyBQSR_GATK(
+      params.reference_fasta,
+      "${params.reference_fasta}.fai",
+      "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
+      run_BaseRecalibrator_GATK.out.recalibration_table,
+      apply_bqsr_ich
+      )
 
     // Split the normal and tumour channels
     run_ApplyBQSR_GATK.out.apply_bqsr_och

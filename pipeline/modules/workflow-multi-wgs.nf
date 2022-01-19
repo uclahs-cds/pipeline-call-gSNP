@@ -38,7 +38,7 @@ workflow multi_sample_wgs {
     ir_input
     ir_input_no_interval
     identifiers
-    identifiers_vcfcalling
+    identifier_sample
 
     main:
     realign_indels(
@@ -54,6 +54,7 @@ workflow multi_sample_wgs {
         realign_indels.out.associated_interval,
         realign_indels.out.includes_unmapped,
         identifiers,
+        identifier_sample,
         base_recal_intervals
         )
 
@@ -239,7 +240,7 @@ workflow multi_sample_wgs {
             }
         .set{ vcf_caller_intervals_ich }
     
-    identifiers_vcfcalling.combine(vcf_caller_bams_ich)
+    identifier_sample.combine(vcf_caller_bams_ich)
         .map{it ->
             it[0]
             }
@@ -295,19 +296,6 @@ workflow multi_sample_wgs {
         "${params.bundle_v0_dbsnp138_vcf_gz}.tbi",
         gvcf_caller_ich
         )
-
-    // run_HaplotypeCallerGVCF_GATK_tumour(
-    //     params.reference_fasta,
-    //     "${params.reference_fasta}.fai",
-    //     "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
-    //     params.bundle_v0_dbsnp138_vcf_gz,
-    //     "${params.bundle_v0_dbsnp138_vcf_gz}.tbi",
-    //     identifiers,
-    //     tumour_bam_ch,
-    //     tumour_bam_index_ch,
-    //     hc_interval,
-    //     "tumour"
-    //     )
 
     hc_completion_signal = run_HaplotypeCallerVCF_GATK.out.vcfs.collect().mix(
         run_HaplotypeCallerGVCF_GATK.out.gvcfs.collect()
@@ -368,20 +356,41 @@ workflow multi_sample_wgs {
         merge_gvcf_ich.id
         )
 
-
-/*
-
     recalibrate_snps(
-        identifiers,
+        run_MergeVcfs_Picard_VCF.out.associated_id,
         run_MergeVcfs_Picard_VCF.out.vcf,
         run_MergeVcfs_Picard_VCF.out.vcf_index
         )
 
     recalibrate_indels(
-        identifiers,
+        recalibrate_snps.out.associated_id,
         recalibrate_snps.out.vcf,
         recalibrate_snps.out.vcf_index
         )
+
+    // Prep identifiers for filtering script
+    identifiers
+        .map{ it ->
+            it[1]
+            }
+        .flatten()
+        .unique()
+        .map{ it ->
+            "--normal $it"
+            }
+        .mix(
+            identifiers
+                .map{ it ->
+                    it[2..-1]
+                    }
+                .flatten()
+                .unique()
+                .filter{ it != 'NA' }
+                .map{ it ->
+                    "--tumour $it"
+                    }
+            )
+        .set{ filter_identifiers_ich }
 
     filter_gSNP_GATK(
         params.reference_fasta,
@@ -389,20 +398,18 @@ workflow multi_sample_wgs {
         "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
         recalibrate_indels.out.vcf,
         recalibrate_indels.out.vcf_index,
-        identifiers
+        recalibrate_indels.out.associated_id,
+        filter_identifiers_ich.collect()
         )
 
-    files_for_sha512 = run_MergeVcfs_Picard_normal_GVCF.out.vcf.flatten().mix(
-        run_MergeVcfs_Picard_normal_GVCF.out.vcf_index.flatten(),
+    files_for_sha512 = run_MergeVcfs_Picard_GVCF.out.vcf.flatten().mix(
+        run_MergeVcfs_Picard_GVCF.out.vcf_index.flatten(),
         filter_gSNP_GATK.out.germline_filtered.flatten(),
         run_MergeSamFiles_Picard_normal.out.merged_bam.flatten(),
         run_MergeSamFiles_Picard_normal.out.merged_bam_index.flatten(),
-        run_MergeVcfs_Picard_tumour_GVCF.out.vcf.flatten(),
-        run_MergeVcfs_Picard_tumour_GVCF.out.vcf_index.flatten(),
         run_MergeSamFiles_Picard_tumour.out.merged_bam.flatten(),
         run_MergeSamFiles_Picard_tumour.out.merged_bam_index.flatten()
         )
 
     calculate_sha512(files_for_sha512)
-*/
 }
