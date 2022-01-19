@@ -118,27 +118,26 @@ process run_MergeSamFiles_Picard {
     publishDir path: "${params.log_output_dir}/process-log",
         pattern: ".command.*",
         mode: "copy",
-        saveAs: { "${task.process.replace(':', '/')}/log${file(it).getName()}" }
+        saveAs: { "${task.process.replace(':', '/')}-${task.index}/log${file(it).getName()}" }
 
     input:
     path(bams)
-    val(sample_type)
-    tuple val(sample_id), val(normal_id), val(tumour_id)
+    val(id)
 
     output:
     path(".command.*")
-    path("${output_id}_realigned_recalibrated_merged.bam"), emit: merged_bam
-    path("${output_id}_realigned_recalibrated_merged.bai"), emit: merged_bam_index
+    path("${id}_realigned_recalibrated_merged.bam"), emit: merged_bam
+    path("${id}_realigned_recalibrated_merged.bai"), emit: merged_bam_index
+    val(id), emit: associated_id
 
     script:
     all_bams = bams.collect{ "-INPUT '$it'" }.join(' ')
-    output_id = (sample_type == "normal") ? "${normal_id}" : "${tumour_id}"
     """
     set -euo pipefail
     java -Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -Djava.io.tmpdir=/scratch \
         -jar /usr/local/share/picard-slim-2.26.8-0/picard.jar MergeSamFiles \
         ${all_bams} \
-        -OUTPUT ${output_id}_realigned_recalibrated_merged.bam \
+        -OUTPUT ${id}_realigned_recalibrated_merged.bam \
         -CREATE_INDEX true \
         -SORT_ORDER coordinate \
         -ASSUME_SORTED false \

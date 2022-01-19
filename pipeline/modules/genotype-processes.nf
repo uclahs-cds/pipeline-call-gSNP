@@ -98,11 +98,9 @@ process run_HaplotypeCallerVCF_GATK {
     path(reference_fasta_dict)
     path(dbsnp_bundle)
     path(dbsnp_bundle_index)
-    tuple val(sample_id), val(normal_id), val(tumour_id)
-    path(bam)
-    path(bam_index)
-    path(bam_tumour)
-    path(bam_index_tumour)
+    val(sample_id)
+    path(bams)
+    path(bams_index)
     path(interval)
 
 
@@ -110,15 +108,13 @@ process run_HaplotypeCallerVCF_GATK {
     path(".command.*")
     path("${sample_id}_${task.index}.vcf"), emit: vcf
     path("${sample_id}_${task.index}.vcf.idx"), emit: vcf_index
-    path(bam), emit: normal_bam_for_deletion
-    path(bam_index), emit: normal_bam_index_for_deletion
-    path(bam_tumour), emit: tumour_bam_for_deletion optional true
-    path(bam_index_tumour), emit: tumour_bam_index_for_deletion optional true
+    path(bams), emit: bams_for_deletion
+    path(bams_index), emit: bams_index_for_deletion
 
     script:
     output_filename = "${sample_id}_${task.index}.vcf"
     interval_str = "--intervals ${interval}"
-    bam_input_str = params.is_NT_paired ? "--input ${bam} --input ${bam_tumour}" : "--input ${bam}"
+    bam_input_str = bams.collect{ "--input '$it'" }.join(' ')
     interval_padding = params.is_targeted ? "--interval-padding 100" : ""
 
     """
@@ -182,11 +178,7 @@ process run_HaplotypeCallerGVCF_GATK {
     path(reference_fasta_dict)
     path(dbsnp_bundle)
     path(dbsnp_bundle_index)
-    tuple val(sample_id), val(normal_id), val(tumour_id)
-    path(bam)
-    path(bam_index)
-    path(interval)
-    val(sample_type)
+    tuple path(bam), path(bam_index), path(interval), val(id)
 
 
     output:
@@ -197,7 +189,7 @@ process run_HaplotypeCallerGVCF_GATK {
     path(bam_index), emit: bam_index_for_deletion
 
     script:
-    output_filename = (sample_type == "normal") ? "${normal_id}_${task.index}_raw_variants.g.vcf.gz" : "${tumour_id}_${task.index}_raw_variants.g.vcf.gz"
+    output_filename = "${id}_${task.index}_raw_variants.g.vcf.gz"
     interval_str = "--intervals ${interval}"
     interval_padding = params.is_targeted ? "--interval-padding 100" : ""
 

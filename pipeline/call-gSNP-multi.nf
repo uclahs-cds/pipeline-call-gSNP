@@ -107,6 +107,7 @@ input_ch_input_csv = Channel.from(1).map{
     }
 
 identifiers = Channel.from(1).map{['A-mini-n1', 'S2_v1.1.5', 'S2_v1.1.5_t1', 'S2_v1.1.5_t2']}.collect()
+identifiers_vcfcalling = Channel.from(1).map{'A-mini-n1'}
 
 workflow {
     // run_validate_PipeVal(input_validation)
@@ -143,7 +144,8 @@ workflow {
         split_intervals,
         ir_input,
         ir_input_no_interval,
-        identifiers
+        identifiers,
+        identifiers_vcfcalling
         )
 
     // if (params.is_NT_paired) {
