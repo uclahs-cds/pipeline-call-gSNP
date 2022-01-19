@@ -233,7 +233,13 @@ workflow calculate_contamination_tumour {
     bam.map{ it ->
         "tumour"
         }
-    .set{ type_ich }
+        .set{ type_ich }
+
+    normal_pileupsummaries.combine(bam)
+        .map{it ->
+            it[0]
+            }
+        .set{ normal_summaries_ich }
 
     run_GetPileupSummaries_GATK(
         params.reference_fasta,
@@ -250,7 +256,7 @@ workflow calculate_contamination_tumour {
 
     run_CalculateContamination_GATK(
         type_ich,
-        normal_pileupsummaries,
+        normal_summaries_ich,
         run_GetPileupSummaries_GATK.out.pileupsummaries,
         id
         )

@@ -106,8 +106,7 @@ process run_HaplotypeCallerVCF_GATK {
 
     output:
     path(".command.*")
-    path("${sample_id}_${task.index}.vcf"), emit: vcf
-    path("${sample_id}_${task.index}.vcf.idx"), emit: vcf_index
+    tuple val(sample_id), path("${sample_id}_${task.index}.vcf"), path("${sample_id}_${task.index}.vcf.idx"), emit: vcfs
     path(bams), emit: bams_for_deletion
     path(bams_index), emit: bams_index_for_deletion
 
@@ -183,8 +182,7 @@ process run_HaplotypeCallerGVCF_GATK {
 
     output:
     path(".command.*")
-    path("*_raw_variants.g.vcf.gz"), emit: gvcf
-    path("*_raw_variants.g.vcf.gz.tbi"), emit: gvcf_index
+    tuple val(id), path("*_raw_variants.g.vcf.gz"), path("*_raw_variants.g.vcf.gz.tbi"), emit: gvcfs
     path(bam), emit: bam_for_deletion
     path(bam_index), emit: bam_index_for_deletion
 
@@ -241,18 +239,17 @@ process run_MergeVcfs_Picard {
     input:
     path(vcfs)
     val(vcf_type)
-    val(sample_type)
-    tuple val(sample_id), val(normal_id), val(tumour_id)
+    val(id)
 
     output:
     path(".command.*")
+    val(id), emit: associated_id
     path("*.vcf{,.gz}"), emit: vcf
     path("*.vcf.{idx,gz.tbi}"), emit: vcf_index
 
     script:
     all_vcfs = vcfs.collect{ "-INPUT '$it'" }.join(' ')
-    output_gvcf_id = (sample_type == "normal") ? "${normal_id}" : "${tumour_id}"
-    output_filename = (vcf_type == "GVCF") ? "${output_gvcf_id}_merged_raw_variants.g.vcf.gz" : "${sample_id}_merged_raw.vcf"
+    output_filename = (vcf_type == "GVCF") ? "${id}_merged_raw_variants.g.vcf.gz" : "${id}_merged_raw.vcf"
 
     """
     set -euo pipefail

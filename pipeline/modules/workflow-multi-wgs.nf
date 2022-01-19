@@ -5,8 +5,7 @@ include {
     run_HaplotypeCallerVCF_GATK
     run_HaplotypeCallerGVCF_GATK
     run_MergeVcfs_Picard as run_MergeVcfs_Picard_VCF
-    run_MergeVcfs_Picard as run_MergeVcfs_Picard_normal_GVCF
-    run_MergeVcfs_Picard as run_MergeVcfs_Picard_tumour_GVCF
+    run_MergeVcfs_Picard as run_MergeVcfs_Picard_GVCF
     } from './genotype-processes.nf'
 include {
     recalibrate_snps
@@ -98,7 +97,7 @@ workflow multi_sample_wgs {
         .set{ normal_merge_id_ich }
 
     run_MergeSamFiles_Picard_normal(
-        normal_merge_bams_ich,
+        normal_merge_bams_ich.collect(),
         normal_merge_id_ich
         )
 
@@ -239,6 +238,12 @@ workflow multi_sample_wgs {
             it[0].split('my_vcfcalling_separator')[2]
             }
         .set{ vcf_caller_intervals_ich }
+    
+    identifiers_vcfcalling.combine(vcf_caller_bams_ich)
+        .map{it ->
+            it[0]
+            }
+        .set{ hc_vcf_ids_ich }
 
 
     run_HaplotypeCallerVCF_GATK(
@@ -247,7 +252,7 @@ workflow multi_sample_wgs {
         "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
         params.bundle_v0_dbsnp138_vcf_gz,
         "${params.bundle_v0_dbsnp138_vcf_gz}.tbi",
-        identifiers_vcfcalling,
+        hc_vcf_ids_ich,
         vcf_caller_bams_ich,
         vcf_caller_bais_ich,
         vcf_caller_intervals_ich
@@ -304,8 +309,8 @@ workflow multi_sample_wgs {
     //     "tumour"
     //     )
 
-    hc_completion_signal = run_HaplotypeCallerVCF_GATK.out.vcf.collect().mix(
-        run_HaplotypeCallerGVCF_GATK.out.gvcf.collect()
+    hc_completion_signal = run_HaplotypeCallerVCF_GATK.out.vcfs.collect().mix(
+        run_HaplotypeCallerGVCF_GATK.out.gvcfs.collect()
         )
         .collect()
 
@@ -327,30 +332,44 @@ workflow multi_sample_wgs {
         reheadered_deletion_signal
         )
 
+    // Prep input for merging VCFs
+    run_HaplotypeCallerVCF_GATK.out.vcfs
+        .map{ it ->
+            it[0,1]
+            }
+        .groupTuple(by: 0)
+        .multiMap{ it ->
+            vcfs: it[1].flatten()
+            id: it[0]
+            }
+        .set{ merge_vcf_ich }
+
+    run_MergeVcfs_Picard_VCF(
+        merge_vcf_ich.vcfs,
+        "VCF",
+        merge_vcf_ich.id
+        )
+
+    // Prep input for merging GVCFs
+    run_HaplotypeCallerGVCF_GATK.out.gvcfs
+        .map{ it ->
+            it[0,1]
+            }
+        .groupTuple(by: 0)
+        .multiMap{ it ->
+            gvcfs: it[1].flatten()
+            id: it[0]
+            }
+        .set{ merge_gvcf_ich }
+
+    run_MergeVcfs_Picard_GVCF(
+        merge_gvcf_ich.gvcfs,
+        "GVCF",
+        merge_gvcf_ich.id
+        )
+
 
 /*
-
-    
-    run_MergeVcfs_Picard_VCF(
-        run_HaplotypeCallerVCF_GATK.out.vcf.collect(),
-        "VCF",
-        "-",
-        identifiers
-        )
-
-    run_MergeVcfs_Picard_normal_GVCF(
-        run_HaplotypeCallerGVCF_GATK_normal.out.gvcf.collect(),
-        "GVCF",
-        "normal",
-        identifiers
-        )
-
-    run_MergeVcfs_Picard_tumour_GVCF(
-        run_HaplotypeCallerGVCF_GATK_tumour.out.gvcf.collect(),
-        "GVCF",
-        "tumour",
-        identifiers
-        )
 
     recalibrate_snps(
         identifiers,
