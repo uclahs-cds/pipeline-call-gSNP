@@ -2,6 +2,7 @@ nextflow.enable.dsl=2
 
 include { calculate_sha512 } from './validation.nf'
 include {
+    run_SplitIntervals_GATK as run_SplitIntervals_GATK_targeted
     run_HaplotypeCallerVCF_GATK
     run_HaplotypeCallerGVCF_GATK
     run_MergeVcfs_Picard as run_MergeVcfs_Picard_VCF
@@ -25,7 +26,7 @@ include {
     remove_intermediate_files as remove_reheadered_bams
     } from './intermediate-cleanup.nf'
 
-workflow single_sample_wgs {
+workflow single_sample_targeted {
     take:
     intervals
     split_intervals
@@ -108,7 +109,27 @@ workflow single_sample_wgs {
         )
 
     // Prepare input for VCF calling
-    identifier_sample.combine(normal_bam_ch)
+    run_MergeSamFiles_Picard.out.merged_bam
+        .collect()
+        .combine(hc_interval)
+        .map{ it ->
+            it[0]
+            }
+        .set{ hc_vcf_bams_ich }
+
+    run_MergeSamFiles_Picard.out.merged_bam_index
+        .collect()
+        .combine(hc_interval)
+        .map{ it ->
+            it[0]
+            }
+        .set{ hc_vcf_bais_ich }
+
+    identifier_sample.combine(hc_vcf_bams_ich)
+        .map{ it ->
+            it[0]
+            }
+        .combine(hc_interval)
         .map{ it ->
             it[0]
             }
@@ -121,40 +142,43 @@ workflow single_sample_wgs {
         params.bundle_v0_dbsnp138_vcf_gz,
         "${params.bundle_v0_dbsnp138_vcf_gz}.tbi",
         hc_vcf_ids_ich,
-        normal_bam_ch,
-        normal_bam_index_ch,
+        hc_vcf_bams_ich,
+        hc_vcf_bais_ich,
         hc_interval
         )
 
     // Prepare input for GVCF calling
     hc_bam_counter = 0
-    normal_bam_ch
+    run_MergeSamFiles_Picard.out.merged_bam
         .map{ it ->
             [hc_bam_counter = hc_bam_counter + 1, it]
             }
         .set{ hc_gvcf_bams }
 
     hc_bai_counter = 0
-    normal_bam_index_ch
+    run_MergeSamFiles_Picard.out.merged_bam_index
         .map{ it ->
             [hc_bai_counter = hc_bai_counter + 1, it]
             }
         .set{ hc_gvcf_bais }
     
     hc_interval_counter = 0
-    hc_interval
+    run_MergeSamFiles_Picard.out.associated_id
         .map{ it ->
             [hc_interval_counter = hc_interval_counter + 1, it]
             }
-        .set{ hc_gvcf_intervals }
+        .set{ hc_gvcf_ids }
 
     hc_gvcf_bams
         .join(hc_gvcf_bais, by: 0)
-        .join(hc_gvcf_intervals, by: 0)
+        .join(hc_gvcf_ids, by: 0)
         .map{ it ->
             it[1..-1]
             }
-        .combine(normal_identifier)
+        .combine(hc_interval)
+        .map{ it ->
+            [it[0], it[1], it[3], it[2]]
+            }
         .set{ gvcf_caller_ich }
 
     run_HaplotypeCallerGVCF_GATK(
