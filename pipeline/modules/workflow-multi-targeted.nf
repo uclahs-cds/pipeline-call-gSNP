@@ -282,7 +282,7 @@ workflow multi_sample_targeted {
         .mix(
             reheader_interval_bams.out.reheadered_tumour_bam.flatten()
             )
-        .filter { it.endsWith('.bam') || it.endsWith('.bai') }
+        .filter { it.toString().endsWith('.bam') || it.toString().endsWith('.bai') }
         .unique()
 
     reheadered_deletion_signal = run_MergeSamFiles_Picard_normal.out.merged_bam.mix(

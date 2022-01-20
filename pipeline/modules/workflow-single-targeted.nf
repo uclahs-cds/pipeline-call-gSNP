@@ -2,11 +2,10 @@ nextflow.enable.dsl=2
 
 include { calculate_sha512 } from './validation.nf'
 include {
-    run_SplitIntervals_GATK as run_SplitIntervals_GATK_targeted
     run_HaplotypeCallerVCF_GATK
-    run_HaplotypeCallerGVCF_GATK as run_HaplotypeCallerGVCF_GATK_normal
+    run_HaplotypeCallerGVCF_GATK
     run_MergeVcfs_Picard as run_MergeVcfs_Picard_VCF
-    run_MergeVcfs_Picard as run_MergeVcfs_Picard_normal_GVCF
+    run_MergeVcfs_Picard as run_MergeVcfs_Picard_GVCF
     } from './genotype-processes.nf'
 include {
     recalibrate_snps
@@ -15,10 +14,10 @@ include {
     } from './variant-recalibration.nf'
 include { realign_indels } from './indel-realignment.nf'
 include { recalibrate_base } from './workflow-bqsr.nf'
-include { run_MergeSamFiles_Picard as run_MergeSamFiles_Picard_normal } from './bam-processing.nf'
+include { run_MergeSamFiles_Picard } from './bam-processing.nf'
 include {
     calculate_contamination_normal
-    run_DepthOfCoverage_GATK as run_DepthOfCoverage_GATK_normal
+    run_DepthOfCoverage_GATK
     } from './summary-processes.nf'
 include {
     remove_intermediate_files as remove_realigned_bams
@@ -26,15 +25,24 @@ include {
     remove_intermediate_files as remove_reheadered_bams
     } from './intermediate-cleanup.nf'
 
-workflow single_sample_targeted {
+workflow single_sample_wgs {
     take:
     intervals
     split_intervals
     ir_input
     ir_input_no_interval
     identifiers
+    identifier_sample
 
     main:
+    identifiers
+        .map{ it ->
+            it[1]
+            }
+        .flatten()
+        .unique()
+        .set{ normal_identifier }
+
     run_SplitIntervals_GATK_targeted(
         params.intervals,
         params.reference_fasta,
@@ -59,6 +67,7 @@ workflow single_sample_targeted {
         realign_indels.out.associated_interval,
         realign_indels.out.includes_unmapped,
         identifiers,
+        identifier_sample,
         base_recal_intervals
         )
 
@@ -68,46 +77,42 @@ workflow single_sample_targeted {
         )
 
     // Generate decoy tumour bam and index channels for single sample mode
-    normal_bam_ch = recalibrate_base.out.recalibrated_normal_bam
-    normal_bam_index_ch = recalibrate_base.out.recalibrated_normal_bam_index
-    tumour_bam_ch = Channel.of(1..params.scatter_count).map{"/scratch/placeholder_${it}.txt"}
-    tumour_bam_index_ch = Channel.of(1..params.scatter_count).map{"/scratch/placeholder_${it}_index.txt"}
+    normal_bam_ch = recalibrate_base.out.recalibrated_normal_bam.map{ it -> it[1] }
+    normal_bam_index_ch = recalibrate_base.out.recalibrated_normal_bam_index.map{ it -> it[1] }
     hc_interval = recalibrate_base.out.associated_interval
 
-    run_MergeSamFiles_Picard_normal(
+    run_MergeSamFiles_Picard(
         normal_bam_ch.collect(),
-        "normal",
-        identifiers
+        normal_identifier
         )
-
-    merged_tumour_bam = Channel.of(1..params.scatter_count).map{"/scratch/placeholder_${it}.txt"}
-    merged_tumour_bam_index = Channel.of(1..params.scatter_count).map{"/scratch/placeholder_${it}_index.txt"}
 
     hc_interval = split_targeted_intervals
     summary_intervals = split_targeted_intervals
 
-    normal_bam_ch = run_MergeSamFiles_Picard_normal.out.merged_bam
-    normal_bam_index_ch = run_MergeSamFiles_Picard_normal.out.merged_bam_index
-    tumour_bam_ch = merged_tumour_bam
-    tumour_bam_index_ch = merged_tumour_bam_index
-
     calculate_contamination_normal(
-        run_MergeSamFiles_Picard_normal.out.merged_bam,
-        run_MergeSamFiles_Picard_normal.out.merged_bam_index,
+        run_MergeSamFiles_Picard.out.merged_bam,
+        run_MergeSamFiles_Picard.out.merged_bam_index,
         summary_intervals,
-        identifiers
+        run_MergeSamFiles_Picard.out.associated_id
         )
 
-    run_DepthOfCoverage_GATK_normal(
+    run_DepthOfCoverage_GATK(
         params.reference_fasta,
         "${params.reference_fasta}.fai",
         "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
         summary_intervals.collect(),
-        run_MergeSamFiles_Picard_normal.out.merged_bam,
-        run_MergeSamFiles_Picard_normal.out.merged_bam_index,
+        run_MergeSamFiles_Picard.out.merged_bam,
+        run_MergeSamFiles_Picard.out.merged_bam_index,
         "normal",
-        identifiers
+        run_MergeSamFiles_Picard.out.associated_id
         )
+
+    // Prepare input for VCF calling
+    identifier_sample.combine(normal_bam_ch)
+        .map{ it ->
+            it[0]
+            }
+        .set{ hc_vcf_ids_ich }
 
     run_HaplotypeCallerVCF_GATK(
         params.reference_fasta,
@@ -115,38 +120,62 @@ workflow single_sample_targeted {
         "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
         params.bundle_v0_dbsnp138_vcf_gz,
         "${params.bundle_v0_dbsnp138_vcf_gz}.tbi",
-        identifiers,
+        hc_vcf_ids_ich,
         normal_bam_ch,
         normal_bam_index_ch,
-        tumour_bam_ch,
-        tumour_bam_index_ch,
         hc_interval
         )
 
-    run_HaplotypeCallerGVCF_GATK_normal(
+    // Prepare input for GVCF calling
+    hc_bam_counter = 0
+    normal_bam_ch
+        .map{ it ->
+            [hc_bam_counter = hc_bam_counter + 1, it]
+            }
+        .set{ hc_gvcf_bams }
+
+    hc_bai_counter = 0
+    normal_bam_index_ch
+        .map{ it ->
+            [hc_bai_counter = hc_bai_counter + 1, it]
+            }
+        .set{ hc_gvcf_bais }
+    
+    hc_interval_counter = 0
+    hc_interval
+        .map{ it ->
+            [hc_interval_counter = hc_interval_counter + 1, it]
+            }
+        .set{ hc_gvcf_intervals }
+
+    hc_gvcf_bams
+        .join(hc_gvcf_bais, by: 0)
+        .join(hc_gvcf_intervals, by: 0)
+        .map{ it ->
+            it[1..-1]
+            }
+        .combine(normal_identifier)
+        .set{ gvcf_caller_ich }
+
+    run_HaplotypeCallerGVCF_GATK(
         params.reference_fasta,
         "${params.reference_fasta}.fai",
         "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
         params.bundle_v0_dbsnp138_vcf_gz,
         "${params.bundle_v0_dbsnp138_vcf_gz}.tbi",
-        identifiers,
-        normal_bam_ch,
-        normal_bam_index_ch,
-        hc_interval,
-        "normal"
+        gvcf_caller_ich
         )
 
-    hc_completion_signal = run_HaplotypeCallerVCF_GATK.out.vcf.collect().mix(
-        run_HaplotypeCallerGVCF_GATK_normal.out.gvcf.collect()
+    hc_completion_signal = run_HaplotypeCallerVCF_GATK.out.vcfs.collect().mix(
+        run_HaplotypeCallerGVCF_GATK.out.gvcfs.collect()
         )
         .collect()
 
-    reheadered_bams_to_delete = recalibrate_base.out.recalibrated_normal_bam.mix(
-        recalibrate_base.out.recalibrated_normal_bam_index
+    reheadered_bams_to_delete = recalibrate_base.out.recalibrated_normal_bam.map{ it -> it[1] }.mix(
+        recalibrate_base.out.recalibrated_normal_bam_index.map{ it -> it[1] }
         )
 
-    reheadered_deletion_signal = run_MergeSamFiles_Picard_normal.out.merged_bam.mix(
-        merged_tumour_bam,
+    reheadered_deletion_signal = run_MergeSamFiles_Picard.out.merged_bam.mix(
         hc_completion_signal
         )
         .collect()
@@ -155,32 +184,66 @@ workflow single_sample_targeted {
         reheadered_bams_to_delete,
         reheadered_deletion_signal
         )
+
+    // Prep input for merging VCFs
+    run_HaplotypeCallerVCF_GATK.out.vcfs
+        .map{ it ->
+            it[0,1]
+            }
+        .groupTuple(by: 0)
+        .multiMap{ it ->
+            vcfs: it[1].flatten()
+            id: it[0]
+            }
+        .set{ merge_vcf_ich }
     
     run_MergeVcfs_Picard_VCF(
-        run_HaplotypeCallerVCF_GATK.out.vcf.collect(),
+        merge_vcf_ich.vcfs,
         "VCF",
-        "-",
-        identifiers
+        merge_vcf_ich.id
         )
 
-    run_MergeVcfs_Picard_normal_GVCF(
-        run_HaplotypeCallerGVCF_GATK_normal.out.gvcf.collect(),
+    // Prep input for merging GVCFs
+    run_HaplotypeCallerGVCF_GATK.out.gvcfs
+        .map{ it ->
+            it[0,1]
+            }
+        .groupTuple(by: 0)
+        .multiMap{ it ->
+            gvcfs: it[1].flatten()
+            id: it[0]
+            }
+        .set{ merge_gvcf_ich }
+
+    run_MergeVcfs_Picard_GVCF(
+        merge_gvcf_ich.gvcfs,
         "GVCF",
-        "normal",
-        identifiers
+        merge_gvcf_ich.id
         )
 
     recalibrate_snps(
-        identifiers,
+        run_MergeVcfs_Picard_VCF.out.associated_id,
         run_MergeVcfs_Picard_VCF.out.vcf,
         run_MergeVcfs_Picard_VCF.out.vcf_index
         )
 
     recalibrate_indels(
-        identifiers,
+        recalibrate_snps.out.associated_id,
         recalibrate_snps.out.vcf,
         recalibrate_snps.out.vcf_index
         )
+
+    // Prep identifiers for filtering script
+    identifiers
+        .map{ it ->
+            it[1]
+            }
+        .flatten()
+        .unique()
+        .map{ it ->
+            "--normal $it --tumour $it"
+            }
+        .set{ filter_identifiers_ich }
 
     filter_gSNP_GATK(
         params.reference_fasta,
@@ -188,14 +251,15 @@ workflow single_sample_targeted {
         "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
         recalibrate_indels.out.vcf,
         recalibrate_indels.out.vcf_index,
-        identifiers
+        recalibrate_indels.out.associated_id,
+        filter_identifiers_ich.collect()
         )
 
-    files_for_sha512 = run_MergeVcfs_Picard_normal_GVCF.out.vcf.flatten().mix(
-        run_MergeVcfs_Picard_normal_GVCF.out.vcf_index.flatten(),
+    files_for_sha512 = run_MergeVcfs_Picard_GVCF.out.vcf.flatten().mix(
+        run_MergeVcfs_Picard_GVCF.out.vcf_index.flatten(),
         filter_gSNP_GATK.out.germline_filtered.flatten(),
-        run_MergeSamFiles_Picard_normal.out.merged_bam.flatten(),
-        run_MergeSamFiles_Picard_normal.out.merged_bam_index.flatten()
+        run_MergeSamFiles_Picard.out.merged_bam.flatten(),
+        run_MergeSamFiles_Picard.out.merged_bam_index.flatten()
         )
 
     calculate_sha512(files_for_sha512)

@@ -66,8 +66,8 @@ workflow single_sample_wgs {
         )
 
     // Generate decoy tumour bam and index channels for single sample mode
-    normal_bam_ch = recalibrate_base.out.recalibrated_normal_bam
-    normal_bam_index_ch = recalibrate_base.out.recalibrated_normal_bam_index
+    normal_bam_ch = recalibrate_base.out.recalibrated_normal_bam.map{ it -> it[1] }
+    normal_bam_index_ch = recalibrate_base.out.recalibrated_normal_bam_index.map{ it -> it[1] }
     hc_interval = recalibrate_base.out.associated_interval
 
     run_MergeSamFiles_Picard(
@@ -84,7 +84,7 @@ workflow single_sample_wgs {
         run_MergeSamFiles_Picard.out.associated_id
         )
 
-    run_DepthOfCoverage_GATK_normal(
+    run_DepthOfCoverage_GATK(
         params.reference_fasta,
         "${params.reference_fasta}.fai",
         "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
@@ -154,13 +154,13 @@ workflow single_sample_wgs {
         gvcf_caller_ich
         )
 
-    hc_completion_signal = run_HaplotypeCallerVCF_GATK.out.vcf.collect().mix(
-        run_HaplotypeCallerGVCF_GATK.out.gvcf.collect()
+    hc_completion_signal = run_HaplotypeCallerVCF_GATK.out.vcfs.collect().mix(
+        run_HaplotypeCallerGVCF_GATK.out.gvcfs.collect()
         )
         .collect()
 
-    reheadered_bams_to_delete = recalibrate_base.out.recalibrated_normal_bam.mix(
-        recalibrate_base.out.recalibrated_normal_bam_index
+    reheadered_bams_to_delete = recalibrate_base.out.recalibrated_normal_bam.map{ it -> it[1] }.mix(
+        recalibrate_base.out.recalibrated_normal_bam_index.map{ it -> it[1] }
         )
 
     reheadered_deletion_signal = run_MergeSamFiles_Picard.out.merged_bam.mix(
@@ -229,20 +229,8 @@ workflow single_sample_wgs {
         .flatten()
         .unique()
         .map{ it ->
-            "--normal $it"
+            "--normal $it --tumour $it"
             }
-        .mix(
-            identifiers
-                .map{ it ->
-                    it[2..-1]
-                    }
-                .flatten()
-                .unique()
-                .filter{ it != 'NA' }
-                .map{ it ->
-                    "--tumour $it"
-                    }
-            )
         .set{ filter_identifiers_ich }
 
     filter_gSNP_GATK(
