@@ -2,6 +2,7 @@ nextflow.enable.dsl=2
 
 include { calculate_sha512 } from './validation.nf'
 include {
+    run_SplitIntervals_GATK as run_SplitIntervals_GATK_targeted
     run_HaplotypeCallerVCF_GATK
     run_HaplotypeCallerGVCF_GATK
     run_MergeVcfs_Picard as run_MergeVcfs_Picard_VCF
@@ -31,7 +32,7 @@ include {
     remove_intermediate_files as remove_reheadered_bams
     } from './intermediate-cleanup.nf'
 
-workflow multi_sample_wgs {
+workflow multi_sample_targeted {
     take:
     intervals
     split_intervals
@@ -41,12 +42,23 @@ workflow multi_sample_wgs {
     identifier_sample
 
     main:
+    run_SplitIntervals_GATK_targeted(
+        params.intervals,
+        params.reference_fasta,
+        "${params.reference_fasta}.fai",
+        "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
+        "targeted-intervals",
+        true
+        )
+
+    split_targeted_intervals = run_SplitIntervals_GATK_targeted.out.interval_list.flatten()
+
     realign_indels(
         ir_input,
         ir_input_no_interval
         )
     
-    base_recal_intervals = intervals
+    base_recal_intervals = params.intervals
 
     recalibrate_base(
         realign_indels.out.realigned_bam,
@@ -134,7 +146,8 @@ workflow multi_sample_wgs {
     // merged_tumour_bam = run_MergeSamFiles_Picard_tumour.out.merged_bam
     // merged_tumour_bam_index = run_MergeSamFiles_Picard_tumour.out.merged_bam_index
 
-    summary_intervals = split_intervals
+    hc_interval = split_targeted_intervals
+    summary_intervals = split_targeted_intervals
 
     calculate_contamination_normal(
         run_MergeSamFiles_Picard_normal.out.merged_bam,
@@ -174,77 +187,33 @@ workflow multi_sample_wgs {
         )
 
     // Prep input for VCF calling
-    reheader_interval_bams.out.reheadered_normal_bam
+    run_MergeSamFiles_Picard_normal.out.merged_bam
+        .concat(run_MergeSamFiles_Picard_tumour.out.merged_bam)
+        .collect()
+        .combine(hc_interval)
         .map{ it ->
-            [it[2].getFileName().toString(), (it[0] + 'my_vcfcalling_separator' + it[1] + 'my_vcfcalling_separator' + it[2]).toString()]
+            it[0]
             }
-        .set{ normal_for_join }
+        .set{ hc_vcf_bams_ich }
 
-    reheader_interval_bams.out.reheadered_tumour_bam
+    run_MergeSamFiles_Picard_normal.out.merged_bam_index
+        .concat(run_MergeSamFiles_Picard_tumour.out.merged_bam_index)
+        .collect()
+        .combine(hc_interval)
         .map{ it ->
-            tumour_vcf = []
-            s_vcf = it.size
-            while (!(s_vcf instanceof Integer)) {
-                s_vcf = s_vcf.size
-                }
-            for(i_vcf = 0; i_vcf < s_vcf; i_vcf = i_vcf + 1) {
-                tumour_vcf = tumour_vcf + [it[i_vcf][2].getFileName().toString() + 'my_vcfcalling_separator' + it[i_vcf][0] + 'my_vcfcalling_separator' + it[i_vcf][1] + 'my_vcfcalling_separator' + it[i_vcf][2]]
-                }
-            tumour_vcf
+            it[0]
             }
-        .flatten()
-        .map{ it ->
-            split_it = it.split('my_vcfcalling_separator')[0..-1]
-            [split_it[0], split_it[1] + 'my_vcfcalling_separator' + split_it[2] + 'my_vcfcalling_separator' + split_it[3]]
-            }
-        .set{ tumour_for_join }
+        .set{ hc_vcf_bais_ich }
 
-    normal_for_join
-        .mix(tumour_for_join)
-        .groupTuple(by: 0)
-        .map{ it -> it[1].flatten()}
-        .set{ grouped_bams }
-
-    grouped_bams
-        .map{ it ->
-            mapped_bams = []
-            s_map = it.size
-            while (!(s_map instanceof Integer)) {
-                s_map = s_map.size
-                }
-            for(i_map = 0; i_map < s_map; i_map = i_map + 1) {
-                mapped_bams = mapped_bams + it[i_map].split('my_vcfcalling_separator')[0]
-                }
-            mapped_bams
-            }
-        .set{ vcf_caller_bams_ich }
-
-    grouped_bams
-        .map{ it ->
-            mapped_bais = []
-            s_map_bai = it.size
-            while (!(s_map_bai instanceof Integer)) {
-                s_map_bai = s_map_bai.size
-                }
-            for(i_map_bai = 0; i_map_bai < s_map_bai; i_map_bai = i_map_bai + 1) {
-                mapped_bais = mapped_bais + it[i_map_bai].split('my_vcfcalling_separator')[1]
-                }
-            mapped_bais
-            }
-        .set{ vcf_caller_bais_ich }
-    
-    grouped_bams
-        .map{ it ->
-            it[0].split('my_vcfcalling_separator')[2]
-            }
-        .set{ vcf_caller_intervals_ich }
-    
-    identifier_sample.combine(vcf_caller_bams_ich)
+    identifier_sample.combine(hc_vcf_bams_ich)
         .map{it ->
             it[0]
             }
+        .combine(hc_interval)
+        .map{ it ->
+            it[0]
+            }
         .set{ hc_vcf_ids_ich }
-
 
     run_HaplotypeCallerVCF_GATK(
         params.reference_fasta,
@@ -253,37 +222,45 @@ workflow multi_sample_wgs {
         params.bundle_v0_dbsnp138_vcf_gz,
         "${params.bundle_v0_dbsnp138_vcf_gz}.tbi",
         hc_vcf_ids_ich,
-        vcf_caller_bams_ich,
-        vcf_caller_bais_ich,
-        vcf_caller_intervals_ich
+        hc_vcf_bams_ich,
+        hc_vcf_bais_ich,
+        hc_interval
         )
 
     // Prep input for GVCF calling
-    reheader_interval_bams.out.reheadered_normal_bam
+    hc_bam_counter = 0
+    run_MergeSamFiles_Picard_normal.out.merged_bam
+        .concat(run_MergeSamFiles_Picard_tumour.out.merged_bam)
         .map{ it ->
-            it.join('my_gvcfcalling_separator')
+            [hc_bam_counter = hc_bam_counter + 1, it]
             }
-        .set{ gvcf_normal_intermediate }
+        .set{ hc_gvcf_bams }
 
-    reheader_interval_bams.out.reheadered_tumour_bam
+    hc_bai_counter = 0
+    run_MergeSamFiles_Picard_normal.out.merged_bam_index
+        .concat(run_MergeSamFiles_Picard_tumour.out.merged_bam_index)
         .map{ it ->
-            tumour_gvcf = []
-            s_gvcf = it.size
-            while (!(s_gvcf instanceof Integer)) {
-                s_gvcf = s_gvcf.size
-                }
-            for(i_gvcf = 0; i_gvcf < s_gvcf; i_gvcf = i_gvcf + 1) {
-                tumour_gvcf = tumour_gvcf + [it[i_gvcf].join('my_gvcfcalling_separator')]
-                }
-            tumour_gvcf
+            [hc_bai_counter = hc_bai_counter + 1, it]
             }
-        .flatten()
-        .set{ gvcf_tumour_intermediate }
-
-    gvcf_normal_intermediate
-        .mix(gvcf_tumour_intermediate)
+        .set{ hc_gvcf_bais }
+    
+    hc_ids_counter = 0
+    run_MergeSamFiles_Picard_normal.out.associated_id
+        .concat(run_MergeSamFiles_Picard_tumour.out.associated_id)
         .map{ it ->
-            it.split('my_gvcfcalling_separator')[0..-1]
+            [hc_bai_counter = hc_bai_counter + 1, it]
+            }
+        .set{ hc_gvcf_ids }
+
+    hc_gvcf_bams
+        .join(hc_gvcf_bais, by: 0)
+        .join(hc_gvcf_ids, by: 0)
+        .map{ it ->
+            it[1..-1]
+            }
+        .combine(hc_interval)
+        .map{ it ->
+            [it[0], it[1], it[3], it[2]]
             }
         .set{ gvcf_caller_ich }
 

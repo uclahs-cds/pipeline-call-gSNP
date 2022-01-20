@@ -51,9 +51,8 @@ include { run_SplitIntervals_GATK } from './modules/genotype-processes.nf'
 include { extract_GenomeIntervals } from './modules/extract-intervals.nf'
 include { single_sample_wgs } from './modules/workflow-single-wgs.nf'
 include { single_sample_targeted } from './modules/workflow-single-targeted.nf'
-include { paired_sample_wgs } from './modules/workflow-paired-wgs.nf'
-include { paired_sample_targeted } from './modules/workflow-paired-targeted.nf'
 include { multi_sample_wgs } from './modules/workflow-multi-wgs.nf'
+include { multi_sample_targeted } from './modules/workflow-multi-targeted.nf'
 
 // Returns the index file for the given bam or vcf
 def indexFile(bam_or_vcf) {
@@ -171,55 +170,50 @@ workflow {
 
     split_intervals = run_SplitIntervals_GATK.out.interval_list.flatten()
 
-    ir_input = input_ch_input_csv.combine(split_intervals)
+    ir_input = input_csv_formatted_ich.combine(split_intervals)
         .map{ input_csv,interval -> [input_csv.sample_id, input_csv.normal_id, input_csv.tumour_id, input_csv.normal_BAM, input_csv.normal_index, input_csv.tumour_BAM, input_csv.tumour_index, interval] }
-    ir_input_no_interval = input_ch_input_csv.combine(split_intervals)
+    ir_input_no_interval = input_csv_formatted_ich.combine(split_intervals)
         .map{ input_csv,interval -> [input_csv.sample_id, input_csv.normal_id, input_csv.tumour_id, input_csv.normal_BAM, input_csv.normal_index, input_csv.tumour_BAM, input_csv.tumour_index] }
 
-    multi_sample_wgs(
-        intervals,
-        split_intervals,
-        ir_input,
-        ir_input_no_interval,
-        identifiers,
-        identifier_sample
-        )
-
-    // if (params.is_NT_paired) {
-    //     if (params.is_targeted) {
-    //         paired_sample_targeted(
-    //             intervals,
-    //             split_intervals,
-    //             ir_input,
-    //             ir_input_no_interval,
-    //             identifiers
-    //             )
-    //     } else {
-    //         paired_sample_wgs(
-    //             intervals,
-    //             split_intervals,
-    //             ir_input,
-    //             ir_input_no_interval,
-    //             identifiers
-    //             )
-    //     }
-    // } else {
-    //     if (params.is_targeted) {
-    //         single_sample_targeted(
-    //             intervals,
-    //             split_intervals,
-    //             ir_input,
-    //             ir_input_no_interval,
-    //             identifiers
-    //             )
-    //     } else {
-    //         single_sample_wgs(
-    //             intervals,
-    //             split_intervals,
-    //             ir_input,
-    //             ir_input_no_interval,
-    //             identifiers
-    //             )
-    //     }
-    // }
+    if (params.is_NT_paired) {
+        if (params.is_targeted) {
+            multi_sample_targeted(
+                intervals,
+                split_intervals,
+                ir_input,
+                ir_input_no_interval,
+                identifiers,
+                identifier_sample
+                )
+        } else {
+            multi_sample_wgs(
+                intervals,
+                split_intervals,
+                ir_input,
+                ir_input_no_interval,
+                identifiers,
+                identifier_sample
+                )
+        }
+    } else {
+        if (params.is_targeted) {
+            single_sample_targeted(
+                intervals,
+                split_intervals,
+                ir_input,
+                ir_input_no_interval,
+                identifiers,
+                identifier_sample
+                )
+        } else {
+            single_sample_wgs(
+                intervals,
+                split_intervals,
+                ir_input,
+                ir_input_no_interval,
+                identifiers,
+                identifier_sample
+                )
+        }
+    }
 }

@@ -89,6 +89,12 @@ workflow recalibrate_base {
         }
       .combine(bqsr_ids)
 
+    recal_table_ich = run_BaseRecalibrator_GATK.out.recalibration_table
+      .combine(apply_bqsr_ich)
+      .map{ it ->
+        it[0]
+        }
+
     // run_ApplyBQSR_GATK(
     //   params.reference_fasta,
     //   "${params.reference_fasta}.fai",
@@ -101,7 +107,7 @@ workflow recalibrate_base {
       params.reference_fasta,
       "${params.reference_fasta}.fai",
       "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
-      run_BaseRecalibrator_GATK.out.recalibration_table,
+      recal_table_ich,
       apply_bqsr_ich
       )
 

@@ -46,7 +46,7 @@ process run_RealignerTargetCreator_GATK {
     output:
     path(".command.*")
     path(interval), emit: scatter_intervals
-    path("${sample_id}_RTC_${task.index}.intervals"), emit: intervals_RTC
+    path("${sample_id[0]}_RTC_${task.index}.intervals"), emit: intervals_RTC
 
     script:
     tumour_bams = bam_tumour.collect{ "--input_file '$it'" }.join(' ')
@@ -63,11 +63,11 @@ process run_RealignerTargetCreator_GATK {
         --known ${bundle_mills_and_1000g_gold_standards_vcf_gz} \
         --known ${bundle_known_indels_vcf_gz} \
         --intervals ${interval} \
-        --out ${sample_id}_RTC_${task.index}.intervals \
+        --out ${sample_id[0]}_RTC_${task.index}.intervals \
         --allow_potentially_misencoded_quality_scores \
         --num_threads 2 \
         ${interval_padding} \
-        ${targeted_interval_params} || touch ${sample_id}_RTC_${task.index}.intervals
+        ${targeted_interval_params} || touch ${sample_id[0]}_RTC_${task.index}.intervals
     """
 }
 
@@ -125,8 +125,8 @@ process run_IndelRealigner_GATK {
     path(".command.*")
     path(scatter_intervals), emit: associated_interval
     val(has_unmapped), emit: includes_unmapped
-    path("${sample_id}_indelrealigned_${task.index}.bam"), emit: realigned_indels_bam
-    path("${sample_id}_indelrealigned_${task.index}.bai"), emit: realigned_indels_bam_index
+    path("${sample_id[0]}_indelrealigned_${task.index}.bam"), emit: realigned_indels_bam
+    path("${sample_id[0]}_indelrealigned_${task.index}.bai"), emit: realigned_indels_bam_index
 
     script:
     tumour_bams = bam_tumour.collect{ "--input_file '$it'" }.join(' ')
@@ -146,7 +146,7 @@ process run_IndelRealigner_GATK {
         --knownAlleles ${bundle_known_indels_vcf_gz} \
         --allow_potentially_misencoded_quality_scores \
         --targetIntervals ${target_intervals_RTC} \
-        --out ${sample_id}_indelrealigned_${task.index}.bam \
+        --out ${sample_id[0]}_indelrealigned_${task.index}.bam \
         ${combined_interval_options}
     """
 }
