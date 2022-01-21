@@ -1,7 +1,7 @@
 nextflow.enable.dsl=2
 
 include { run_reheader_SAMtools as run_reheader_SAMtools_normal; run_reheader_SAMtools as run_reheader_SAMtools_tumour } from './bam-processing.nf'
-include { run_BuildBamIndex_Picard as run_BuildBamIndex_Picard_normal; run_BuildBamIndex_Picard as run_BuildBamIndex_Picard_tumour } from './bam-processing.nf'
+include { run_index_SAMtools as run_index_SAMtools_normal; run_index_SAMtools as run_index_SAMtools_tumour } from './bam-processing.nf'
 
 workflow reheader_interval_bams {
     take:
@@ -63,23 +63,23 @@ workflow reheader_interval_bams {
         tumour_bams_index_flattened_ich
     )
 
-    run_BuildBamIndex_Picard_normal(
+    run_index_SAMtools_normal(
         run_reheader_SAMtools_normal.out.bam_reheadered,
         run_reheader_SAMtools_normal.out.associated_interval
         )
     
-    run_BuildBamIndex_Picard_tumour(
+    run_index_SAMtools_tumour(
         run_reheader_SAMtools_tumour.out.bam_reheadered,
         run_reheader_SAMtools_tumour.out.associated_interval
         )
 
     // Merge the reheadered, indexed output based on the associated interval
-    normal_for_match = run_BuildBamIndex_Picard_normal.out.indexed_out
+    normal_for_match = run_index_SAMtools_normal.out.indexed_out
         .map{ it ->
             [it[2].getFileName(), it[0], it[1], it[2], it[3]]
             }
 
-    tumour_for_match = run_BuildBamIndex_Picard_tumour.out.indexed_out
+    tumour_for_match = run_index_SAMtools_tumour.out.indexed_out
         .map{ it ->
             [it[2].getFileName(), [it[0], it[1], it[2], it[3]]]
             }

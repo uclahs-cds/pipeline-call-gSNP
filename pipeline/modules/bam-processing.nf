@@ -42,7 +42,7 @@ process run_reheader_SAMtools {
     set -euo pipefail
 
     samtools reheader \
-        -c 'sed "/^@RG/! s/.*/keep&/" | sed "/^@RG/ s/.*SM:${id}\$/keep&/" | grep "^keep" | sed "s/^keep//g"' \
+        -c 'sed "/^@RG/! s/.*/keep&/" | sed "/^@RG/ s/.*SM:${id}\$/keep&/" | sed "/^@RG/ s/.*SM:${id}\t/keep&/" | grep "^keep" | sed "s/^keep//g"' \
         ${bam} \
         > ${id}_recalibrated_reheadered_${task.index}.bam
     """
@@ -59,11 +59,10 @@ process run_reheader_SAMtools {
         params.output_dir: string(path)
         params.log_output_dir: string(path)
         params.save_intermediate_files: bool.
-        params.docker_image_picard: string
-        params.gatk_command_mem_diff: float(memory)
+        params.docker_image_samtools: string
 */
-process run_BuildBamIndex_Picard {
-    container params.docker_image_picard
+process run_index_SAMtools {
+    container params.docker_image_samtools
     publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}",
         mode: "copy",
         enabled: params.save_intermediate_files,
@@ -85,11 +84,8 @@ process run_BuildBamIndex_Picard {
     script:
     """
     set -euo pipefail
-    java -Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -Djava.io.tmpdir=/scratch \
-        -jar /usr/local/share/picard-slim-2.26.8-0/picard.jar BuildBamIndex \
-        -VALIDATION_STRINGENCY LENIENT \
-        -INPUT ${bam} \
-        -OUTPUT ${bam}.bai \
+    
+    samtools index ${bam}
     """
 }
 

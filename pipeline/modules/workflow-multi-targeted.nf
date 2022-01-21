@@ -236,6 +236,8 @@ workflow multi_sample_targeted {
             }
         .set{ hc_gvcf_bams }
 
+    hc_gvcf_bams.view{ "bams: $it" }
+
     hc_bai_counter = 0
     run_MergeSamFiles_Picard_normal.out.merged_bam_index
         .concat(run_MergeSamFiles_Picard_tumour.out.merged_bam_index)
@@ -248,13 +250,14 @@ workflow multi_sample_targeted {
     run_MergeSamFiles_Picard_normal.out.associated_id
         .concat(run_MergeSamFiles_Picard_tumour.out.associated_id)
         .map{ it ->
-            [hc_bai_counter = hc_bai_counter + 1, it]
+            [hc_ids_counter = hc_ids_counter + 1, it]
             }
         .set{ hc_gvcf_ids }
 
     hc_gvcf_bams
         .join(hc_gvcf_bais, by: 0)
         .join(hc_gvcf_ids, by: 0)
+        .view{ "joined: $it" }
         .map{ it ->
             it[1..-1]
             }
