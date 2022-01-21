@@ -82,12 +82,6 @@ workflow multi_sample_targeted {
         recalibrate_base.out.recalibrated_tumour_bam_index
         )
 
-    // normal_bam_ch = reheader_interval_bams.out.reheadered_normal_bam
-    // normal_bam_index_ch = reheader_interval_bams.out.reheadered_normal_bam_index
-    // tumour_bam_ch = reheader_interval_bams.out.reheadered_tumour_bam
-    // tumour_bam_index_ch = reheader_interval_bams.out.reheadered_tumour_bam_index
-    // hc_interval = reheader_interval_bams.out.associated_interval
-
     recalibrated_bams_to_delete = reheader_interval_bams.out.normal_bam_for_deletion.mix(
         reheader_interval_bams.out.normal_bam_index_for_deletion,
         reheader_interval_bams.out.tumour_bam_for_deletion,
@@ -100,10 +94,12 @@ workflow multi_sample_targeted {
         )
 
     // Prep the input for merging normal BAMs
+    // Get only the BAMs
     reheader_interval_bams.out.reheadered_normal_bam
         .map{ it -> it[0]}
         .set{ normal_merge_bams_ich }
     
+    // Get only the ids
     reheader_interval_bams.out.reheadered_normal_bam
         .map{it -> it[-1]}
         .unique()
@@ -115,6 +111,8 @@ workflow multi_sample_targeted {
         )
 
     // Prep the input for merging tumour BAMs
+    // Flatten the input by 1 level, keeping BAM-id associations
+    // Extract the BAM and id from each
     reheader_interval_bams.out.reheadered_tumour_bam
         .map{ it ->
             tumour_it = []
@@ -142,9 +140,6 @@ workflow multi_sample_targeted {
         tumour_merge_ich.bams_ich,
         tumour_merge_ich.id_ich
         )
-
-    // merged_tumour_bam = run_MergeSamFiles_Picard_tumour.out.merged_bam
-    // merged_tumour_bam_index = run_MergeSamFiles_Picard_tumour.out.merged_bam_index
 
     hc_interval = split_targeted_intervals
     summary_intervals = split_targeted_intervals
@@ -187,6 +182,7 @@ workflow multi_sample_targeted {
         )
 
     // Prep input for VCF calling
+    // Replicate the merged normal + tumour BAMs and BAIs for every split interval
     run_MergeSamFiles_Picard_normal.out.merged_bam
         .concat(run_MergeSamFiles_Picard_tumour.out.merged_bam)
         .collect()
@@ -205,6 +201,7 @@ workflow multi_sample_targeted {
             }
         .set{ hc_vcf_bais_ich }
 
+    // Replicate the sample identifier for every interval
     identifier_sample.combine(hc_vcf_bams_ich)
         .map{it ->
             it[0]
@@ -228,6 +225,7 @@ workflow multi_sample_targeted {
         )
 
     // Prep input for GVCF calling
+    // Add indices for joining inputs for GVCF calling
     hc_bam_counter = 0
     run_MergeSamFiles_Picard_normal.out.merged_bam
         .concat(run_MergeSamFiles_Picard_tumour.out.merged_bam)
@@ -235,8 +233,6 @@ workflow multi_sample_targeted {
             [hc_bam_counter = hc_bam_counter + 1, it]
             }
         .set{ hc_gvcf_bams }
-
-    hc_gvcf_bams.view{ "bams: $it" }
 
     hc_bai_counter = 0
     run_MergeSamFiles_Picard_normal.out.merged_bam_index
@@ -254,16 +250,17 @@ workflow multi_sample_targeted {
             }
         .set{ hc_gvcf_ids }
 
+    // Join and remove join index
+    // Replicate for each split interval
     hc_gvcf_bams
         .join(hc_gvcf_bais, by: 0)
         .join(hc_gvcf_ids, by: 0)
-        .view{ "joined: $it" }
         .map{ it ->
             it[1..-1]
             }
         .combine(hc_interval)
         .map{ it ->
-            [it[0], it[1], it[3], it[2]]
+            [it[0], it[1], it[3], it[2]] // Re-order to match the input order
             }
         .set{ gvcf_caller_ich }
 
@@ -300,6 +297,7 @@ workflow multi_sample_targeted {
         )
 
     // Prep input for merging VCFs
+    // Keep only the id and VCF and group by id
     run_HaplotypeCallerVCF_GATK.out.vcfs
         .map{ it ->
             it[0,1]
@@ -318,6 +316,7 @@ workflow multi_sample_targeted {
         )
 
     // Prep input for merging GVCFs
+    // Keep only the id and GVCF and group by id
     run_HaplotypeCallerGVCF_GATK.out.gvcfs
         .map{ it ->
             it[0,1]
@@ -348,6 +347,8 @@ workflow multi_sample_targeted {
         )
 
     // Prep identifiers for filtering script
+    // For filtering, the normal and tumour identifiers are required
+    // Generate the options to pass as inputs
     identifiers
         .map{ it ->
             it[1]

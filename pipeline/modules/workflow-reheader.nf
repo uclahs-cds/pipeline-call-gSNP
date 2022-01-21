@@ -17,6 +17,7 @@ workflow reheader_interval_bams {
         )
 
     // Partially flatten the tumour inputs
+    // Flatten by one level, keeping the associations between id, BAM, and interval intact
     tumour_bams.map{ it ->
         combined_it_bam = []
         s_bam = it.size
@@ -34,13 +35,7 @@ workflow reheader_interval_bams {
             }
         .set{ tumour_bams_flattened_ich }
 
-    // tumour_bams_flattened_all
-    //     .multiMap{it ->
-    //         tumour_bams_flattened: it[0,1]
-    //         tumour_bams_flattened_intervals: it[3]
-    //         }
-    //     .set{ tumour_bam_ich }
-
+    // Repeat for BAIs
     tumour_bams_index.map{ it ->
         combined_it_bai = []
         s_bai = it.size
@@ -74,6 +69,7 @@ workflow reheader_interval_bams {
         )
 
     // Merge the reheadered, indexed output based on the associated interval
+    // Each element has the format [BAM, index, interval, id]
     normal_for_match = run_index_SAMtools_normal.out.indexed_out
         .map{ it ->
             [it[2].getFileName(), it[0], it[1], it[2], it[3]]
@@ -85,6 +81,7 @@ workflow reheader_interval_bams {
             }
         .groupTuple()
 
+    // Join and remove the join index
     normal_for_match
         .join(tumour_for_match, by: 0)
         .multiMap { it ->

@@ -77,7 +77,7 @@ workflow single_sample_targeted {
         recalibrate_base.out.recalibrated_normal_bam.collect().mix(recalibrate_base.out.recalibrated_tumour_bam.collect()) // Let BQSR finish before deletion
         )
 
-    // Generate decoy tumour bam and index channels for single sample mode
+    // Extract the BAMs and indices separately
     normal_bam_ch = recalibrate_base.out.recalibrated_normal_bam.map{ it -> it[1] }
     normal_bam_index_ch = recalibrate_base.out.recalibrated_normal_bam_index.map{ it -> it[1] }
     hc_interval = recalibrate_base.out.associated_interval
@@ -109,6 +109,7 @@ workflow single_sample_targeted {
         )
 
     // Prepare input for VCF calling
+    // Replicate the merged normal BAM and BAI for every split interval
     run_MergeSamFiles_Picard.out.merged_bam
         .collect()
         .combine(hc_interval)
@@ -125,6 +126,7 @@ workflow single_sample_targeted {
             }
         .set{ hc_vcf_bais_ich }
 
+    // Replicate the sample identifier for every interval
     identifier_sample.combine(hc_vcf_bams_ich)
         .map{ it ->
             it[0]
@@ -148,6 +150,7 @@ workflow single_sample_targeted {
         )
 
     // Prepare input for GVCF calling
+    // Add indices for joining inputs for GVCF calling
     hc_bam_counter = 0
     run_MergeSamFiles_Picard.out.merged_bam
         .map{ it ->
@@ -169,6 +172,8 @@ workflow single_sample_targeted {
             }
         .set{ hc_gvcf_ids }
 
+    // Join and remove join index
+    // Replicate for each split interval
     hc_gvcf_bams
         .join(hc_gvcf_bais, by: 0)
         .join(hc_gvcf_ids, by: 0)
@@ -177,7 +182,7 @@ workflow single_sample_targeted {
             }
         .combine(hc_interval)
         .map{ it ->
-            [it[0], it[1], it[3], it[2]]
+            [it[0], it[1], it[3], it[2]] // Re-order to match the input order
             }
         .set{ gvcf_caller_ich }
 
@@ -210,6 +215,7 @@ workflow single_sample_targeted {
         )
 
     // Prep input for merging VCFs
+    // Keep only the id and VCF and group by id
     run_HaplotypeCallerVCF_GATK.out.vcfs
         .map{ it ->
             it[0,1]
@@ -228,6 +234,7 @@ workflow single_sample_targeted {
         )
 
     // Prep input for merging GVCFs
+    // Keep only the id and GVCF and group by id
     run_HaplotypeCallerGVCF_GATK.out.gvcfs
         .map{ it ->
             it[0,1]
@@ -258,6 +265,8 @@ workflow single_sample_targeted {
         )
 
     // Prep identifiers for filtering script
+    // For filtering, the normal and tumour identifiers are required
+    // Generate the options to pass as inputs
     identifiers
         .map{ it ->
             it[1]

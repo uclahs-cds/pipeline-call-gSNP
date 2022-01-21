@@ -70,12 +70,6 @@ workflow multi_sample_wgs {
         recalibrate_base.out.recalibrated_tumour_bam_index
         )
 
-    // normal_bam_ch = reheader_interval_bams.out.reheadered_normal_bam
-    // normal_bam_index_ch = reheader_interval_bams.out.reheadered_normal_bam_index
-    // tumour_bam_ch = reheader_interval_bams.out.reheadered_tumour_bam
-    // tumour_bam_index_ch = reheader_interval_bams.out.reheadered_tumour_bam_index
-    // hc_interval = reheader_interval_bams.out.associated_interval
-
     recalibrated_bams_to_delete = reheader_interval_bams.out.normal_bam_for_deletion.mix(
         reheader_interval_bams.out.normal_bam_index_for_deletion,
         reheader_interval_bams.out.tumour_bam_for_deletion,
@@ -88,10 +82,12 @@ workflow multi_sample_wgs {
         )
 
     // Prep the input for merging normal BAMs
+    // Get only the BAMs
     reheader_interval_bams.out.reheadered_normal_bam
         .map{ it -> it[0]}
         .set{ normal_merge_bams_ich }
     
+    // Get only the ids
     reheader_interval_bams.out.reheadered_normal_bam
         .map{it -> it[-1]}
         .unique()
@@ -103,6 +99,8 @@ workflow multi_sample_wgs {
         )
 
     // Prep the input for merging tumour BAMs
+    // Flatten the input by 1 level, keeping BAM-id associations
+    // Extract the BAM and id from each
     reheader_interval_bams.out.reheadered_tumour_bam
         .map{ it ->
             tumour_it = []
@@ -130,9 +128,6 @@ workflow multi_sample_wgs {
         tumour_merge_ich.bams_ich,
         tumour_merge_ich.id_ich
         )
-
-    // merged_tumour_bam = run_MergeSamFiles_Picard_tumour.out.merged_bam
-    // merged_tumour_bam_index = run_MergeSamFiles_Picard_tumour.out.merged_bam_index
 
     summary_intervals = split_intervals
 
@@ -174,12 +169,15 @@ workflow multi_sample_wgs {
         )
 
     // Prep input for VCF calling
+    // Use the interval basename as the join index
+    // Keep only the BAM, index, and interval
     reheader_interval_bams.out.reheadered_normal_bam
         .map{ it ->
             [it[2].getFileName().toString(), (it[0] + 'my_vcfcalling_separator' + it[1] + 'my_vcfcalling_separator' + it[2]).toString()]
             }
         .set{ normal_for_join }
 
+    // Flatten the tumour channel and keep the same elements for tumour samples
     reheader_interval_bams.out.reheadered_tumour_bam
         .map{ it ->
             tumour_vcf = []
@@ -199,12 +197,14 @@ workflow multi_sample_wgs {
             }
         .set{ tumour_for_join }
 
+    // Join by interval and flatten each emission
     normal_for_join
         .mix(tumour_for_join)
         .groupTuple(by: 0)
         .map{ it -> it[1].flatten()}
         .set{ grouped_bams }
 
+    // Split the flattened inputs
     grouped_bams
         .map{ it ->
             mapped_bams = []
@@ -233,6 +233,7 @@ workflow multi_sample_wgs {
             }
         .set{ vcf_caller_bais_ich }
     
+    // Extract the associated interval path for each emission
     grouped_bams
         .map{ it ->
             it[0].split('my_vcfcalling_separator')[2]
@@ -259,6 +260,7 @@ workflow multi_sample_wgs {
         )
 
     // Prep input for GVCF calling
+    // Flatten and combine the inputs for normal and tumour BAMs
     reheader_interval_bams.out.reheadered_normal_bam
         .map{ it ->
             it.join('my_gvcfcalling_separator')
@@ -280,6 +282,7 @@ workflow multi_sample_wgs {
         .flatten()
         .set{ gvcf_tumour_intermediate }
 
+    // Mix and split apart the inputs for calling
     gvcf_normal_intermediate
         .mix(gvcf_tumour_intermediate)
         .map{ it ->
@@ -320,6 +323,7 @@ workflow multi_sample_wgs {
         )
 
     // Prep input for merging VCFs
+    // Keep only the id and VCF and group by id
     run_HaplotypeCallerVCF_GATK.out.vcfs
         .map{ it ->
             it[0,1]
@@ -338,6 +342,7 @@ workflow multi_sample_wgs {
         )
 
     // Prep input for merging GVCFs
+    // Keep only the id and GVCF and group by id
     run_HaplotypeCallerGVCF_GATK.out.gvcfs
         .map{ it ->
             it[0,1]
@@ -368,6 +373,8 @@ workflow multi_sample_wgs {
         )
 
     // Prep identifiers for filtering script
+    // For filtering, the normal and tumour identifiers are required
+    // Generate the options to pass as inputs
     identifiers
         .map{ it ->
             it[1]

@@ -65,7 +65,7 @@ workflow single_sample_wgs {
         recalibrate_base.out.recalibrated_normal_bam.collect().mix(recalibrate_base.out.recalibrated_tumour_bam.collect()) // Let BQSR finish before deletion
         )
 
-    // Generate decoy tumour bam and index channels for single sample mode
+    // Extract the BAMs and indices separately
     normal_bam_ch = recalibrate_base.out.recalibrated_normal_bam.map{ it -> it[1] }
     normal_bam_index_ch = recalibrate_base.out.recalibrated_normal_bam_index.map{ it -> it[1] }
     hc_interval = recalibrate_base.out.associated_interval
@@ -115,6 +115,7 @@ workflow single_sample_wgs {
         )
 
     // Prepare input for GVCF calling
+    // Add indices for joining inputs for GVCF calling
     hc_bam_counter = 0
     normal_bam_ch
         .map{ it ->
@@ -136,6 +137,8 @@ workflow single_sample_wgs {
             }
         .set{ hc_gvcf_intervals }
 
+    // Join and remove join index
+    // Replicate for each split interval
     hc_gvcf_bams
         .join(hc_gvcf_bais, by: 0)
         .join(hc_gvcf_intervals, by: 0)
@@ -174,6 +177,7 @@ workflow single_sample_wgs {
         )
 
     // Prep input for merging VCFs
+    // Keep only the id and VCF and group by id
     run_HaplotypeCallerVCF_GATK.out.vcfs
         .map{ it ->
             it[0,1]
@@ -192,6 +196,7 @@ workflow single_sample_wgs {
         )
 
     // Prep input for merging GVCFs
+    // Keep only the id and GVCF and group by id
     run_HaplotypeCallerGVCF_GATK.out.gvcfs
         .map{ it ->
             it[0,1]
@@ -222,6 +227,8 @@ workflow single_sample_wgs {
         )
 
     // Prep identifiers for filtering script
+    // For filtering, the normal and tumour identifiers are required
+    // Generate the options to pass as inputs
     identifiers
         .map{ it ->
             it[1]

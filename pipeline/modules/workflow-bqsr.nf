@@ -33,6 +33,7 @@ workflow recalibrate_base {
       )
 
     // Extract the normal and tumour IDs
+    // IDs are listed as [sample_id, normal_id, tumour1_id, tumour2_id, ...]
     bqsr_ids = bqsr_generator_identifiers
       .map{ it ->
         it[1]
@@ -56,6 +57,7 @@ workflow recalibrate_base {
         )
 
     // Generate the input channels
+    // Add indices for joining
     counter_bam = 0
     bams_with_idx = realigned_bam
       .map{
@@ -80,6 +82,7 @@ workflow recalibrate_base {
         [counter_unmapped = counter_unmapped + 1, it]
         }
 
+    // Join the channels and remove the join index
     apply_bqsr_ich = bams_with_idx
       .join(bam_index_with_idx, by: 0)
       .join(intervals_with_idx, by: 0)
@@ -89,19 +92,12 @@ workflow recalibrate_base {
         }
       .combine(bqsr_ids)
 
+    // Replicate the recal table for all split BAMs
     recal_table_ich = run_BaseRecalibrator_GATK.out.recalibration_table
       .combine(apply_bqsr_ich)
       .map{ it ->
         it[0]
         }
-
-    // run_ApplyBQSR_GATK(
-    //   params.reference_fasta,
-    //   "${params.reference_fasta}.fai",
-    //   "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
-    //   "/hot/users/yashpatel/pipeline-call-gSNP/work/recal_table_multi.grp",
-    //   apply_bqsr_ich
-    //   )
 
     run_ApplyBQSR_GATK(
       params.reference_fasta,
@@ -119,6 +115,7 @@ workflow recalibrate_base {
         }
       .set{ apply_bqsr_split_och }
 
+    // Get the interval basename for matching
     apply_bqsr_split_och.normal
       .map{it ->
         [it[2].getFileName(), it]
@@ -132,6 +129,8 @@ workflow recalibrate_base {
         .set{ tumour_with_key }
       
     // Split up the output channels
+    // The element at index 1 (normal BAM tuple) is [id, type, interval, bam, index]
+    // The tumour elements are a list of tuples of the same format
     if (params.is_NT_paired) {
       normal_with_key
         .join(tumour_with_key, by: 0) // Join on interval
@@ -143,6 +142,7 @@ workflow recalibrate_base {
           tumour_bam_index_raw: it[2]
           }.set{ bqsr_och }
 
+          // Extracting the id, BAM, and interval for tumour samples
           bqsr_och.tumour_bam_raw.map{ it ->
             mapped_it_bam = []
             s_bam = it.size
@@ -155,6 +155,7 @@ workflow recalibrate_base {
             mapped_it_bam
             }.set{ tumour_bam_och }
 
+          // Extracting the id, BAI, and interval for tumour samples
           bqsr_och.tumour_bam_index_raw.map{ it ->
             mapped_it_bai = []
             s_bai = it.size
@@ -182,6 +183,7 @@ workflow recalibrate_base {
     }
 
     // Filter the deletion channel
+    // Keep only the normal to avoid duplications
     run_ApplyBQSR_GATK.out.deletion_och
       .filter{ it[0] == 'normal' }
       .multiMap{it ->
