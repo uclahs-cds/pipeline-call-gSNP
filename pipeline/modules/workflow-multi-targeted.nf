@@ -192,7 +192,7 @@ workflow multi_sample_targeted {
         .collect()
         .combine(hc_interval)
         .map{ it ->
-            it[0]
+            it[0..-2]
             }
         .set{ hc_vcf_bams_ich }
 
@@ -201,7 +201,7 @@ workflow multi_sample_targeted {
         .collect()
         .combine(hc_interval)
         .map{ it ->
-            it[0]
+            it[0..-2]
             }
         .set{ hc_vcf_bais_ich }
 
