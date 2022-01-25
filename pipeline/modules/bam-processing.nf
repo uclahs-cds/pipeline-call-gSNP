@@ -131,7 +131,7 @@ process run_MergeSamFiles_Picard {
     """
     set -euo pipefail
     java -Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -Djava.io.tmpdir=/scratch \
-        -jar /usr/local/share/picard-slim-2.26.8-0/picard.jar MergeSamFiles \
+        -jar /usr/local/share/picard-slim-2.26.10-0/picard.jar MergeSamFiles \
         ${all_bams} \
         -OUTPUT ${id}_realigned_recalibrated_merged.bam \
         -CREATE_INDEX true \
