@@ -74,7 +74,7 @@ workflow single_sample_targeted {
 
     remove_realigned_bams(
         recalibrate_base.out.bam_for_deletion.mix(recalibrate_base.out.bam_index_for_deletion),
-        recalibrate_base.out.recalibrated_normal_bam.collect().mix(recalibrate_base.out.recalibrated_tumour_bam.collect()) // Let BQSR finish before deletion
+        recalibrate_base.out.recalibrated_normal_bam.collect().mix(recalibrate_base.out.recalibrated_tumour_bam.collect()).collect() // Let BQSR finish before deletion
         )
 
     // Extract the BAMs and indices separately
