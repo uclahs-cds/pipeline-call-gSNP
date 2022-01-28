@@ -108,7 +108,7 @@ process run_ApplyBQSR_GATK {
     publishDir path: "${params.log_output_dir}/process-log",
       pattern: ".command.*",
       mode: "copy",
-      saveAs: { "${task.process.replace(':', '/')}-${task.index}/log${file(it).getName()}" }
+      saveAs: { "${task.process.replace(':', '/')}-${interval_id}/log${file(it).getName()}" }
 
     input:
     path(reference_fasta)
@@ -127,13 +127,15 @@ process run_ApplyBQSR_GATK {
     tuple val(id),
           val(type),
           path(interval),
-          path("${id}_recalibrated_${task.index}.bam"),
-          path("${id}_recalibrated_${task.index}.bai"), emit: apply_bqsr_och
+          path("${id}_recalibrated_${interval_id}.bam"),
+          path("${id}_recalibrated_${interval_id}.bai"), emit: apply_bqsr_och
     tuple val(type),
           path(indelrealigned_bam),
           path(indelrealigned_bam_index), emit: deletion_och
 
     script:
+    // Get split interval number to serve as task ID
+    interval_id = interval.baseName.split('-')[0]
     unmapped_interval_option = (includes_unmapped) ? "--intervals unmapped" : ""
     combined_interval_options = "--intervals ${interval} ${unmapped_interval_option}"
     """
@@ -143,7 +145,7 @@ process run_ApplyBQSR_GATK {
         --input ${indelrealigned_bam} \
         --bqsr-recal-file ${recalibration_table} \
         --reference ${reference_fasta} \
-        --output ${id}_recalibrated_${task.index}.bam \
+        --output ${id}_recalibrated_${interval_id}.bam \
         --read-filter SampleReadFilter \
         --sample ${id} \
         ${combined_interval_options} \

@@ -24,7 +24,7 @@ process run_reheader_SAMtools {
     publishDir path: "${params.log_output_dir}/process-log",
         pattern: ".command.*",
         mode: "copy",
-        saveAs: { "${task.process.replace(':', '/')}-${task.index}/log${file(it).getName()}" }
+        saveAs: { "${task.process.replace(':', '/')}-${interval_id}/log${file(it).getName()}" }
 
     input:
     tuple val(id), path(bam), path(interval)
@@ -32,19 +32,21 @@ process run_reheader_SAMtools {
 
     output:
     path(".command.*")
-    tuple val(id), path("${id}_recalibrated_reheadered_${task.index}.bam"), emit: bam_reheadered
+    tuple val(id), path("${id}_recalibrated_reheadered_${interval_id}.bam"), emit: bam_reheadered
     path(interval), emit: associated_interval
     path(bam), emit: bam_for_deletion
     path(bam_index), emit: bam_index_for_deletion
 
     script:
+    // Get split interval number to serve as task ID
+    interval_id = interval.baseName.split('-')[0]
     """
     set -euo pipefail
 
     samtools reheader \
         -c 'sed "/^@RG/! s/.*/keep&/" | sed "/^@RG/ s/.*SM:${id}\$/keep&/" | sed "/^@RG/ s/.*SM:${id}\t/keep&/" | grep "^keep" | sed "s/^keep//g"' \
         ${bam} \
-        > ${id}_recalibrated_reheadered_${task.index}.bam
+        > ${id}_recalibrated_reheadered_${interval_id}.bam
     """
 }
 
@@ -71,7 +73,7 @@ process run_index_SAMtools {
     publishDir path: "${params.log_output_dir}/process-log",
         pattern: ".command.*",
         mode: "copy",
-        saveAs: { "${task.process.replace(':', '/')}-${task.index}/log${file(it).getName()}" }
+        saveAs: { "${task.process.replace(':', '/')}-${interval_id}/log${file(it).getName()}" }
 
     input:
     tuple val(id), path(bam)
@@ -82,6 +84,8 @@ process run_index_SAMtools {
     tuple path(bam), path("${bam}.bai"), path(interval), val(id), emit: indexed_out
 
     script:
+    // Get split interval number to serve as task ID
+    interval_id = interval.baseName.split('-')[0]
     """
     set -euo pipefail
     
@@ -114,7 +118,7 @@ process run_MergeSamFiles_Picard {
     publishDir path: "${params.log_output_dir}/process-log",
         pattern: ".command.*",
         mode: "copy",
-        saveAs: { "${task.process.replace(':', '/')}-${task.index}/log${file(it).getName()}" }
+        saveAs: { "${task.process.replace(':', '/')}-${id}/log${file(it).getName()}" }
 
     input:
     path(bams)
