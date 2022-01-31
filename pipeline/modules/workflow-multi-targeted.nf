@@ -31,6 +31,7 @@ include {
     remove_intermediate_files as remove_recalibrated_bams
     remove_intermediate_files as remove_reheadered_bams
     } from './intermediate-cleanup.nf'
+include { flatten_samples } from './functions.nf'
 
 workflow multi_sample_targeted {
     take:
@@ -113,21 +114,11 @@ workflow multi_sample_targeted {
     // Prep the input for merging tumour BAMs
     // Flatten the input by 1 level, keeping BAM-id associations
     // Extract the BAM and id from each
-    reheader_interval_bams.out.reheadered_tumour_bam
+    flatten_samples(reheader_interval_bams.out.reheadered_tumour_bam)
+    
+    flatten_samples.out.och
         .map{ it ->
-            tumour_it = []
-            s_tum = it.size
-            while (!(s_tum instanceof Integer)) {
-                s_tum = s_tum.size
-                }
-            for(i_tum = 0; i_tum < s_tum; i_tum = i_tum + 1) {
-                tumour_it = tumour_it + [it[i_tum][-1] + 'my_merging_separator' + it[i_tum][0]]
-                }
-            tumour_it
-            }
-        .flatten()
-        .map{ it ->
-            it.split('my_merging_separator')[0..-1]
+            it[-1,0]
             }
         .groupTuple()
         .multiMap{ it ->
