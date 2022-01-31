@@ -1,5 +1,13 @@
 
-
+/*
+    Workflow module for flattening an input channel by one layer, while keeping remaining structure intact.
+   
+    input:
+        ich: channel where each emission is a list of structured elements like tuples
+    
+    output:
+        och: channel where each structured element is its own emission
+*/
 workflow flatten_samples {
     take:
     ich

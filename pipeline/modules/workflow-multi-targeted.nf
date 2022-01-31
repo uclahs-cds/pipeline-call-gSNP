@@ -116,7 +116,7 @@ workflow multi_sample_targeted {
     // Extract the BAM and id from each
     flatten_samples(reheader_interval_bams.out.reheadered_tumour_bam)
     
-    flatten_sample.out.och
+    flatten_samples.out.och
         .map{ it ->
             it[-1,0]
             }
