@@ -114,30 +114,9 @@ workflow multi_sample_targeted {
     // Prep the input for merging tumour BAMs
     // Flatten the input by 1 level, keeping BAM-id associations
     // Extract the BAM and id from each
-    // reheader_interval_bams.out.reheadered_tumour_bam
-    //     .map{ it ->
-    //         tumour_it = []
-    //         s_tum = it.size
-    //         while (!(s_tum instanceof Integer)) {
-    //             s_tum = s_tum.size
-    //             }
-    //         for(i_tum = 0; i_tum < s_tum; i_tum = i_tum + 1) {
-    //             tumour_it = tumour_it + [it[i_tum][-1] + 'my_merging_separator' + it[i_tum][0]]
-    //             }
-    //         tumour_it
-    //         }
-    //     .flatten()
-    //     .map{ it ->
-    //         it.split('my_merging_separator')[0..-1]
-    //         }
-    //     .groupTuple()
-    //     .multiMap{ it ->
-    //         bams_ich: it[1]
-    //         id_ich: it[0]
-    //         }
-    //     .set{ tumour_merge_ich }
-
-    flatten_samples(reheader_interval_bams.out.reheadered_tumour_bam).out.och
+    flatten_samples(reheader_interval_bams.out.reheadered_tumour_bam)
+    
+    flatten_sample.out.och
         .map{ it ->
             it[-1,0]
             }
