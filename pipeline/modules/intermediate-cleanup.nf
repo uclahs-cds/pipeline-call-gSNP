@@ -17,7 +17,7 @@ process remove_intermediate_files {
     publishDir path: "${params.log_output_dir}/process-log",
       pattern: ".command.*",
       mode: "copy",
-      saveAs: { "${task.process.split(':')[-1]}/${task.process.replace(':', '/')}-${task.index}/log${file(it).getName()}" }
+      saveAs: { "${task.process.replace(':', '/')}/${task.process.split(':')[-1]}-${task.index}/log${file(it).getName()}" }
 
     input:
     path(file_to_remove)
