@@ -39,7 +39,9 @@ workflow reheader_interval_bams {
     //         }
     //     .set{ tumour_bams_flattened_ich }
 
-    flatten_samples_bam(tumour_bams).out.och
+    flatten_samples_bam(tumour_bams)
+    
+    flatten_samples_bam.out.och
         .map{ it ->
             it[0,1,2]
             }
@@ -63,7 +65,9 @@ workflow reheader_interval_bams {
     //         }
     //     .set{ tumour_bams_index_flattened_ich }
 
-    flatten_samples_bam_index(tumour_bams_index).out.och
+    flatten_samples_bam_index(tumour_bams_index)
+    
+    flatten_samples_bam_index.out.och
         .map{ it ->
             it[0,1]
             }

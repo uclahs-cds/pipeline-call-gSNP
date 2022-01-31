@@ -30,6 +30,11 @@ include {
     remove_intermediate_files as remove_recalibrated_bams
     remove_intermediate_files as remove_reheadered_bams
     } from './intermediate-cleanup.nf'
+include {
+    flatten_samples as flatten_samples_merge
+    flatten_samples as flatten_samples_vcf_calling
+    flatten_samples as flatten_samples_gvcf_calling
+    } from './functions.nf'
 
 workflow multi_sample_wgs {
     take:
@@ -101,21 +106,34 @@ workflow multi_sample_wgs {
     // Prep the input for merging tumour BAMs
     // Flatten the input by 1 level, keeping BAM-id associations
     // Extract the BAM and id from each
-    reheader_interval_bams.out.reheadered_tumour_bam
+    // reheader_interval_bams.out.reheadered_tumour_bam
+    //     .map{ it ->
+    //         tumour_it = []
+    //         s_tum = it.size
+    //         while (!(s_tum instanceof Integer)) {
+    //             s_tum = s_tum.size
+    //             }
+    //         for(i_tum = 0; i_tum < s_tum; i_tum = i_tum + 1) {
+    //             tumour_it = tumour_it + [it[i_tum][-1] + 'my_merging_separator' + it[i_tum][0]]
+    //             }
+    //         tumour_it
+    //         }
+    //     .flatten()
+    //     .map{ it ->
+    //         it.split('my_merging_separator')[0..-1]
+    //         }
+    //     .groupTuple()
+    //     .multiMap{ it ->
+    //         bams_ich: it[1]
+    //         id_ich: it[0]
+    //         }
+    //     .set{ tumour_merge_ich }
+
+    flatten_samples_merge(reheader_interval_bams.out.reheadered_tumour_bam)
+
+    flatten_samples_merge.out.och
         .map{ it ->
-            tumour_it = []
-            s_tum = it.size
-            while (!(s_tum instanceof Integer)) {
-                s_tum = s_tum.size
-                }
-            for(i_tum = 0; i_tum < s_tum; i_tum = i_tum + 1) {
-                tumour_it = tumour_it + [it[i_tum][-1] + 'my_merging_separator' + it[i_tum][0]]
-                }
-            tumour_it
-            }
-        .flatten()
-        .map{ it ->
-            it.split('my_merging_separator')[0..-1]
+            [it[-1], it[0]]
             }
         .groupTuple()
         .multiMap{ it ->
@@ -171,73 +189,109 @@ workflow multi_sample_wgs {
     // Prep input for VCF calling
     // Use the interval basename as the join index
     // Keep only the BAM, index, and interval
+    // reheader_interval_bams.out.reheadered_normal_bam
+    //     .map{ it ->
+    //         [it[2].getFileName().toString(), (it[0] + 'my_vcfcalling_separator' + it[1] + 'my_vcfcalling_separator' + it[2]).toString()]
+    //         }
+    //     .set{ normal_for_join }
+
+    // // Flatten the tumour channel and keep the same elements for tumour samples
+    // reheader_interval_bams.out.reheadered_tumour_bam
+    //     .map{ it ->
+    //         tumour_vcf = []
+    //         s_vcf = it.size
+    //         while (!(s_vcf instanceof Integer)) {
+    //             s_vcf = s_vcf.size
+    //             }
+    //         for(i_vcf = 0; i_vcf < s_vcf; i_vcf = i_vcf + 1) {
+    //             tumour_vcf = tumour_vcf + [it[i_vcf][2].getFileName().toString() + 'my_vcfcalling_separator' + it[i_vcf][0] + 'my_vcfcalling_separator' + it[i_vcf][1] + 'my_vcfcalling_separator' + it[i_vcf][2]]
+    //             }
+    //         tumour_vcf
+    //         }
+    //     .flatten()
+    //     .map{ it ->
+    //         split_it = it.split('my_vcfcalling_separator')[0..-1]
+    //         [split_it[0], split_it[1] + 'my_vcfcalling_separator' + split_it[2] + 'my_vcfcalling_separator' + split_it[3]]
+    //         }
+    //     .set{ tumour_for_join }
+
+    // // Join by interval and flatten each emission
+    // normal_for_join
+    //     .mix(tumour_for_join)
+    //     .groupTuple(by: 0)
+    //     .map{ it -> it[1].flatten()}
+    //     .set{ grouped_bams }
+
+    // // Split the flattened inputs
+    // grouped_bams
+    //     .map{ it ->
+    //         mapped_bams = []
+    //         s_map = it.size
+    //         while (!(s_map instanceof Integer)) {
+    //             s_map = s_map.size
+    //             }
+    //         for(i_map = 0; i_map < s_map; i_map = i_map + 1) {
+    //             mapped_bams = mapped_bams + it[i_map].split('my_vcfcalling_separator')[0]
+    //             }
+    //         mapped_bams
+    //         }
+    //     .set{ vcf_caller_bams_ich }
+
+    // grouped_bams
+    //     .map{ it ->
+    //         mapped_bais = []
+    //         s_map_bai = it.size
+    //         while (!(s_map_bai instanceof Integer)) {
+    //             s_map_bai = s_map_bai.size
+    //             }
+    //         for(i_map_bai = 0; i_map_bai < s_map_bai; i_map_bai = i_map_bai + 1) {
+    //             mapped_bais = mapped_bais + it[i_map_bai].split('my_vcfcalling_separator')[1]
+    //             }
+    //         mapped_bais
+    //         }
+    //     .set{ vcf_caller_bais_ich }
+    
+    // // Extract the associated interval path for each emission
+    // grouped_bams
+    //     .map{ it ->
+    //         it[0].split('my_vcfcalling_separator')[2]
+    //         }
+    //     .set{ vcf_caller_intervals_ich }
+
     reheader_interval_bams.out.reheadered_normal_bam
-        .map{ it ->
-            [it[2].getFileName().toString(), (it[0] + 'my_vcfcalling_separator' + it[1] + 'my_vcfcalling_separator' + it[2]).toString()]
+        .multiMap{ it ->
+            bams: [it[2].getFileName().toString(), it[0]]
+            bais: [it[2].getFileName().toString(), it[1]]
+            intervals: [it[2].getFileName().toString(), it[2]]
             }
-        .set{ normal_for_join }
+        .set{ normal_for_mix }
 
-    // Flatten the tumour channel and keep the same elements for tumour samples
-    reheader_interval_bams.out.reheadered_tumour_bam
-        .map{ it ->
-            tumour_vcf = []
-            s_vcf = it.size
-            while (!(s_vcf instanceof Integer)) {
-                s_vcf = s_vcf.size
-                }
-            for(i_vcf = 0; i_vcf < s_vcf; i_vcf = i_vcf + 1) {
-                tumour_vcf = tumour_vcf + [it[i_vcf][2].getFileName().toString() + 'my_vcfcalling_separator' + it[i_vcf][0] + 'my_vcfcalling_separator' + it[i_vcf][1] + 'my_vcfcalling_separator' + it[i_vcf][2]]
-                }
-            tumour_vcf
-            }
-        .flatten()
-        .map{ it ->
-            split_it = it.split('my_vcfcalling_separator')[0..-1]
-            [split_it[0], split_it[1] + 'my_vcfcalling_separator' + split_it[2] + 'my_vcfcalling_separator' + split_it[3]]
-            }
-        .set{ tumour_for_join }
+    flatten_samples_vcf_calling(reheader_interval_bams.out.reheadered_tumour_bam)
 
-    // Join by interval and flatten each emission
-    normal_for_join
-        .mix(tumour_for_join)
+    flatten_samples_vcf_calling.out.och
+        .multiMap{ it ->
+            bams: [it[2].getFileName().toString(), it[0]]
+            bais: [it[2].getFileName().toString(), it[1]]
+            intervals: [it[2].getFileName().toString(), it[2]]
+            }
+        .set{ tumour_for_mix }
+
+    normal_for_mix.bams
+        .mix(tumour_for_mix.bams)
         .groupTuple(by: 0)
-        .map{ it -> it[1].flatten()}
-        .set{ grouped_bams }
-
-    // Split the flattened inputs
-    grouped_bams
-        .map{ it ->
-            mapped_bams = []
-            s_map = it.size
-            while (!(s_map instanceof Integer)) {
-                s_map = s_map.size
-                }
-            for(i_map = 0; i_map < s_map; i_map = i_map + 1) {
-                mapped_bams = mapped_bams + it[i_map].split('my_vcfcalling_separator')[0]
-                }
-            mapped_bams
-            }
+        .map{ it -> it[1].flatten() }
         .set{ vcf_caller_bams_ich }
 
-    grouped_bams
-        .map{ it ->
-            mapped_bais = []
-            s_map_bai = it.size
-            while (!(s_map_bai instanceof Integer)) {
-                s_map_bai = s_map_bai.size
-                }
-            for(i_map_bai = 0; i_map_bai < s_map_bai; i_map_bai = i_map_bai + 1) {
-                mapped_bais = mapped_bais + it[i_map_bai].split('my_vcfcalling_separator')[1]
-                }
-            mapped_bais
-            }
+    normal_for_mix.bais
+        .mix(tumour_for_mix.bais)
+        .groupTuple(by: 0)
+        .map{ it -> it[1].flatten() }
         .set{ vcf_caller_bais_ich }
-    
-    // Extract the associated interval path for each emission
-    grouped_bams
-        .map{ it ->
-            it[0].split('my_vcfcalling_separator')[2]
-            }
+
+    normal_for_mix.intervals
+        .mix(tumour_for_mix.intervals)
+        .groupTuple(by: 0)
+        .map{ it -> it[1][0] } // Take the first interval path since all of the intervals after grouping are the same
         .set{ vcf_caller_intervals_ich }
     
     identifier_sample.combine(vcf_caller_bams_ich)
@@ -261,33 +315,39 @@ workflow multi_sample_wgs {
 
     // Prep input for GVCF calling
     // Flatten and combine the inputs for normal and tumour BAMs
-    reheader_interval_bams.out.reheadered_normal_bam
-        .map{ it ->
-            it.join('my_gvcfcalling_separator')
-            }
-        .set{ gvcf_normal_intermediate }
+    // reheader_interval_bams.out.reheadered_normal_bam
+    //     .map{ it ->
+    //         it.join('my_gvcfcalling_separator')
+    //         }
+    //     .set{ gvcf_normal_intermediate }
 
-    reheader_interval_bams.out.reheadered_tumour_bam
-        .map{ it ->
-            tumour_gvcf = []
-            s_gvcf = it.size
-            while (!(s_gvcf instanceof Integer)) {
-                s_gvcf = s_gvcf.size
-                }
-            for(i_gvcf = 0; i_gvcf < s_gvcf; i_gvcf = i_gvcf + 1) {
-                tumour_gvcf = tumour_gvcf + [it[i_gvcf].join('my_gvcfcalling_separator')]
-                }
-            tumour_gvcf
-            }
-        .flatten()
-        .set{ gvcf_tumour_intermediate }
+    // reheader_interval_bams.out.reheadered_tumour_bam
+    //     .map{ it ->
+    //         tumour_gvcf = []
+    //         s_gvcf = it.size
+    //         while (!(s_gvcf instanceof Integer)) {
+    //             s_gvcf = s_gvcf.size
+    //             }
+    //         for(i_gvcf = 0; i_gvcf < s_gvcf; i_gvcf = i_gvcf + 1) {
+    //             tumour_gvcf = tumour_gvcf + [it[i_gvcf].join('my_gvcfcalling_separator')]
+    //             }
+    //         tumour_gvcf
+    //         }
+    //     .flatten()
+    //     .set{ gvcf_tumour_intermediate }
 
-    // Mix and split apart the inputs for calling
-    gvcf_normal_intermediate
-        .mix(gvcf_tumour_intermediate)
-        .map{ it ->
-            it.split('my_gvcfcalling_separator')[0..-1]
-            }
+    // // Mix and split apart the inputs for calling
+    // gvcf_normal_intermediate
+    //     .mix(gvcf_tumour_intermediate)
+    //     .map{ it ->
+    //         it.split('my_gvcfcalling_separator')[0..-1]
+    //         }
+    //     .set{ gvcf_caller_ich }
+
+    flatten_samples_gvcf_calling(reheader_interval_bams.out.reheadered_tumour_bam)
+
+    flatten_samples_gvcf_calling.out.och
+        .mix(reheader_interval_bams.out.reheadered_normal_bam)
         .set{ gvcf_caller_ich }
 
     run_HaplotypeCallerGVCF_GATK(
