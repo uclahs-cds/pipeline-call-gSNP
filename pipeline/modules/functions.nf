@@ -1,4 +1,3 @@
-
 /*
     Workflow module for flattening an input channel by one layer, while keeping remaining structure intact.
    
