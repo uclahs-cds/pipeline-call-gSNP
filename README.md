@@ -111,10 +111,10 @@ Generate sha512 checksum for final BAM, filtered VCF, and GVCFs for SNPs and IND
 | sampleID | string | Sample ID, patient ID, or study participant ID (to be standardized) |
 | normalID | string | Must be strictly set to the sample tag (SM:) in the BAM header @RG line (should be also in the pipeline-align-DNA input .csv file) |
 | normalBAM | path | Set to absolute path to normal BAM |
-| normalBAMindex | path | Set to absolute path to normal BAM index |
 | tumourID | string | Set to placeholder 'NA1' if normal only; otherwise must be strictly set to the sample tag (SM:) in the BAM header @RG line (should be also in the pipeline-align-DNA input .csv file) |
 | tumourBAM | path | Set to placeholder 'NA2' if normal only; otherwise absolute path to tumour BAM |
-| tumourBAMindex | path | Set to placeholder 'NA3' if normal only; otherwise absolute path to tumour BAM index |
+
+For inputs with one normal sample and multiple tumour samples, add rows. Keep the non-tumour related fields identical for each row and update the tumour fields.
 
 ### Config
 

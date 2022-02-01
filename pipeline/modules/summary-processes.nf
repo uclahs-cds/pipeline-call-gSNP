@@ -40,7 +40,7 @@ process run_GetPileupSummaries_GATK {
     val(sample_type)
     path(bam)
     path(bam_index)
-    tuple val(sample_id), val(normal_id), val(tumour_id)
+    val(id)
 
     output:
     path(".command.*")
@@ -48,7 +48,7 @@ process run_GetPileupSummaries_GATK {
 
     script:
     interval_options = all_intervals.collect{ "--intervals '$it'" }.join(' ')
-    output_filename = (sample_type == "normal") ? "${normal_id}_getpileupsummaries.table" : "${tumour_id}_getpileupsummaries.table"
+    output_filename = "${id}_getpileupsummaries.table"
     """
     set -euo pipefail
     gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=/scratch" \
@@ -92,7 +92,7 @@ process run_CalculateContamination_GATK {
     val(sample_type)
     path(matched_normal_pileupsummaries)
     path(pileupsummaries)
-    tuple val(sample_id), val(normal_id), val(tumour_id)
+    val(id)
 
     output:
     path(".command.*")
@@ -100,8 +100,7 @@ process run_CalculateContamination_GATK {
     path("*_with_matched_normal.table"), emit: tumour_normal_matched_contamination optional true
 
     script:
-    output_id = (sample_type == "normal") ? "${normal_id}" : "${tumour_id}"
-    single_output_filename = "${output_id}_calculatecontamination_${sample_type}"
+    single_output_filename = "${id}_calculatecontamination_${sample_type}"
     calc_matched = (sample_type == "normal") ? false : true
     """
     set -euo pipefail
@@ -161,7 +160,7 @@ process run_DepthOfCoverage_GATK {
     path(bam)
     path(bam_index)
     val(sample_type)
-    tuple val(sample_id), val(normal_id), val(tumour_id)
+    val(id)
 
     output:
     path(".command.*")
@@ -172,13 +171,12 @@ process run_DepthOfCoverage_GATK {
 
     script:
     interval_options = params.is_targeted ? "--intervals ${params.intervals}" : all_intervals.collect{ "--intervals '$it'" }.join(' ')
-    output_id = (sample_type == "normal") ? "${normal_id}" : "${tumour_id}"
     """
     set -euo pipefail
     gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=/scratch" \
         DepthOfCoverage \
         --input ${bam} \
-        --output ${output_id}_DOC \
+        --output ${id}_DOC \
         --output-format TABLE \
         --reference ${reference_fasta} \
         --omit-depth-output-at-each-base \
@@ -196,7 +194,7 @@ workflow calculate_contamination_normal {
     bam
     bam_index
     all_intervals
-    identifiers
+    id
 
     main:
     run_GetPileupSummaries_GATK(
@@ -209,14 +207,14 @@ workflow calculate_contamination_normal {
         "normal",
         bam,
         bam_index,
-        identifiers
+        id
         )
 
     run_CalculateContamination_GATK(
         "normal",
         "/scratch/summaryplaceholder.txt", // Decoy since processing normal sample
         run_GetPileupSummaries_GATK.out.pileupsummaries,
-        identifiers
+        id
         )
     
     emit:
@@ -228,10 +226,21 @@ workflow calculate_contamination_tumour {
     bam
     bam_index
     all_intervals
-    identifiers
+    id
     normal_pileupsummaries
 
     main:
+    bam.map{ it ->
+        "tumour"
+        }
+        .set{ type_ich }
+
+    normal_pileupsummaries.combine(bam)
+        .map{it ->
+            it[0]
+            }
+        .set{ normal_summaries_ich }
+
     run_GetPileupSummaries_GATK(
         params.reference_fasta,
         "${params.reference_fasta}.fai",
@@ -239,16 +248,16 @@ workflow calculate_contamination_tumour {
         params.bundle_contest_hapmap_3p3_vcf_gz,
         "${params.bundle_contest_hapmap_3p3_vcf_gz}.tbi",
         all_intervals.collect(),
-        "tumour",
+        type_ich,
         bam,
         bam_index,
-        identifiers
+        id
         )
 
     run_CalculateContamination_GATK(
-        "tumour",
-        normal_pileupsummaries,
+        type_ich,
+        normal_summaries_ich,
         run_GetPileupSummaries_GATK.out.pileupsummaries,
-        identifiers
+        id
         )
 }

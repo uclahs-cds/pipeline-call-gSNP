@@ -49,7 +49,7 @@ process run_BaseRecalibrator_GATK {
     path(all_target_intervals)
     path(indelrealigned_bams)
     path(indelrealigned_bams_bai)
-    tuple val(sample_id), val(normal_id), val(tumour_id)
+    val(sample_id)
 
     output:
     path(".command.*")

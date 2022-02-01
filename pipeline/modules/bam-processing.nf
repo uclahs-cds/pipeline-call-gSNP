@@ -27,29 +27,24 @@ process run_reheader_SAMtools {
         saveAs: { "${task.process.replace(':', '/')}-${task.index}/log${file(it).getName()}" }
 
     input:
-    tuple val(sample_id), val(normal_id), val(tumour_id)
-    path(bam)
-    path(bam_index)
-    path(interval)
-    val(bam_type)
+    tuple val(id), path(bam), path(interval)
+    tuple val(index_id), path(bam_index)
 
     output:
     path(".command.*")
-    path("${keep_id}_recalibrated_reheadered_${task.index}.bam"), emit: bam_reheadered
+    tuple val(id), path("${id}_recalibrated_reheadered_${task.index}.bam"), emit: bam_reheadered
     path(interval), emit: associated_interval
     path(bam), emit: bam_for_deletion
     path(bam_index), emit: bam_index_for_deletion
 
     script:
-    keep_id = (bam_type == 'normal') ? normal_id : tumour_id
-    remove_id = (bam_type == 'normal') ? tumour_id : normal_id
     """
     set -euo pipefail
 
     samtools reheader \
-        -c 'grep -v -P "^@RG.*SM:${remove_id}"' \
+        -c 'sed "/^@RG/! s/.*/keep&/" | sed "/^@RG/ s/.*SM:${id}\$/keep&/" | sed "/^@RG/ s/.*SM:${id}\t/keep&/" | grep "^keep" | sed "s/^keep//g"' \
         ${bam} \
-        > ${keep_id}_recalibrated_reheadered_${task.index}.bam
+        > ${id}_recalibrated_reheadered_${task.index}.bam
     """
 }
 
@@ -64,11 +59,10 @@ process run_reheader_SAMtools {
         params.output_dir: string(path)
         params.log_output_dir: string(path)
         params.save_intermediate_files: bool.
-        params.docker_image_picard: string
-        params.gatk_command_mem_diff: float(memory)
+        params.docker_image_samtools: string
 */
-process run_BuildBamIndex_Picard {
-    container params.docker_image_picard
+process run_index_SAMtools {
+    container params.docker_image_samtools
     publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}",
         mode: "copy",
         enabled: params.save_intermediate_files,
@@ -80,21 +74,18 @@ process run_BuildBamIndex_Picard {
         saveAs: { "${task.process.replace(':', '/')}-${task.index}/log${file(it).getName()}" }
 
     input:
-    path(bam)
+    tuple val(id), path(bam)
     path(interval)
 
     output:
     path(".command.*")
-    tuple path(bam), path("${bam}.bai"), path(interval), emit: indexed_out
+    tuple path(bam), path("${bam}.bai"), path(interval), val(id), emit: indexed_out
 
     script:
     """
     set -euo pipefail
-    java -Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -Djava.io.tmpdir=/scratch \
-        -jar /usr/local/share/picard-slim-2.26.10-0/picard.jar BuildBamIndex \
-        -VALIDATION_STRINGENCY LENIENT \
-        -INPUT ${bam} \
-        -OUTPUT ${bam}.bai \
+    
+    samtools index ${bam}
     """
 }
 
@@ -123,27 +114,26 @@ process run_MergeSamFiles_Picard {
     publishDir path: "${params.log_output_dir}/process-log",
         pattern: ".command.*",
         mode: "copy",
-        saveAs: { "${task.process.replace(':', '/')}/log${file(it).getName()}" }
+        saveAs: { "${task.process.replace(':', '/')}-${task.index}/log${file(it).getName()}" }
 
     input:
     path(bams)
-    val(sample_type)
-    tuple val(sample_id), val(normal_id), val(tumour_id)
+    val(id)
 
     output:
     path(".command.*")
-    path("${output_id}_realigned_recalibrated_merged.bam"), emit: merged_bam
-    path("${output_id}_realigned_recalibrated_merged.bai"), emit: merged_bam_index
+    path("${id}_realigned_recalibrated_merged.bam"), emit: merged_bam
+    path("${id}_realigned_recalibrated_merged.bai"), emit: merged_bam_index
+    val(id), emit: associated_id
 
     script:
     all_bams = bams.collect{ "-INPUT '$it'" }.join(' ')
-    output_id = (sample_type == "normal") ? "${normal_id}" : "${tumour_id}"
     """
     set -euo pipefail
     java -Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -Djava.io.tmpdir=/scratch \
         -jar /usr/local/share/picard-slim-2.26.10-0/picard.jar MergeSamFiles \
         ${all_bams} \
-        -OUTPUT ${output_id}_realigned_recalibrated_merged.bam \
+        -OUTPUT ${id}_realigned_recalibrated_merged.bam \
         -CREATE_INDEX true \
         -SORT_ORDER coordinate \
         -ASSUME_SORTED false \

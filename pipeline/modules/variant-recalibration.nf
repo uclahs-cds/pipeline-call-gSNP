@@ -36,7 +36,7 @@ process run_VariantRecalibratorINDEL_GATK {
     path(reference_fasta_dict)
     path(bundle_mills_and_1000g_gold_standards_vcf_gz)
     path(bundle_mills_and_1000g_gold_standards_vcf_gz_tbi)
-    tuple val(sample_id), val(normal_id), val(tumour_id)
+    val(sample_id)
     path(sample_vcf)
     path(sample_vcf_tbi)
 
@@ -126,7 +126,7 @@ process run_VariantRecalibratorSNP_GATK {
     path(bundle_omni_1000g_2p5_vcf_gz_tbi)
     path(bundle_phase1_1000g_snps_high_conf_vcf_gz)
     path(bundle_phase1_1000g_snps_high_conf_vcf_gz_tbi)
-    tuple val(sample_id), val(normal_id), val(tumour_id)
+    val(sample_id)
     path(sample_vcf)
     path(sample_vcf_tbi)
 
@@ -216,6 +216,7 @@ process run_ApplyVQSR_GATK {
     path(".command.*")
     path("${sample_id}_merged_recalibrated_${suffix}.vcf.gz"), emit: vcf
     path("${sample_id}_merged_recalibrated_${suffix}.vcf.gz.tbi"), emit: vcf_index
+    val(sample_id), emit: associated_id
 
     script:
     """
@@ -266,7 +267,8 @@ process filter_gSNP_GATK {
     path(reference_fasta_dict)
     path(sample_vcf)
     path(sample_vcf_tbi)
-    tuple val(sample_id), val(normal_id), val(tumour_id)
+    val(sample_id)
+    val(identifiers_options)
 
     output:
     path(".command.*")
@@ -278,15 +280,14 @@ process filter_gSNP_GATK {
           path("filtered_germline_genotype_count_${sample_id}.tsv"), emit: germline_filtered_tsv
 
     script:
-    tumour_option = params.is_NT_paired ? "--tumour ${tumour_id}" : "--tumour ${normal_id}"
+    identifier_opts = identifiers_options.collect{ "$it" }.join(' ')
     """
     set -euo pipefail
     /src/NGS-Tools-GATK/bin/filter_GATK_SNV_calls.pl \
         --input ${sample_vcf} \
         --sample ${sample_id} \
         --ref ${reference_fasta} \
-        --normal ${normal_id} \
-        ${tumour_option} \
+        ${identifier_opts} \
         --filter_somatic Y \
         --filter_ambiguous Y \
         --split_calls Y \
@@ -368,6 +369,7 @@ workflow recalibrate_snps {
   emit:
   vcf = run_ApplyVQSR_GATK.out.vcf
   vcf_index = run_ApplyVQSR_GATK.out.vcf_index
+  associated_id = run_ApplyVQSR_GATK.out.associated_id
 }
 
 workflow recalibrate_indels {
@@ -400,4 +402,5 @@ workflow recalibrate_indels {
   emit:
   vcf = run_ApplyVQSR_GATK.out.vcf
   vcf_index = run_ApplyVQSR_GATK.out.vcf_index
+  associated_id = run_ApplyVQSR_GATK.out.associated_id
 }

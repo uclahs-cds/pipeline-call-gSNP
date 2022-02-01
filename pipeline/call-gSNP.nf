@@ -51,8 +51,8 @@ include { run_SplitIntervals_GATK } from './modules/genotype-processes.nf'
 include { extract_GenomeIntervals } from './modules/extract-intervals.nf'
 include { single_sample_wgs } from './modules/workflow-single-wgs.nf'
 include { single_sample_targeted } from './modules/workflow-single-targeted.nf'
-include { paired_sample_wgs } from './modules/workflow-paired-wgs.nf'
-include { paired_sample_targeted } from './modules/workflow-paired-targeted.nf'
+include { multi_sample_wgs } from './modules/workflow-multi-wgs.nf'
+include { multi_sample_targeted } from './modules/workflow-multi-targeted.nf'
 
 // Returns the index file for the given bam or vcf
 def indexFile(bam_or_vcf) {
@@ -93,7 +93,44 @@ if (params.is_NT_paired) {
     input_ch_input_csv.flatMap{it -> [it.normal_BAM, it.normal_index]}.set{input_validation}
 }
 
-identifiers = input_ch_input_csv.map{it -> [it.sample_id, it.normal_id, it.tumour_id]}.collect()
+// Gather the inputs into a single emission
+input_ch_input_csv.multiMap{ it ->
+  sample_id: it.sample_id
+  normal_id: it.normal_id
+  normal_BAM: it.normal_BAM
+  normal_index: it.normal_index
+  tumour_id: it.tumour_id
+  tumour_BAM: it.tumour_BAM
+  tumour_index: it.tumour_index
+  }
+  .set{ branched_input }
+
+// For the sample ID and the normal input fields, keep only the first since they should be identical for the sample
+branched_input.sample_id.first().collect().map{ it -> [sample_id: it] }.set{formatted_sample_id}
+branched_input.normal_id.first().collect().map{ it -> [normal_id: it] }.set{formatted_normal_id}
+branched_input.normal_BAM.first().collect().map{ it -> [normal_BAM: it] }.set{formatted_normal_BAM}
+branched_input.normal_index.first().collect().map{ it -> [normal_index: it] }.set{formatted_normal_index}
+
+// For the tumour input fields, keep all lines from csv
+branched_input.tumour_id.collect().map{ it -> [tumour_id: it] }.set{formatted_tumour_id}
+branched_input.tumour_BAM.collect().map{ it -> [tumour_BAM: it] }.set{formatted_tumour_BAM}
+branched_input.tumour_index.collect().map{ it -> [tumour_index: it] }.set{formatted_tumour_index}
+
+// Mix the formatted channels and gather into single emission
+formatted_sample_id.mix(
+  formatted_normal_id,
+  formatted_normal_BAM,
+  formatted_normal_index,
+  formatted_tumour_id,
+  formatted_tumour_BAM,
+  formatted_tumour_index
+  )
+  .reduce{ a, b -> a + b }
+  .set{ input_csv_formatted_ich }
+
+// Create the identifier channels
+identifiers = input_csv_formatted_ich.map{it -> it.sample_id + it.normal_id + it.tumour_id}.collect()
+identifier_sample = input_csv_formatted_ich.map{it -> it.sample_id}.flatten()
 
 workflow {
     run_validate_PipeVal(input_validation)
@@ -120,27 +157,29 @@ workflow {
 
     split_intervals = run_SplitIntervals_GATK.out.interval_list.flatten()
 
-    ir_input = input_ch_input_csv.combine(split_intervals)
+    ir_input = input_csv_formatted_ich.combine(split_intervals)
         .map{ input_csv,interval -> [input_csv.sample_id, input_csv.normal_id, input_csv.tumour_id, input_csv.normal_BAM, input_csv.normal_index, input_csv.tumour_BAM, input_csv.tumour_index, interval] }
-    ir_input_no_interval = input_ch_input_csv.combine(split_intervals)
+    ir_input_no_interval = input_csv_formatted_ich.combine(split_intervals)
         .map{ input_csv,interval -> [input_csv.sample_id, input_csv.normal_id, input_csv.tumour_id, input_csv.normal_BAM, input_csv.normal_index, input_csv.tumour_BAM, input_csv.tumour_index] }
 
     if (params.is_NT_paired) {
         if (params.is_targeted) {
-            paired_sample_targeted(
+            multi_sample_targeted(
                 intervals,
                 split_intervals,
                 ir_input,
                 ir_input_no_interval,
-                identifiers
+                identifiers,
+                identifier_sample
                 )
         } else {
-            paired_sample_wgs(
+            multi_sample_wgs(
                 intervals,
                 split_intervals,
                 ir_input,
                 ir_input_no_interval,
-                identifiers
+                identifiers,
+                identifier_sample
                 )
         }
     } else {
@@ -150,7 +189,8 @@ workflow {
                 split_intervals,
                 ir_input,
                 ir_input_no_interval,
-                identifiers
+                identifiers,
+                identifier_sample
                 )
         } else {
             single_sample_wgs(
@@ -158,7 +198,8 @@ workflow {
                 split_intervals,
                 ir_input,
                 ir_input_no_interval,
-                identifiers
+                identifiers,
+                identifier_sample
                 )
         }
     }

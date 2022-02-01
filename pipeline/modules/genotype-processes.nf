@@ -98,27 +98,22 @@ process run_HaplotypeCallerVCF_GATK {
     path(reference_fasta_dict)
     path(dbsnp_bundle)
     path(dbsnp_bundle_index)
-    tuple val(sample_id), val(normal_id), val(tumour_id)
-    path(bam)
-    path(bam_index)
-    path(bam_tumour)
-    path(bam_index_tumour)
+    val(sample_id)
+    path(bams)
+    path(bams_index)
     path(interval)
 
 
     output:
     path(".command.*")
-    path("${sample_id}_${task.index}.vcf"), emit: vcf
-    path("${sample_id}_${task.index}.vcf.idx"), emit: vcf_index
-    path(bam), emit: normal_bam_for_deletion
-    path(bam_index), emit: normal_bam_index_for_deletion
-    path(bam_tumour), emit: tumour_bam_for_deletion optional true
-    path(bam_index_tumour), emit: tumour_bam_index_for_deletion optional true
+    tuple val(sample_id), path("${sample_id}_${task.index}.vcf"), path("${sample_id}_${task.index}.vcf.idx"), emit: vcfs
+    path(bams), emit: bams_for_deletion
+    path(bams_index), emit: bams_index_for_deletion
 
     script:
     output_filename = "${sample_id}_${task.index}.vcf"
     interval_str = "--intervals ${interval}"
-    bam_input_str = params.is_NT_paired ? "--input ${bam} --input ${bam_tumour}" : "--input ${bam}"
+    bam_input_str = bams.collect{ "--input '$it'" }.join(' ')
     interval_padding = params.is_targeted ? "--interval-padding 100" : ""
 
     """
@@ -182,22 +177,17 @@ process run_HaplotypeCallerGVCF_GATK {
     path(reference_fasta_dict)
     path(dbsnp_bundle)
     path(dbsnp_bundle_index)
-    tuple val(sample_id), val(normal_id), val(tumour_id)
-    path(bam)
-    path(bam_index)
-    path(interval)
-    val(sample_type)
+    tuple path(bam), path(bam_index), path(interval), val(id)
 
 
     output:
     path(".command.*")
-    path("*_raw_variants.g.vcf.gz"), emit: gvcf
-    path("*_raw_variants.g.vcf.gz.tbi"), emit: gvcf_index
+    tuple val(id), path("*_raw_variants.g.vcf.gz"), path("*_raw_variants.g.vcf.gz.tbi"), emit: gvcfs
     path(bam), emit: bam_for_deletion
     path(bam_index), emit: bam_index_for_deletion
 
     script:
-    output_filename = (sample_type == "normal") ? "${normal_id}_${task.index}_raw_variants.g.vcf.gz" : "${tumour_id}_${task.index}_raw_variants.g.vcf.gz"
+    output_filename = "${id}_${task.index}_raw_variants.g.vcf.gz"
     interval_str = "--intervals ${interval}"
     interval_padding = params.is_targeted ? "--interval-padding 100" : ""
 
@@ -249,18 +239,17 @@ process run_MergeVcfs_Picard {
     input:
     path(vcfs)
     val(vcf_type)
-    val(sample_type)
-    tuple val(sample_id), val(normal_id), val(tumour_id)
+    val(id)
 
     output:
     path(".command.*")
+    val(id), emit: associated_id
     path("*.vcf{,.gz}"), emit: vcf
     path("*.vcf.{idx,gz.tbi}"), emit: vcf_index
 
     script:
     all_vcfs = vcfs.collect{ "-INPUT '$it'" }.join(' ')
-    output_gvcf_id = (sample_type == "normal") ? "${normal_id}" : "${tumour_id}"
-    output_filename = (vcf_type == "GVCF") ? "${output_gvcf_id}_merged_raw_variants.g.vcf.gz" : "${sample_id}_merged_raw.vcf"
+    output_filename = (vcf_type == "GVCF") ? "${id}_merged_raw_variants.g.vcf.gz" : "${id}_merged_raw.vcf"
 
     """
     set -euo pipefail
