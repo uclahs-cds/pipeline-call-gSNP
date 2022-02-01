@@ -24,7 +24,7 @@ process run_reheader_SAMtools {
     publishDir path: "${params.log_output_dir}/process-log",
         pattern: ".command.*",
         mode: "copy",
-        saveAs: { "${task.process.replace(':', '/')}-${interval_id}/log${file(it).getName()}" }
+        saveAs: { "${task.process.replace(':', '/')}-${id}-${interval_id}/log${file(it).getName()}" }
 
     input:
     tuple val(id), path(bam), path(interval)
@@ -73,7 +73,7 @@ process run_index_SAMtools {
     publishDir path: "${params.log_output_dir}/process-log",
         pattern: ".command.*",
         mode: "copy",
-        saveAs: { "${task.process.replace(':', '/')}-${interval_id}/log${file(it).getName()}" }
+        saveAs: { "${task.process.replace(':', '/')}-${id}-${interval_id}/log${file(it).getName()}" }
 
     input:
     tuple val(id), path(bam)
