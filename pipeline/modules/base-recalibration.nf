@@ -108,7 +108,7 @@ process run_ApplyBQSR_GATK {
     publishDir path: "${params.log_output_dir}/process-log",
       pattern: ".command.*",
       mode: "copy",
-      saveAs: { "${task.process.replace(':', '/')}-${interval_id}/log${file(it).getName()}" }
+      saveAs: { "${task.process.replace(':', '/')}-${id}-${interval_id}/log${file(it).getName()}" }
 
     input:
     path(reference_fasta)
