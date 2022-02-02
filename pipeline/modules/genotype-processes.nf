@@ -90,7 +90,7 @@ process run_HaplotypeCallerVCF_GATK {
     publishDir path: "${params.log_output_dir}/process-log",
       pattern: ".command.*",
       mode: "copy",
-      saveAs: { "${task.process.replace(':', '/')}/${task.process.replace(':', '/')}-${task.index}/log${file(it).getName()}" }
+      saveAs: { "${task.process.replace(':', '/')}/${task.process.split(':')[-1]}-${interval_id}/log${file(it).getName()}" }
 
     input:
     path(reference_fasta)
@@ -106,12 +106,14 @@ process run_HaplotypeCallerVCF_GATK {
 
     output:
     path(".command.*")
-    tuple val(sample_id), path("${sample_id}_${task.index}.vcf"), path("${sample_id}_${task.index}.vcf.idx"), emit: vcfs
+    tuple val(sample_id), path("${sample_id}_${interval_id}.vcf"), path("${sample_id}_${interval_id}.vcf.idx"), emit: vcfs
     path(bams), emit: bams_for_deletion
     path(bams_index), emit: bams_index_for_deletion
 
     script:
-    output_filename = "${sample_id}_${task.index}.vcf"
+    // Get split interval number to serve as task ID
+    interval_id = interval.baseName.split('-')[0]
+    output_filename = "${sample_id}_${interval_id}.vcf"
     interval_str = "--intervals ${interval}"
     bam_input_str = bams.collect{ "--input '$it'" }.join(' ')
     interval_padding = params.is_targeted ? "--interval-padding 100" : ""
@@ -169,7 +171,7 @@ process run_HaplotypeCallerGVCF_GATK {
     publishDir path: "${params.log_output_dir}/process-log",
       pattern: ".command.*",
       mode: "copy",
-      saveAs: { "${task.process.replace(':', '/')}/${task.process.replace(':', '/')}-${task.index}/log${file(it).getName()}" }
+      saveAs: { "${task.process.replace(':', '/')}/${task.process.split(':')[-1]}-${id}-${interval_id}/log${file(it).getName()}" }
 
     input:
     path(reference_fasta)
@@ -187,7 +189,9 @@ process run_HaplotypeCallerGVCF_GATK {
     path(bam_index), emit: bam_index_for_deletion
 
     script:
-    output_filename = "${id}_${task.index}_raw_variants.g.vcf.gz"
+    // Get split interval number to serve as task ID
+    interval_id = interval.baseName.split('-')[0]
+    output_filename = "${id}_${interval_id}_raw_variants.g.vcf.gz"
     interval_str = "--intervals ${interval}"
     interval_padding = params.is_targeted ? "--interval-padding 100" : ""
 
@@ -234,7 +238,7 @@ process run_MergeVcfs_Picard {
     publishDir path: "${params.log_output_dir}/process-log",
       pattern: ".command.*",
       mode: "copy",
-      saveAs: { "${task.process.replace(':', '/')}/log${file(it).getName()}" }
+      saveAs: { "${task.process.replace(':', '/')}-${id}/log${file(it).getName()}" }
 
     input:
     path(vcfs)

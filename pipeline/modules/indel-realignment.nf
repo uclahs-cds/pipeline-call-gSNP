@@ -31,7 +31,7 @@ process run_RealignerTargetCreator_GATK {
     publishDir path: "${params.log_output_dir}/process-log",
       pattern: ".command.*",
       mode: "copy",
-      saveAs: { "${task.process.replace(':', '/')}-${task.index}/log${file(it).getName()}" }
+      saveAs: { "${task.process.replace(':', '/')}-${interval_id}/log${file(it).getName()}" }
 
     input:
     path(reference_fasta)
@@ -46,9 +46,11 @@ process run_RealignerTargetCreator_GATK {
     output:
     path(".command.*")
     path(interval), emit: scatter_intervals
-    path("${sample_id[0]}_RTC_${task.index}.intervals"), emit: intervals_RTC
+    path("${sample_id[0]}_RTC_${interval_id}.intervals"), emit: intervals_RTC
 
     script:
+    // Get split interval number to serve as task ID
+    interval_id = interval.baseName.split('-')[0]
     tumour_bams = bam_tumour.collect{ "--input_file '$it'" }.join(' ')
     bam_input_str = params.is_NT_paired ? "--input_file ${bam} ${tumour_bams}" : "--input_file ${bam}"
     interval_padding = params.is_targeted ? "--interval_padding 100" : ""
@@ -63,11 +65,11 @@ process run_RealignerTargetCreator_GATK {
         --known ${bundle_mills_and_1000g_gold_standards_vcf_gz} \
         --known ${bundle_known_indels_vcf_gz} \
         --intervals ${interval} \
-        --out ${sample_id[0]}_RTC_${task.index}.intervals \
+        --out ${sample_id[0]}_RTC_${interval_id}.intervals \
         --allow_potentially_misencoded_quality_scores \
         --num_threads 2 \
         ${interval_padding} \
-        ${targeted_interval_params} || touch ${sample_id[0]}_RTC_${task.index}.intervals
+        ${targeted_interval_params} || touch ${sample_id[0]}_RTC_${interval_id}.intervals
     """
 }
 
@@ -107,7 +109,7 @@ process run_IndelRealigner_GATK {
     publishDir path: "${params.log_output_dir}/process-log",
       pattern: ".command.*",
       mode: "copy",
-      saveAs: { "${task.process.replace(':', '/')}-${task.index}/log${file(it).getName()}" }
+      saveAs: { "${task.process.replace(':', '/')}-${interval_id}/log${file(it).getName()}" }
 
     input:
     path(reference_fasta)
@@ -125,14 +127,16 @@ process run_IndelRealigner_GATK {
     path(".command.*")
     path(scatter_intervals), emit: associated_interval
     val(has_unmapped), emit: includes_unmapped
-    path("${sample_id[0]}_indelrealigned_${task.index}.bam"), emit: realigned_indels_bam
-    path("${sample_id[0]}_indelrealigned_${task.index}.bai"), emit: realigned_indels_bam_index
+    path("${sample_id[0]}_indelrealigned_${interval_id}.bam"), emit: realigned_indels_bam
+    path("${sample_id[0]}_indelrealigned_${interval_id}.bai"), emit: realigned_indels_bam_index
 
     script:
+    // Get split interval number to serve as task ID
+    interval_id = scatter_intervals.baseName.split('-')[0]
     tumour_bams = bam_tumour.collect{ "--input_file '$it'" }.join(' ')
     bam_input_str = params.is_NT_paired ? "--input_file ${bam} ${tumour_bams}" : "--input_file ${bam}"
-    unmapped_interval_option = (task.index == 1) ? "--intervals unmapped" : ""
-    has_unmapped = (task.index == 1) ? true : false
+    unmapped_interval_option = (interval_id == '0000') ? "--intervals unmapped" : ""
+    has_unmapped = (interval_id == '0000') ? true : false
     combined_interval_options = "--intervals ${scatter_intervals} ${unmapped_interval_option}"
     """
     set -euo pipefail
@@ -146,7 +150,7 @@ process run_IndelRealigner_GATK {
         --knownAlleles ${bundle_known_indels_vcf_gz} \
         --allow_potentially_misencoded_quality_scores \
         --targetIntervals ${target_intervals_RTC} \
-        --out ${sample_id[0]}_indelrealigned_${task.index}.bam \
+        --out ${sample_id[0]}_indelrealigned_${interval_id}.bam \
         ${combined_interval_options}
     """
 }

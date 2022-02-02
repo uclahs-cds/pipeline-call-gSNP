@@ -28,7 +28,7 @@ process run_GetPileupSummaries_GATK {
     publishDir path: "${params.log_output_dir}/process-log",
       pattern: ".command.*",
       mode: "copy",
-      saveAs: { "${task.process.replace(':', '/')}-${task.index}/log${file(it).getName()}" }
+      saveAs: { "${task.process.replace(':', '/')}-${id}/log${file(it).getName()}" }
 
     input:
     path(reference_fasta)
@@ -86,7 +86,7 @@ process run_CalculateContamination_GATK {
     publishDir path: "${params.log_output_dir}/process-log",
       pattern: ".command.*",
       mode: "copy",
-      saveAs: { "${task.process.replace(':', '/')}-${task.index}/log${file(it).getName()}" }
+      saveAs: { "${task.process.replace(':', '/')}-${id}/log${file(it).getName()}" }
 
     input:
     val(sample_type)
@@ -150,7 +150,7 @@ process run_DepthOfCoverage_GATK {
     publishDir path: "${params.log_output_dir}/process-log",
       pattern: ".command.*",
       mode: "copy",
-      saveAs: { "${task.process.replace(':', '/')}-${task.index}/log${file(it).getName()}" }
+      saveAs: { "${task.process.replace(':', '/')}-${id}/log${file(it).getName()}" }
 
     input:
     path(reference_fasta)
