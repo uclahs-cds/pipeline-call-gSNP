@@ -100,8 +100,8 @@ workflow recalibrate_base {
     //     it[0]
     //     }
 
-    recal_table_ich = Channel.of("/hot/pipeline/development/slurm/call-gSNP/unreleased/yashpatel-intervals-as-ids/multi_wgs/call-gSNP-7.2.1/A-mini-n1/GATK-4.2.4.1/intermediate/multi_sample_wgs/recalibrate_base/run_BaseRecalibrator_GATK/A-mini-n1_recalibration_table.grp")
-    // recal_table_ich = Channel.of("/hot/pipeline/development/slurm/call-gSNP/unreleased/yashpatel-group-apply-bqsr/large_sample_test/DTB-005_recalibration_table.grp")
+    // recal_table_ich = Channel.of("/hot/pipeline/development/slurm/call-gSNP/unreleased/yashpatel-intervals-as-ids/multi_wgs/call-gSNP-7.2.1/A-mini-n1/GATK-4.2.4.1/intermediate/multi_sample_wgs/recalibrate_base/run_BaseRecalibrator_GATK/A-mini-n1_recalibration_table.grp")
+    recal_table_ich = Channel.of("/hot/pipeline/development/slurm/call-gSNP/unreleased/yashpatel-group-apply-bqsr/large_sample_test/DTB-005_recalibration_table.grp")
       .combine(apply_bqsr_ich)
       .map{ it ->
         it[0]
