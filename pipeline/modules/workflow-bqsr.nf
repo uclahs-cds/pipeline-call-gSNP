@@ -16,21 +16,21 @@ workflow recalibrate_base {
     intervals
 
     main:
-    run_BaseRecalibrator_GATK(
-      params.reference_fasta,
-      "${params.reference_fasta}.fai",
-      "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
-      params.bundle_mills_and_1000g_gold_standard_indels_vcf_gz,
-      "${params.bundle_mills_and_1000g_gold_standard_indels_vcf_gz}.tbi",
-      params.bundle_known_indels_vcf_gz,
-      "${params.bundle_known_indels_vcf_gz}.tbi",
-      params.bundle_v0_dbsnp138_vcf_gz,
-      "${params.bundle_v0_dbsnp138_vcf_gz}.tbi",
-      intervals,
-      realigned_bam.collect(),
-      realigned_bam_index.collect(),
-      sample_identifier
-      )
+    // run_BaseRecalibrator_GATK(
+    //   params.reference_fasta,
+    //   "${params.reference_fasta}.fai",
+    //   "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
+    //   params.bundle_mills_and_1000g_gold_standard_indels_vcf_gz,
+    //   "${params.bundle_mills_and_1000g_gold_standard_indels_vcf_gz}.tbi",
+    //   params.bundle_known_indels_vcf_gz,
+    //   "${params.bundle_known_indels_vcf_gz}.tbi",
+    //   params.bundle_v0_dbsnp138_vcf_gz,
+    //   "${params.bundle_v0_dbsnp138_vcf_gz}.tbi",
+    //   intervals,
+    //   realigned_bam.collect(),
+    //   realigned_bam_index.collect(),
+    //   sample_identifier
+    //   )
 
     // Extract the normal and tumour IDs
     // IDs are listed as [sample_id, normal_id, tumour1_id, tumour2_id, ...]
@@ -41,7 +41,7 @@ workflow recalibrate_base {
       .flatten()
       .unique()
       .map{ it ->
-        [it, 'normal']
+        it + "-normal"
         }
       .mix(
         bqsr_generator_identifiers
@@ -52,7 +52,7 @@ workflow recalibrate_base {
           .unique()
           .filter{ it != 'NA' }
           .map{ it ->
-            [it, 'tumour']
+            it + "-tumour"
             }
         )
 
@@ -91,9 +91,17 @@ workflow recalibrate_base {
         it[1..-1]
         }
       .combine(bqsr_ids)
+      .groupTuple(by: [0,1,2,3])
 
     // Replicate the recal table for all split BAMs
-    recal_table_ich = run_BaseRecalibrator_GATK.out.recalibration_table
+    // recal_table_ich = run_BaseRecalibrator_GATK.out.recalibration_table
+    //   .combine(apply_bqsr_ich)
+    //   .map{ it ->
+    //     it[0]
+    //     }
+
+    recal_table_ich = Channel.of("/hot/pipeline/development/slurm/call-gSNP/unreleased/yashpatel-intervals-as-ids/multi_wgs/call-gSNP-7.2.1/A-mini-n1/GATK-4.2.4.1/intermediate/multi_sample_wgs/recalibrate_base/run_BaseRecalibrator_GATK/A-mini-n1_recalibration_table.grp")
+    // recal_table_ich = Channel.of("/hot/pipeline/development/slurm/call-gSNP/unreleased/yashpatel-group-apply-bqsr/large_sample_test/DTB-005_recalibration_table.grp")
       .combine(apply_bqsr_ich)
       .map{ it ->
         it[0]
@@ -107,13 +115,41 @@ workflow recalibrate_base {
       apply_bqsr_ich
       )
 
-    // Split the normal and tumour channels
+    intervals_for_join = associated_interval.map{ it ->
+      [it.baseName.split('-')[0], it]
+      }
+
+    // Split the normal and tumour channels and add necessary information
     run_ApplyBQSR_GATK.out.apply_bqsr_och
+      .flatten()
+      .map{ it -> [
+        it.baseName.split("_recalibrated_")[-1].split(".bam")[0], // interval number
+        it.baseName.split("_recalibrated_")[0..-2].join("_recalibrated_").split("-")[0..-2].join("-"), // sample id
+        it.baseName.split("_recalibrated_")[0..-2].join("_recalibrated_").split("-")[-1], // sample type
+        it
+        ]
+        }
+      .groupTuple(by: [0,1]) // Group by sample and interval to match BAM and BAI
+      .map{ it ->
+        [it[0], [it[1], it[2][0], it[3]]]
+        }
+      .combine(intervals_for_join) // Add path to associated interval
+      .filter{ it[0] == it[2] }
+      .map{ it ->
+        it[1,3].flatten()
+        }
+      .map{ it ->
+        [it[0], it[1], it[4], it[2], it[3]] //Re-arrange into: id, type, interval, bam, bai
+        }
+      .view{ "forbranch: $it" }
       .branch{
         normal: it[1] == 'normal'
         tumour: it[1] == 'tumour'
         }
       .set{ apply_bqsr_split_och }
+    
+    apply_bqsr_split_och.normal.view{"normal: $it"}
+    apply_bqsr_split_och.tumour.view{"tumour: $it"}
 
     // Get the interval basename for matching
     apply_bqsr_split_och.normal
@@ -185,10 +221,9 @@ workflow recalibrate_base {
     // Filter the deletion channel
     // Keep only the normal to avoid duplications
     run_ApplyBQSR_GATK.out.deletion_och
-      .filter{ it[0] == 'normal' }
       .multiMap{it ->
-        bam_deletion_och: it[1]
-        bam_index_deletion_och: it[2]
+        bam_deletion_och: it[0]
+        bam_index_deletion_och: it[1]
         }
       .set{ filtered_deletion_och }
 
