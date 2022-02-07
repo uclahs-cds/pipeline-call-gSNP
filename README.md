@@ -124,8 +124,6 @@ For inputs with one normal sample and multiple tumour samples, add rows. Keep th
 | `avere_prefix` | Yes | string | Prefix for location of avere cache |
 | `blcds_registered_dataset` | Yes | boolean | Set to true when using BLCDS folder structure; use false for now |
 | `output_dir` | Yes | string | Need to set if `blcds_registered_dataset = false` |
-| `java_temp_dir` | Yes | string | Store Java temp files; set to `/scratch` in production |
-| `temp_dir` | Yes | string | Store Nextflow workDir intermediate files; set to `/scratch` in production |
 | `input_csv` | Yes | path | Absolute path to input CSV file |
 | `save_intermediate_files` | Yes | boolean | Set to false to disable publishing of intermediate files; true otherwise; disabling option will delete intermediate files to allow for processing of large BAMs |
 | `is_emit_original_quals` | Yes | boolean | Set to true to emit original quality scores; false to omit |
@@ -141,6 +139,7 @@ For inputs with one normal sample and multiple tumour samples, add rows. Keep th
 | `bundle_omni_1000g_2p5_vcf_gz` | Yes | path | Absolute path to 1000 genomes OMNI 2.5 file, e.g., `/hot/ref/tool-specific-input/GATK/GRCh38/1000G_omni2.5.hg38.vcf.gz` |
 | `bundle_phase1_1000g_snps_high_conf_vcf_gz` | Yes | path | Absolute path to 1000 genomes phase 1 high-confidence file, e.g., `/hot/ref/tool-specific-input/GATK/GRCh38/1000G_phase1.snps.high_confidence.hg38.vcf.gz` |
 | `bundle_contest_hapmap_3p3_vcf_gz` | Yes | path | Absolute path to HapMap 3.3 biallelic sites file, e.g., `/hot/users/shutao/Biallelic/hapmap_3.3.hg38.BIALLELIC.PASS.vcf.gz` |
+| `work_dir` | optional | path | Path of working directory for Nextflow. When included in the sample config file, Nextflow intermediate files and logs will be saved to this directory. With ucla_cds, the default is `/scratch` and should only be changed for testing/development. Changing this directory to `/hot` or `/tmp` can lead to high server latency and potential disk space limitations, respectively. |
 
 ---
 

@@ -57,7 +57,7 @@ process run_VariantRecalibratorINDEL_GATK {
     """
     set -euo pipefail
 
-    gatk --java-options "-DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=/scratch" \
+    gatk --java-options "-DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=${workDir}" \
             VariantRecalibrator \
             --variant ${sample_vcf} \
             --reference ${reference_fasta} \
@@ -147,7 +147,7 @@ process run_VariantRecalibratorSNP_GATK {
     """
     set -euo pipefail
 
-    gatk --java-options "-DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=/scratch" \
+    gatk --java-options "-DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=${workDir}" \
         VariantRecalibrator \
         --variant ${sample_vcf} \
         --reference ${reference_fasta} \
@@ -221,7 +221,7 @@ process run_ApplyVQSR_GATK {
     script:
     """
     set -euo pipefail
-    gatk --java-options "-DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=/scratch" \
+    gatk --java-options "-DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=${workDir}" \
            ApplyVQSR \
            --variant ${sample_vcf} \
            --reference ${reference_fasta} \
