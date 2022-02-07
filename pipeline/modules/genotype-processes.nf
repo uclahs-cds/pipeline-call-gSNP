@@ -121,7 +121,7 @@ process run_HaplotypeCallerVCF_GATK {
     """
     set -euo pipefail
 
-    gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=/scratch" \
+    gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=${workDir}" \
         HaplotypeCaller \
         ${bam_input_str} \
         --output ${output_filename} \
@@ -198,7 +198,7 @@ process run_HaplotypeCallerGVCF_GATK {
     """
     set -euo pipefail
 
-    gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=/scratch" \
+    gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=${workDir}" \
         HaplotypeCaller \
         --input ${bam} \
         --output ${output_filename} \
@@ -258,7 +258,7 @@ process run_MergeVcfs_Picard {
     """
     set -euo pipefail
 
-    java -Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -Djava.io.tmpdir=/scratch \
+    java -Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -Djava.io.tmpdir=${workDir} \
       -jar /usr/local/share/picard-slim-2.26.10-0/picard.jar MergeVcfs \
       ${all_vcfs} \
       -OUTPUT ${output_filename} \

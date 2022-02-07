@@ -14,6 +14,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### Changed
 - Switch to SAMtools for indexing BAMs
 - Use sample ID and intervals as identifiers for log output directories
+- Standardize config structure
 
 ---
 

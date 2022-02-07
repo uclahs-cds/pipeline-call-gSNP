@@ -57,7 +57,7 @@ process run_RealignerTargetCreator_GATK {
     targeted_interval_params = params.is_targeted ? "--intervals ${params.intervals} --interval_set_rule INTERSECTION" : ""
     """
     set -euo pipefail
-    java -Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=/scratch \
+    java -Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=${workDir} \
         -jar /GenomeAnalysisTK.jar \
         --analysis_type RealignerTargetCreator \
         ${bam_input_str} \
@@ -140,7 +140,7 @@ process run_IndelRealigner_GATK {
     combined_interval_options = "--intervals ${scatter_intervals} ${unmapped_interval_option}"
     """
     set -euo pipefail
-    java -Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=/scratch \
+    java -Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=${workDir} \
         -jar /GenomeAnalysisTK.jar \
         --analysis_type IndelRealigner \
         ${bam_input_str} \

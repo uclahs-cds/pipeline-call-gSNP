@@ -60,7 +60,7 @@ process run_BaseRecalibrator_GATK {
     targeted_options = params.is_targeted ? "--intervals ${all_target_intervals} --interval-padding 100" : ""
     """
     set -euo pipefail
-    gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=/scratch" \
+    gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=${workDir}" \
         BaseRecalibrator \
         ${all_ir_bams} \
         --reference ${reference_fasta} \

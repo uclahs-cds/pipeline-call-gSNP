@@ -134,7 +134,7 @@ process run_MergeSamFiles_Picard {
     all_bams = bams.collect{ "-INPUT '$it'" }.join(' ')
     """
     set -euo pipefail
-    java -Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -Djava.io.tmpdir=/scratch \
+    java -Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -Djava.io.tmpdir=${workDir} \
         -jar /usr/local/share/picard-slim-2.26.10-0/picard.jar MergeSamFiles \
         ${all_bams} \
         -OUTPUT ${id}_realigned_recalibrated_merged.bam \

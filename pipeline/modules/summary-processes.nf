@@ -51,7 +51,7 @@ process run_GetPileupSummaries_GATK {
     output_filename = "${id}_getpileupsummaries.table"
     """
     set -euo pipefail
-    gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=/scratch" \
+    gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=${workDir}" \
         GetPileupSummaries \
         --input ${bam} \
         --reference ${reference_fasta} \
@@ -104,14 +104,14 @@ process run_CalculateContamination_GATK {
     calc_matched = (sample_type == "normal") ? false : true
     """
     set -euo pipefail
-    gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=/scratch" \
+    gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=${workDir}" \
         CalculateContamination \
         --input ${pileupsummaries} \
         --output ${single_output_filename}_alone.table
 
     if ${calc_matched}
     then
-      gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=/scratch" \
+      gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=${workDir}" \
           CalculateContamination \
           --input ${pileupsummaries} \
           --matched-normal ${matched_normal_pileupsummaries} \
@@ -173,7 +173,7 @@ process run_DepthOfCoverage_GATK {
     interval_options = params.is_targeted ? "--intervals ${params.intervals}" : all_intervals.collect{ "--intervals '$it'" }.join(' ')
     """
     set -euo pipefail
-    gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=/scratch" \
+    gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=${workDir}" \
         DepthOfCoverage \
         --input ${bam} \
         --output ${id}_DOC \
