@@ -260,19 +260,6 @@ workflow multi_sample_wgs {
         .filter { it.toString().endsWith('.bam') || it.toString().endsWith('.bai') }
         .unique()
 
-    // reheadered_bams_to_delete = reheader_interval_bams.out.reheadered_normal_bam.flatten()
-    //     .mix(
-    //         reheader_interval_bams.out.reheadered_tumour_bam.flatten()
-    //         )
-    //     .filter { it.toString().endsWith('.bam') || it.toString().endsWith('.bai') }
-    //     .unique()
-
-    // reheadered_deletion_signal = run_MergeSamFiles_Picard_normal.out.merged_bam.mix(
-    //     run_MergeSamFiles_Picard_tumour.out.merged_bam,
-    //     hc_completion_signal
-    //     )
-    //     .collect()
-
     reheadered_normal_bams_to_delete.combine(reheadered_deletion_signal_normal)
         .mix(reheadered_tumour_bams_to_delete.combine(reheadered_deletion_signal_tumour))
         .multiMap{ it ->
