@@ -16,6 +16,38 @@ workflow recalibrate_base {
     intervals
 
     main:
+    // Extract the normal and tumour IDs
+    // IDs are listed as [sample_id, normal_id, tumour1_id, tumour2_id, ...]
+    classified_ids = bqsr_generator_identifiers
+      .map{ it ->
+        it[1]
+        }
+      .flatten()
+      .unique()
+      .map{ it ->
+        [it, "normal"]
+        }
+      .mix(
+        bqsr_generator_identifiers
+          .map{ it ->
+            it[2..-1]
+            }
+          .flatten()
+          .unique()
+          .filter{ it != 'NA' }
+          .map{ it ->
+            [it, "tumour"]
+            }
+        )
+
+    baserecalibrator_ids = classified_ids.map{ it ->
+      it[0]
+      }
+    
+    bqsr_ids = classified_ids.map{ it ->
+      "${it[0]}-${it[1]}"
+      }
+
     run_BaseRecalibrator_GATK(
       params.reference_fasta,
       "${params.reference_fasta}.fai",
@@ -29,32 +61,8 @@ workflow recalibrate_base {
       intervals,
       realigned_bam.collect(),
       realigned_bam_index.collect(),
-      sample_identifier
+      baserecalibrator_ids
       )
-
-    // Extract the normal and tumour IDs
-    // IDs are listed as [sample_id, normal_id, tumour1_id, tumour2_id, ...]
-    bqsr_ids = bqsr_generator_identifiers
-      .map{ it ->
-        it[1]
-        }
-      .flatten()
-      .unique()
-      .map{ it ->
-        it + "-normal"
-        }
-      .mix(
-        bqsr_generator_identifiers
-          .map{ it ->
-            it[2..-1]
-            }
-          .flatten()
-          .unique()
-          .filter{ it != 'NA' }
-          .map{ it ->
-            it + "-tumour"
-            }
-        )
 
     // Generate the input channels
     // Add indices for joining
@@ -93,18 +101,11 @@ workflow recalibrate_base {
       .combine(bqsr_ids)
       .groupTuple(by: [0,1,2,3])
 
-    // Replicate the recal table for all split BAMs
-    recal_table_ich = run_BaseRecalibrator_GATK.out.recalibration_table
-      .combine(apply_bqsr_ich)
-      .map{ it ->
-        it[0]
-        }
-
     run_ApplyBQSR_GATK(
       params.reference_fasta,
       "${params.reference_fasta}.fai",
       "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
-      recal_table_ich,
+      run_BaseRecalibrator_GATK.out.recalibration_table.collect(),
       apply_bqsr_ich
       )
 
