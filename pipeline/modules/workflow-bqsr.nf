@@ -25,11 +25,7 @@ workflow recalibrate_base {
       .flatten()
       .unique()
       .map{ it ->
-<<<<<<< HEAD
         [it, "normal"]
-=======
-        it + "-normal"
->>>>>>> main
         }
       .mix(
         bqsr_generator_identifiers
@@ -40,11 +36,7 @@ workflow recalibrate_base {
           .unique()
           .filter{ it != 'NA' }
           .map{ it ->
-<<<<<<< HEAD
             [it, "tumour"]
-=======
-            it + "-tumour"
->>>>>>> main
             }
         )
 
