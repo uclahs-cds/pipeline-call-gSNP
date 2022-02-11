@@ -25,7 +25,11 @@ workflow recalibrate_base {
       .flatten()
       .unique()
       .map{ it ->
+<<<<<<< HEAD
         [it, "normal"]
+=======
+        it + "-normal"
+>>>>>>> main
         }
       .mix(
         bqsr_generator_identifiers
@@ -36,7 +40,11 @@ workflow recalibrate_base {
           .unique()
           .filter{ it != 'NA' }
           .map{ it ->
+<<<<<<< HEAD
             [it, "tumour"]
+=======
+            it + "-tumour"
+>>>>>>> main
             }
         )
 
@@ -90,7 +98,10 @@ workflow recalibrate_base {
         [counter_unmapped = counter_unmapped + 1, it]
         }
 
-    // Join the channels and remove the join index
+    // Join the channels and remove the join index.
+    // Group the ids together for each interval-level IR BAM so that each
+    // interval-level IR BAM can be deleted immediately after its
+    // corresponding ApplyBQSR process finishes.
     apply_bqsr_ich = bams_with_idx
       .join(bam_index_with_idx, by: 0)
       .join(intervals_with_idx, by: 0)
