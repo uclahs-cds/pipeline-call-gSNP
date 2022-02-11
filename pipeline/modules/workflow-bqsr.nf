@@ -82,7 +82,10 @@ workflow recalibrate_base {
         [counter_unmapped = counter_unmapped + 1, it]
         }
 
-    // Join the channels and remove the join index
+    // Join the channels and remove the join index.
+    // Group the ids together for each interval-level IR BAM so that each
+    // interval-level IR BAM can be deleted immediately after its
+    // corresponding ApplyBQSR process finishes.
     apply_bqsr_ich = bams_with_idx
       .join(bam_index_with_idx, by: 0)
       .join(intervals_with_idx, by: 0)
