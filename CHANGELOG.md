@@ -15,6 +15,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Switch to SAMtools for indexing BAMs
 - Use sample ID and intervals as identifiers for log output directories
 - Standardize config structure
+- Partially revert BQSR parallelization and group ApplyBQSR by interval
 
 ---
 

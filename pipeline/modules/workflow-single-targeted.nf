@@ -74,7 +74,7 @@ workflow single_sample_targeted {
 
     remove_realigned_bams(
         recalibrate_base.out.bam_for_deletion.mix(recalibrate_base.out.bam_index_for_deletion),
-        recalibrate_base.out.recalibrated_normal_bam.collect().mix(recalibrate_base.out.recalibrated_tumour_bam.collect()).collect() // Let BQSR finish before deletion
+        "decoy signal"
         )
 
     // Extract the BAMs and indices separately
@@ -195,19 +195,11 @@ workflow single_sample_targeted {
         gvcf_caller_ich
         )
 
-    hc_completion_signal = run_HaplotypeCallerVCF_GATK.out.vcfs.collect().mix(
-        run_HaplotypeCallerGVCF_GATK.out.gvcfs.collect()
-        )
-        .collect()
-
     reheadered_bams_to_delete = recalibrate_base.out.recalibrated_normal_bam.map{ it -> it[1] }.mix(
         recalibrate_base.out.recalibrated_normal_bam_index.map{ it -> it[1] }
         )
 
-    reheadered_deletion_signal = run_MergeSamFiles_Picard.out.merged_bam.mix(
-        hc_completion_signal
-        )
-        .collect()
+    reheadered_deletion_signal = run_MergeSamFiles_Picard.out.merged_bam.last()
 
     remove_reheadered_bams(
         reheadered_bams_to_delete,

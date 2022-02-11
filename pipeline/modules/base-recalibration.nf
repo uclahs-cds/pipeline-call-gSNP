@@ -108,7 +108,7 @@ process run_ApplyBQSR_GATK {
     publishDir path: "${params.log_output_dir}/process-log",
       pattern: ".command.*",
       mode: "copy",
-      saveAs: { "${task.process.replace(':', '/')}-${id}-${interval_id}/log${file(it).getName()}" }
+      saveAs: { "${task.process.replace(':', '/')}-${interval_id}/log${file(it).getName()}" }
 
     input:
     path(reference_fasta)
@@ -119,18 +119,13 @@ process run_ApplyBQSR_GATK {
           path(indelrealigned_bam_index),
           path(interval),
           val(includes_unmapped),
-          val(id),
-          val(type)
+          val(id)
 
     output:
     path(".command.*")
-    tuple val(id),
-          val(type),
-          path(interval),
-          path("${id}_recalibrated_${interval_id}.bam"),
-          path("${id}_recalibrated_${interval_id}.bai"), emit: apply_bqsr_och
-    tuple val(type),
-          path(indelrealigned_bam),
+    tuple path("*_recalibrated_${interval_id}.bam"),
+          path("*_recalibrated_${interval_id}.bai"), emit: apply_bqsr_och
+    tuple path(indelrealigned_bam),
           path(indelrealigned_bam_index), emit: deletion_och
 
     script:
@@ -138,17 +133,23 @@ process run_ApplyBQSR_GATK {
     interval_id = interval.baseName.split('-')[0]
     unmapped_interval_option = (includes_unmapped) ? "--intervals unmapped" : ""
     combined_interval_options = "--intervals ${interval} ${unmapped_interval_option}"
+    all_commands = id.collect{
+      """
+      gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=/scratch" \\
+        ApplyBQSR \\
+        --input ${indelrealigned_bam} \\
+        --bqsr-recal-file ${recalibration_table} \\
+        --reference ${reference_fasta} \\
+        --read-filter SampleReadFilter \\
+        ${combined_interval_options} \\
+        --emit-original-quals ${params.is_emit_original_quals} \\
+        --output ${it}_recalibrated_${interval_id}.bam \\
+        --sample ${it.split("-")[0..-2].join("-")}
+      """
+      }
+      .join("\n")
     """
     set -euo pipefail
-    gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=${workDir}" \
-        ApplyBQSR \
-        --input ${indelrealigned_bam} \
-        --bqsr-recal-file ${recalibration_table} \
-        --reference ${reference_fasta} \
-        --output ${id}_recalibrated_${interval_id}.bam \
-        --read-filter SampleReadFilter \
-        --sample ${id} \
-        ${combined_interval_options} \
-        --emit-original-quals ${params.is_emit_original_quals}
+    ${all_commands}
     """
 }

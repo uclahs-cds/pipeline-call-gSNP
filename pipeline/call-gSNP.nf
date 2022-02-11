@@ -77,7 +77,7 @@ if (params.is_NT_paired) {
         .set { input_ch_input_csv }
 
     // Validation channel    
-    input_ch_input_csv.flatMap{it -> [it.normal_BAM, it.normal_index, it.tumour_BAM, it.tumour_index]}.set{input_validation}
+    input_ch_input_csv.flatMap{it -> [it.normal_BAM, it.normal_index, it.tumour_BAM, it.tumour_index]}.unique().set{input_validation}
 
 } else {
     Channel
@@ -90,7 +90,7 @@ if (params.is_NT_paired) {
         .set { input_ch_input_csv }
 
     // Validation channel    
-    input_ch_input_csv.flatMap{it -> [it.normal_BAM, it.normal_index]}.set{input_validation}
+    input_ch_input_csv.flatMap{it -> [it.normal_BAM, it.normal_index]}.unique().set{input_validation}
 }
 
 // Gather the inputs into a single emission

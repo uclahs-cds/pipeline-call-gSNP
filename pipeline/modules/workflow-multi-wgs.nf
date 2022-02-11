@@ -65,7 +65,7 @@ workflow multi_sample_wgs {
 
     remove_realigned_bams(
         recalibrate_base.out.bam_for_deletion.mix(recalibrate_base.out.bam_index_for_deletion),
-        recalibrate_base.out.recalibrated_normal_bam.collect().mix(recalibrate_base.out.recalibrated_tumour_bam.collect()).collect() // Let BQSR finish before deletion
+        "decoy signal"
         )
 
     reheader_interval_bams(
@@ -237,27 +237,40 @@ workflow multi_sample_wgs {
         gvcf_caller_ich
         )
 
-    hc_completion_signal = run_HaplotypeCallerVCF_GATK.out.vcfs.collect().mix(
-        run_HaplotypeCallerGVCF_GATK.out.gvcfs.collect()
+    hc_completion_signal = run_HaplotypeCallerVCF_GATK.out.vcfs.last().mix(
+        run_HaplotypeCallerGVCF_GATK.out.gvcfs.last()
         )
-        .collect()
+        .last()
 
-    reheadered_bams_to_delete = reheader_interval_bams.out.reheadered_normal_bam.flatten()
-        .mix(
-            reheader_interval_bams.out.reheadered_tumour_bam.flatten()
-            )
+    reheadered_deletion_signal_normal = run_MergeSamFiles_Picard_normal.out.merged_bam.mix(
+        hc_completion_signal
+        )
+        .last()
+
+    reheadered_deletion_signal_tumour = run_MergeSamFiles_Picard_tumour.out.merged_bam.last().mix(
+        hc_completion_signal
+        )
+        .last()
+
+    reheadered_normal_bams_to_delete = reheader_interval_bams.out.reheadered_normal_bam.flatten()
         .filter { it.toString().endsWith('.bam') || it.toString().endsWith('.bai') }
         .unique()
 
-    reheadered_deletion_signal = run_MergeSamFiles_Picard_normal.out.merged_bam.mix(
-        run_MergeSamFiles_Picard_tumour.out.merged_bam,
-        hc_completion_signal
-        )
-        .collect()
+    reheadered_tumour_bams_to_delete = reheader_interval_bams.out.reheadered_tumour_bam.flatten()
+        .filter { it.toString().endsWith('.bam') || it.toString().endsWith('.bai') }
+        .unique()
+
+    reheadered_normal_bams_to_delete.combine(reheadered_deletion_signal_normal)
+        .mix(reheadered_tumour_bams_to_delete.combine(reheadered_deletion_signal_tumour))
+        .multiMap{ it ->
+            files_to_delete: it[0]
+            deletion_signal: it[1]
+            }
+        .set{ remove_reheadered_bams_ich }
 
     remove_reheadered_bams(
-        reheadered_bams_to_delete,
-        reheadered_deletion_signal
+        remove_reheadered_bams_ich.files_to_delete,
+        remove_reheadered_bams_ich.deletion_signal
         )
 
     // Prep input for merging VCFs

@@ -41,7 +41,7 @@ workflow recalibrate_base {
       .flatten()
       .unique()
       .map{ it ->
-        [it, 'normal']
+        it + "-normal"
         }
       .mix(
         bqsr_generator_identifiers
@@ -52,7 +52,7 @@ workflow recalibrate_base {
           .unique()
           .filter{ it != 'NA' }
           .map{ it ->
-            [it, 'tumour']
+            it + "-tumour"
             }
         )
 
@@ -82,7 +82,10 @@ workflow recalibrate_base {
         [counter_unmapped = counter_unmapped + 1, it]
         }
 
-    // Join the channels and remove the join index
+    // Join the channels and remove the join index.
+    // Group the ids together for each interval-level IR BAM so that each
+    // interval-level IR BAM can be deleted immediately after its
+    // corresponding ApplyBQSR process finishes.
     apply_bqsr_ich = bams_with_idx
       .join(bam_index_with_idx, by: 0)
       .join(intervals_with_idx, by: 0)
@@ -91,6 +94,7 @@ workflow recalibrate_base {
         it[1..-1]
         }
       .combine(bqsr_ids)
+      .groupTuple(by: [0,1,2,3])
 
     // Replicate the recal table for all split BAMs
     recal_table_ich = run_BaseRecalibrator_GATK.out.recalibration_table
@@ -107,8 +111,31 @@ workflow recalibrate_base {
       apply_bqsr_ich
       )
 
-    // Split the normal and tumour channels
+    intervals_for_join = associated_interval.map{ it ->
+      [it.baseName.split('-')[0], it]
+      }
+
+    // Split the normal and tumour channels and add necessary information
     run_ApplyBQSR_GATK.out.apply_bqsr_och
+      .flatten()
+      .map{ it -> [
+        it.baseName.split("_recalibrated_")[-1].split(".bam")[0], // interval number
+        it.baseName.split("_recalibrated_")[0..-2].join("_recalibrated_").split("-")[0..-2].join("-"), // sample id
+        it.baseName.split("_recalibrated_")[0..-2].join("_recalibrated_").split("-")[-1], // sample type
+        it
+        ]}
+      .groupTuple(by: [0,1]) // Group by sample and interval to match BAM and BAI
+      .map{ it ->
+        [it[0], [it[1], it[2][0], it[3]]]
+        }
+      .combine(intervals_for_join) // Add path to associated interval
+      .filter{ it[0] == it[2] }
+      .map{ it ->
+        it[1,3].flatten()
+        }
+      .map{ it ->
+        [it[0], it[1], it[4], it[2], it[3]] //Re-arrange into: id, type, interval, bam, bai
+        }
       .branch{
         normal: it[1] == 'normal'
         tumour: it[1] == 'tumour'
@@ -185,10 +212,9 @@ workflow recalibrate_base {
     // Filter the deletion channel
     // Keep only the normal to avoid duplications
     run_ApplyBQSR_GATK.out.deletion_och
-      .filter{ it[0] == 'normal' }
       .multiMap{it ->
-        bam_deletion_och: it[1]
-        bam_index_deletion_och: it[2]
+        bam_deletion_och: it[0]
+        bam_index_deletion_och: it[1]
         }
       .set{ filtered_deletion_och }
 
