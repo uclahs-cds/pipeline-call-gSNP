@@ -23,7 +23,12 @@ process run_VariantRecalibratorINDEL_GATK {
     publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}",
       mode: "copy",
       enabled: params.save_intermediate_files,
-      pattern: "*_output_indel.*"
+      pattern: "*_output_indel.{recal*,tranches}"
+
+    publishDir path: "${params.output_dir}/QC/${task.process.replace(':', '/')}",
+      mode: "copy",
+      enabled: params.save_intermediate_files,
+      pattern: "*_output_indel.{plots*}"
 
     publishDir path: "${params.log_output_dir}/process-log",
       pattern: ".command.*",
@@ -107,7 +112,12 @@ process run_VariantRecalibratorSNP_GATK {
     publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}",
       mode: "copy",
       enabled: params.save_intermediate_files,
-      pattern: "*_output_snp.*"
+      pattern: "*_output_snp.{recal*,tranches}"
+
+    publishDir path: "${params.output_dir}/QC/${task.process.replace(':', '/')}",
+      mode: "copy",
+      enabled: params.save_intermediate_files,
+      pattern: "*_output_snp.{plots*,tranches.pdf}"
 
     publishDir path: "${params.log_output_dir}/process-log",
       pattern: ".command.*",
@@ -135,6 +145,7 @@ process run_VariantRecalibratorSNP_GATK {
     path(".command.*")
     path("${sample_id}_output_snp.plots.R")
     path("${sample_id}_output_snp.plots.R.pdf")
+    path("${sample_id}_output_snp.tranches.pdf")
     tuple path(sample_vcf),
           path(sample_vcf_tbi),
           path("${sample_id}_output_snp.recal"),
