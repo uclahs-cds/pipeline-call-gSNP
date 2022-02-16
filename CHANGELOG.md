@@ -17,6 +17,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Standardize config structure
 - Partially revert BQSR parallelization and group ApplyBQSR by interval
 - Parallelize BaseRecalibrator per sample
+- Save VQSR output for QC
 
 ---
 
