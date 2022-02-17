@@ -18,6 +18,9 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Partially revert BQSR parallelization and group ApplyBQSR by interval
 - Save VQSR output for QC
 
+### Fixed
+- Accept empty tumour columns in input CSV in single-sample mode
+
 ---
 
 ## [7.2.1] - 2021-01-25
