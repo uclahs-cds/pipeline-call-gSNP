@@ -84,8 +84,14 @@ if (params.is_NT_paired) {
         .fromPath(params.input_csv, checkIfExists: true)
         .splitCsv(header:true)
         .map{
+            [normal_index: indexFile(it.normal_BAM)] + it
+            }
+        .map{
             // Add filler values for tumour sample if in single sample mode
-            [normal_index: indexFile(it.normal_BAM)] + [tumour_id: 'NA'] + [tumour_BAM: '/scratch/NA.bam'] + [tumour_index: '/scratch/NA.bam.bai'] + it
+            it['tumour_id'] = 'NA'
+            it['tumour_BAM'] = '/scratch/NA.bam'
+            it['tumour_index'] = '/scratch/NA.bam.bai'
+            it
             }
         .set { input_ch_input_csv }
 
