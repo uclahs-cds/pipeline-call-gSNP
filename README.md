@@ -15,6 +15,8 @@ For pipeline documentation, please refer to [here](https://uclahs.app.box.com/fi
 
 This pipeline takes BAM and BAM index from [pipeline-align-DNA](https://github.com/uclahs-cds/pipeline-align-DNA), and runs through GATK4 best practice to call germline short variant (SNP and INDEL). It can be run on a single normal sample or on normal-tumour paired samples.
 
+Adapted from the pipeline [here](https://github.com/uclahs-cds/BoutrosLab/tree/master/Resources/code/perl/NGS-Tools-GATK/trunk/lib/NGS/Tools).
+
 ---
 
 ## How To Run
