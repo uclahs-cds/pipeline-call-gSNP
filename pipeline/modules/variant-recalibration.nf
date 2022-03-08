@@ -204,7 +204,7 @@ process run_VariantRecalibratorSNP_GATK {
 */
 process run_ApplyVQSR_GATK {
     container params.docker_image_gatk
-    publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}",
+    publishDir path: "${params.output_dir}/${-> (mode == 'INDEL') ? "output/" : "intermediate/${task.process.replace(':', '/')}"}/",
       mode: "copy",
       enabled: params.save_intermediate_files,
       pattern: "*_merged_recalibrated_${suffix}.vcf.gz{,.tbi}"
