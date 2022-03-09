@@ -34,7 +34,7 @@ process run_BaseRecalibrator_GATK {
     publishDir path: "${params.log_output_dir}/process-log",
       pattern: ".command.*",
       mode: "copy",
-      saveAs: { "${task.process.replace(':', '/')}/log${file(it).getName()}" }
+      saveAs: { "${task.process.replace(':', '/')}-${id}/log${file(it).getName()}" }
 
     input:
     path(reference_fasta)
@@ -49,11 +49,11 @@ process run_BaseRecalibrator_GATK {
     path(all_target_intervals)
     path(indelrealigned_bams)
     path(indelrealigned_bams_bai)
-    val(sample_id)
+    val(id)
 
     output:
     path(".command.*")
-    path("${sample_id}_recalibration_table.grp"), emit: recalibration_table
+    path("${id}_recalibration_table.grp"), emit: recalibration_table
 
     script:
     all_ir_bams = indelrealigned_bams.collect{ "--input '$it'" }.join(' ')
@@ -68,8 +68,10 @@ process run_BaseRecalibrator_GATK {
         --known-sites ${bundle_mills_and_1000g_gold_standards_vcf_gz} \
         --known-sites ${bundle_known_indels_vcf_gz} \
         --known-sites ${bundle_v0_dbsnp138_vcf_gz} \
-        --output ${sample_id}_recalibration_table.grp \
-        ${targeted_options}
+        --output ${id}_recalibration_table.grp \
+        ${targeted_options} \
+        --read-filter SampleReadFilter \
+        --sample ${id}
     """
 }
 
@@ -138,7 +140,7 @@ process run_ApplyBQSR_GATK {
       gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=/scratch" \\
         ApplyBQSR \\
         --input ${indelrealigned_bam} \\
-        --bqsr-recal-file ${recalibration_table} \\
+        --bqsr-recal-file ${it.split("-")[0..-2].join("-")}_recalibration_table.grp \\
         --reference ${reference_fasta} \\
         --read-filter SampleReadFilter \\
         ${combined_interval_options} \\

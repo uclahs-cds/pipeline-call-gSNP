@@ -28,7 +28,6 @@ Current Configuration:
 
        - output: 
           output: ${params.output_dir}
-          temp: ${params.temp_dir}
 
       Tools Used:
           tool GATK: ${params.docker_image_gatk}
