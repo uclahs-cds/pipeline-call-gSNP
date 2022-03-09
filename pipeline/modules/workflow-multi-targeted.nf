@@ -377,6 +377,8 @@ workflow multi_sample_targeted {
 
     files_for_sha512 = run_MergeVcfs_Picard_GVCF.out.vcf.flatten().mix(
         run_MergeVcfs_Picard_GVCF.out.vcf_index.flatten(),
+        recalibrate_indels.out.vcf.flatten(),
+        recalibrate_indels.out.vcf_index.flatten(),
         filter_gSNP_GATK.out.germline_filtered.flatten(),
         run_MergeSamFiles_Picard_normal.out.merged_bam.flatten(),
         run_MergeSamFiles_Picard_normal.out.merged_bam_index.flatten(),

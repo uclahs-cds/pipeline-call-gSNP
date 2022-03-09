@@ -27,7 +27,6 @@ process run_VariantRecalibratorINDEL_GATK {
 
     publishDir path: "${params.output_dir}/QC/${task.process.replace(':', '/')}",
       mode: "copy",
-      enabled: params.save_intermediate_files,
       pattern: "*_output_indel.{plots*}"
 
     publishDir path: "${params.log_output_dir}/process-log",
@@ -116,7 +115,6 @@ process run_VariantRecalibratorSNP_GATK {
 
     publishDir path: "${params.output_dir}/QC/${task.process.replace(':', '/')}",
       mode: "copy",
-      enabled: params.save_intermediate_files,
       pattern: "*_output_snp.{plots*,tranches.pdf}"
 
     publishDir path: "${params.log_output_dir}/process-log",
@@ -204,10 +202,14 @@ process run_VariantRecalibratorSNP_GATK {
 */
 process run_ApplyVQSR_GATK {
     container params.docker_image_gatk
-    publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}",
+    publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}/",
       mode: "copy",
       enabled: params.save_intermediate_files,
-      pattern: "*_merged_recalibrated_${suffix}.vcf.gz{,.tbi}"
+      pattern: "*_merged_recalibrated_SNP.vcf.gz{,.tbi}"
+
+    publishDir path: "${params.output_dir}/output/",
+      mode: "copy",
+      pattern: "*_merged_recalibrated_SNP_AND_INDEL.vcf.gz{,.tbi}"
 
     publishDir path: "${params.log_output_dir}/process-log",
       pattern: ".command.*",

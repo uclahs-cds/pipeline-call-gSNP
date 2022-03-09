@@ -18,6 +18,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Partially revert BQSR parallelization and group ApplyBQSR by interval
 - Parallelize BaseRecalibrator per sample
 - Save VQSR output for QC
+- Save SNP+INDEL VQSRed VCF to output
 
 ---
 
