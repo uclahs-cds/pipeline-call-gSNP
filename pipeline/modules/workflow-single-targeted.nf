@@ -24,7 +24,13 @@ include {
     remove_intermediate_files as remove_realigned_bams
     remove_intermediate_files as remove_recalibrated_bams
     remove_intermediate_files as remove_reheadered_bams
-    } from './intermediate-cleanup.nf'
+    } from '../../external/nextflow-modules/modules/common/intermediate_file_removal/main.nf' addParams(
+        options: [
+            save_intermediate_files: params.save_intermediate_files,
+            output_dir: params.output_dir,
+            log_output_dir: "${params.log_output_dir}/process-log/single_sample_targeted"
+            ]
+        )
 
 workflow single_sample_targeted {
     take:
