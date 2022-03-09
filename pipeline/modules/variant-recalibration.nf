@@ -27,7 +27,6 @@ process run_VariantRecalibratorINDEL_GATK {
 
     publishDir path: "${params.output_dir}/QC/${task.process.replace(':', '/')}",
       mode: "copy",
-      enabled: params.save_intermediate_files,
       pattern: "*_output_indel.{plots*}"
 
     publishDir path: "${params.log_output_dir}/process-log",
@@ -116,7 +115,6 @@ process run_VariantRecalibratorSNP_GATK {
 
     publishDir path: "${params.output_dir}/QC/${task.process.replace(':', '/')}",
       mode: "copy",
-      enabled: params.save_intermediate_files,
       pattern: "*_output_snp.{plots*,tranches.pdf}"
 
     publishDir path: "${params.log_output_dir}/process-log",
