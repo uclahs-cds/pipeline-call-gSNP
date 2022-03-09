@@ -47,7 +47,7 @@ Starting workflow...
 
 include { run_validate_PipeVal } from './modules/validation.nf'
 include { run_SplitIntervals_GATK } from './modules/genotype-processes.nf'
-include { extract_GenomeIntervals } from './modules/extract-intervals.nf'
+include { extract_GenomeIntervals } from '../external/nextflow-modules/modules/common/extract_genome_intervals/main.nf'
 include { single_sample_wgs } from './modules/workflow-single-wgs.nf'
 include { single_sample_targeted } from './modules/workflow-single-targeted.nf'
 include { multi_sample_wgs } from './modules/workflow-multi-wgs.nf'
