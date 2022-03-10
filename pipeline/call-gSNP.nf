@@ -52,7 +52,11 @@ include { run_validate_PipeVal } from '../external/nextflow-modules/modules/Pipe
         ]
     )
 include { run_SplitIntervals_GATK } from './modules/genotype-processes.nf'
-include { extract_GenomeIntervals } from '../external/nextflow-modules/modules/common/extract_genome_intervals/main.nf'
+include { extract_GenomeIntervals } from '../external/nextflow-modules/modules/common/extract_genome_intervals/main.nf' addParams(
+    options: [
+        save_intermediate_files: params.save_intermediate_files
+        ]
+    )
 include { single_sample_wgs } from './modules/workflow-single-wgs.nf'
 include { single_sample_targeted } from './modules/workflow-single-targeted.nf'
 include { multi_sample_wgs } from './modules/workflow-multi-wgs.nf'
