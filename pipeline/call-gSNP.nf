@@ -47,7 +47,7 @@ Starting workflow...
 
 include { run_validate_PipeVal } from '../external/nextflow-modules/modules/PipeVal/validate/main.nf' addParams(
     options: [
-        docker_image_version: params.docker_image_validate,
+        docker_image_version: params.pipeval_version,
         main_process: "./" //Save logs in <log_dir>/process-log/run_validate_PipeVal
         ]
     )

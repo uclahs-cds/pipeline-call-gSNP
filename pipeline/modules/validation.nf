@@ -1,35 +1,4 @@
 /*
-    Nextflow module for validating files
-
-    input:
-        file_to_validate: path to file to validate
-        
-    params:
-        params.log_output_dir: string(path)
-        params.docker_image_validate: string
-*/
-process run_validate_PipeVal {
-    container params.docker_image_validate
-
-    publishDir path: "${params.log_output_dir}/process-log",
-      pattern: ".command.*",
-      mode: "copy",
-      saveAs: { "${task.process}/${task.process}-${task.index}/log${file(it).getName()}" }
-
-    input:
-    path file_to_validate
-
-    output:
-    path(".command.*")
-    path("input_validation.txt"), emit: val_file
-
-    """
-    set -euo pipefail
-    python -m validate -t file-input ${file_to_validate} > 'input_validation.txt'
-    """
-}
-
-/*
   Nextflow module for calculating SHA512 checksum
 
   input:
