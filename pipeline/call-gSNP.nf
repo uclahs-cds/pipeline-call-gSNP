@@ -81,7 +81,7 @@ if (params.is_NT_paired) {
         .set { input_ch_input_csv }
 
     // Validation channel    
-    input_ch_input_csv.flatMap{it -> [it.normal_BAM, it.normal_index, it.tumour_BAM, it.tumour_index]}.unique().set{input_validation}
+    input_ch_input_csv.flatMap{it -> [it.normal_BAM, it.normal_index, it.tumour_BAM, it.tumour_index]}.unique().map{it -> ['file-input', it]}.set{input_validation}
 
 } else {
     Channel
@@ -94,7 +94,7 @@ if (params.is_NT_paired) {
         .set { input_ch_input_csv }
 
     // Validation channel    
-    input_ch_input_csv.flatMap{it -> [it.normal_BAM, it.normal_index]}.unique().set{input_validation}
+    input_ch_input_csv.flatMap{it -> [it.normal_BAM, it.normal_index]}.unique().map{it -> ['file-input', it]}.set{input_validation}
 }
 
 // Gather the inputs into a single emission
@@ -139,7 +139,7 @@ identifier_sample = input_csv_formatted_ich.map{it -> it.sample_id}.flatten()
 workflow {
     run_validate_PipeVal(input_validation)
     // Collect and store input validation output
-    run_validate_PipeVal.out.val_file.collectFile(
+    run_validate_PipeVal.out.validation_result.collectFile(
       name: 'input_validation.txt',
       storeDir: "${params.output_dir}/validation"
       )
