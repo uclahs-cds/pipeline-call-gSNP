@@ -1,4 +1,4 @@
 [submodule "external/nextflow-modules"]
 	path = external/nextflow-modules
 	url = git@github.com:uclahs-cds/pipeline-Nextflow-module.git
-	branch = yashpatel-update-pipeval-dir
+	branch = main
