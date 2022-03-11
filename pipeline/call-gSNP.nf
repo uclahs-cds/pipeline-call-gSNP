@@ -45,9 +45,18 @@ Starting workflow...
 ------------------------------------
         """
 
-include { run_validate_PipeVal } from './modules/validation.nf'
+include { run_validate_PipeVal } from '../external/nextflow-modules/modules/PipeVal/validate/main.nf' addParams(
+    options: [
+        docker_image_version: params.pipeval_version,
+        main_process: "./" //Save logs in <log_dir>/process-log/run_validate_PipeVal
+        ]
+    )
 include { run_SplitIntervals_GATK } from './modules/genotype-processes.nf'
-include { extract_GenomeIntervals } from './modules/extract-intervals.nf'
+include { extract_GenomeIntervals } from '../external/nextflow-modules/modules/common/extract_genome_intervals/main.nf' addParams(
+    options: [
+        save_intermediate_files: params.save_intermediate_files
+        ]
+    )
 include { single_sample_wgs } from './modules/workflow-single-wgs.nf'
 include { single_sample_targeted } from './modules/workflow-single-targeted.nf'
 include { multi_sample_wgs } from './modules/workflow-multi-wgs.nf'
@@ -76,7 +85,7 @@ if (params.is_NT_paired) {
         .set { input_ch_input_csv }
 
     // Validation channel    
-    input_ch_input_csv.flatMap{it -> [it.normal_BAM, it.normal_index, it.tumour_BAM, it.tumour_index]}.unique().set{input_validation}
+    input_ch_input_csv.flatMap{it -> [it.normal_BAM, it.normal_index, it.tumour_BAM, it.tumour_index]}.unique().map{it -> ['file-input', it]}.set{input_validation}
 
 } else {
     Channel
@@ -89,7 +98,7 @@ if (params.is_NT_paired) {
         .set { input_ch_input_csv }
 
     // Validation channel    
-    input_ch_input_csv.flatMap{it -> [it.normal_BAM, it.normal_index]}.unique().set{input_validation}
+    input_ch_input_csv.flatMap{it -> [it.normal_BAM, it.normal_index]}.unique().map{it -> ['file-input', it]}.set{input_validation}
 }
 
 // Gather the inputs into a single emission
@@ -134,7 +143,7 @@ identifier_sample = input_csv_formatted_ich.map{it -> it.sample_id}.flatten()
 workflow {
     run_validate_PipeVal(input_validation)
     // Collect and store input validation output
-    run_validate_PipeVal.out.val_file.collectFile(
+    run_validate_PipeVal.out.validation_result.collectFile(
       name: 'input_validation.txt',
       storeDir: "${params.output_dir}/validation"
       )
