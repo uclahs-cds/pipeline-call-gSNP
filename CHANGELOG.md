@@ -13,7 +13,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [8.0.0] - 2022-03-14
 ### Added
-- Support for paired inputs with a single normal sample and multiple tumour samples
+- BETA: Support for paired inputs with a single normal sample and multiple tumour samples
 
 ### Changed
 - Switch to SAMtools for indexing BAMs
