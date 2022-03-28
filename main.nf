@@ -45,14 +45,14 @@ Starting workflow...
 ------------------------------------
         """
 
-include { run_validate_PipeVal } from '../external/nextflow-modules/modules/PipeVal/validate/main.nf' addParams(
+include { run_validate_PipeVal } from './external/nextflow-modules/modules/PipeVal/validate/main.nf' addParams(
     options: [
         docker_image_version: params.pipeval_version,
         main_process: "./" //Save logs in <log_dir>/process-log/run_validate_PipeVal
         ]
     )
 include { run_SplitIntervals_GATK } from './modules/genotype-processes.nf'
-include { extract_GenomeIntervals } from '../external/nextflow-modules/modules/common/extract_genome_intervals/main.nf' addParams(
+include { extract_GenomeIntervals } from './external/nextflow-modules/modules/common/extract_genome_intervals/main.nf' addParams(
     options: [
         save_intermediate_files: params.save_intermediate_files
         ]
