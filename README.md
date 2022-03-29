@@ -28,10 +28,10 @@ This pipeline takes BAM and BAM index from [pipeline-align-DNA](https://github.c
 3. Download the submission script (submit_nextflow_pipeline.py) from [here](https://github.com/uclahs-cds/tool-submit-nf), and submit your pipeline below.
 ```
 python submit_nextflow_pipeline.py \
-       --nextflow_script /path/to/call-gSNP.nf \
+       --nextflow_script /path/to/main.nf \
        --sge_scheduler False \
        --multi_node_mode False \
-       --nextflow_config /path/to/call-gSNP.SLURM.template.WGS.config \
+       --nextflow_config /path/to/call-gSNP.config \
        --pipeline_run_name job_name \
        --partition_type midmem_or_execute \
        --email email_address
