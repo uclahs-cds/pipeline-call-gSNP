@@ -2,7 +2,6 @@ nextflow.enable.dsl=2
 
 include { calculate_sha512 } from './validation.nf'
 include {
-    run_SplitIntervals_GATK as run_SplitIntervals_GATK_targeted
     run_HaplotypeCallerVCF_GATK
     run_HaplotypeCallerGVCF_GATK
     run_MergeVcfs_Picard as run_MergeVcfs_Picard_VCF
@@ -24,15 +23,15 @@ include {
     remove_intermediate_files as remove_realigned_bams
     remove_intermediate_files as remove_recalibrated_bams
     remove_intermediate_files as remove_reheadered_bams
-    } from '../../external/nextflow-modules/modules/common/intermediate_file_removal/main.nf' addParams(
+    } from '../external/nextflow-modules/modules/common/intermediate_file_removal/main.nf' addParams(
         options: [
             save_intermediate_files: params.save_intermediate_files,
             output_dir: params.output_dir,
-            log_output_dir: "${params.log_output_dir}/process-log/single_sample_targeted"
+            log_output_dir: "${params.log_output_dir}/process-log/single_sample_wgs"
             ]
         )
 
-workflow single_sample_targeted {
+workflow single_sample_wgs {
     take:
     intervals
     split_intervals
@@ -50,23 +49,12 @@ workflow single_sample_targeted {
         .unique()
         .set{ normal_identifier }
 
-    run_SplitIntervals_GATK_targeted(
-        params.intervals,
-        params.reference_fasta,
-        "${params.reference_fasta}.fai",
-        "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
-        "targeted-intervals",
-        true
-        )
-
-    split_targeted_intervals = run_SplitIntervals_GATK_targeted.out.interval_list.flatten()
-
     realign_indels(
         ir_input,
         ir_input_no_interval
         )
 
-    base_recal_intervals = params.intervals
+    base_recal_intervals = intervals
 
     recalibrate_base(
         realign_indels.out.realigned_bam,
@@ -93,8 +81,7 @@ workflow single_sample_targeted {
         normal_identifier
         )
 
-    hc_interval = split_targeted_intervals
-    summary_intervals = split_targeted_intervals
+    summary_intervals = split_intervals
 
     calculate_contamination_normal(
         run_MergeSamFiles_Picard.out.merged_bam,
@@ -115,29 +102,7 @@ workflow single_sample_targeted {
         )
 
     // Prepare input for VCF calling
-    // Replicate the merged normal BAM and BAI for every split interval
-    run_MergeSamFiles_Picard.out.merged_bam
-        .collect()
-        .combine(hc_interval)
-        .map{ it ->
-            it[0]
-            }
-        .set{ hc_vcf_bams_ich }
-
-    run_MergeSamFiles_Picard.out.merged_bam_index
-        .collect()
-        .combine(hc_interval)
-        .map{ it ->
-            it[0]
-            }
-        .set{ hc_vcf_bais_ich }
-
-    // Replicate the sample identifier for every interval
-    identifier_sample.combine(hc_vcf_bams_ich)
-        .map{ it ->
-            it[0]
-            }
-        .combine(hc_interval)
+    identifier_sample.combine(normal_bam_ch)
         .map{ it ->
             it[0]
             }
@@ -150,46 +115,43 @@ workflow single_sample_targeted {
         params.bundle_v0_dbsnp138_vcf_gz,
         "${params.bundle_v0_dbsnp138_vcf_gz}.tbi",
         hc_vcf_ids_ich,
-        hc_vcf_bams_ich,
-        hc_vcf_bais_ich,
+        normal_bam_ch,
+        normal_bam_index_ch,
         hc_interval
         )
 
     // Prepare input for GVCF calling
     // Add indices for joining inputs for GVCF calling
     hc_bam_counter = 0
-    run_MergeSamFiles_Picard.out.merged_bam
+    normal_bam_ch
         .map{ it ->
             [hc_bam_counter = hc_bam_counter + 1, it]
             }
         .set{ hc_gvcf_bams }
 
     hc_bai_counter = 0
-    run_MergeSamFiles_Picard.out.merged_bam_index
+    normal_bam_index_ch
         .map{ it ->
             [hc_bai_counter = hc_bai_counter + 1, it]
             }
         .set{ hc_gvcf_bais }
     
     hc_interval_counter = 0
-    run_MergeSamFiles_Picard.out.associated_id
+    hc_interval
         .map{ it ->
             [hc_interval_counter = hc_interval_counter + 1, it]
             }
-        .set{ hc_gvcf_ids }
+        .set{ hc_gvcf_intervals }
 
     // Join and remove join index
     // Replicate for each split interval
     hc_gvcf_bams
         .join(hc_gvcf_bais, by: 0)
-        .join(hc_gvcf_ids, by: 0)
+        .join(hc_gvcf_intervals, by: 0)
         .map{ it ->
             it[1..-1]
             }
-        .combine(hc_interval)
-        .map{ it ->
-            [it[0], it[1], it[3], it[2]] // Re-order to match the input order
-            }
+        .combine(normal_identifier)
         .set{ gvcf_caller_ich }
 
     run_HaplotypeCallerGVCF_GATK(
@@ -201,11 +163,19 @@ workflow single_sample_targeted {
         gvcf_caller_ich
         )
 
+    hc_completion_signal = run_HaplotypeCallerVCF_GATK.out.vcfs.collect().mix(
+        run_HaplotypeCallerGVCF_GATK.out.gvcfs.collect()
+        )
+        .collect()
+
     reheadered_bams_to_delete = recalibrate_base.out.recalibrated_normal_bam.map{ it -> it[1] }.mix(
         recalibrate_base.out.recalibrated_normal_bam_index.map{ it -> it[1] }
         )
 
-    reheadered_deletion_signal = run_MergeSamFiles_Picard.out.merged_bam.last()
+    reheadered_deletion_signal = run_MergeSamFiles_Picard.out.merged_bam.mix(
+        hc_completion_signal
+        )
+        .collect()
 
     remove_reheadered_bams(
         reheadered_bams_to_delete,

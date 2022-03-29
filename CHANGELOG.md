@@ -8,6 +8,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ---
 
 ## [Unreleased]
+### Changed
+- Reorganize repo with pipeline entrypoint at root of repo
 
 ---
 
