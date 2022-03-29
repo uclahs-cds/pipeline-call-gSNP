@@ -29,7 +29,7 @@ include {
     remove_intermediate_files as remove_realigned_bams
     remove_intermediate_files as remove_recalibrated_bams
     remove_intermediate_files as remove_reheadered_bams
-    } from '../external/nextflow-modules/modules/common/intermediate_file_removal/main.nf' addParams(
+    } from '../external/nextflow-module/modules/common/intermediate_file_removal/main.nf' addParams(
         options: [
             save_intermediate_files: params.save_intermediate_files,
             output_dir: params.output_dir,

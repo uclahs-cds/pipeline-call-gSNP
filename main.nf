@@ -45,22 +45,22 @@ Starting workflow...
 ------------------------------------
         """
 
-include { run_validate_PipeVal } from './external/nextflow-modules/modules/PipeVal/validate/main.nf' addParams(
+include { run_validate_PipeVal } from './external/nextflow-module/modules/PipeVal/validate/main.nf' addParams(
     options: [
         docker_image_version: params.pipeval_version,
         main_process: "./" //Save logs in <log_dir>/process-log/run_validate_PipeVal
         ]
     )
-include { run_SplitIntervals_GATK } from './modules/genotype-processes.nf'
-include { extract_GenomeIntervals } from './external/nextflow-modules/modules/common/extract_genome_intervals/main.nf' addParams(
+include { run_SplitIntervals_GATK } from './module/genotype-processes.nf'
+include { extract_GenomeIntervals } from './external/nextflow-module/modules/common/extract_genome_intervals/main.nf' addParams(
     options: [
         save_intermediate_files: params.save_intermediate_files
         ]
     )
-include { single_sample_wgs } from './modules/workflow-single-wgs.nf'
-include { single_sample_targeted } from './modules/workflow-single-targeted.nf'
-include { multi_sample_wgs } from './modules/workflow-multi-wgs.nf'
-include { multi_sample_targeted } from './modules/workflow-multi-targeted.nf'
+include { single_sample_wgs } from './module/workflow-single-wgs.nf'
+include { single_sample_targeted } from './module/workflow-single-targeted.nf'
+include { multi_sample_wgs } from './module/workflow-multi-wgs.nf'
+include { multi_sample_targeted } from './module/workflow-multi-targeted.nf'
 
 // Returns the index file for the given bam or vcf
 def indexFile(bam_or_vcf) {
