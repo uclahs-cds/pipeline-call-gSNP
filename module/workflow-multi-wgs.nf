@@ -2,7 +2,6 @@ nextflow.enable.dsl=2
 
 include { calculate_sha512 } from './validation.nf'
 include {
-    run_SplitIntervals_GATK as run_SplitIntervals_GATK_targeted
     run_HaplotypeCallerVCF_GATK
     run_HaplotypeCallerGVCF_GATK
     run_MergeVcfs_Picard as run_MergeVcfs_Picard_VCF
@@ -30,16 +29,20 @@ include {
     remove_intermediate_files as remove_realigned_bams
     remove_intermediate_files as remove_recalibrated_bams
     remove_intermediate_files as remove_reheadered_bams
-    } from '../external/nextflow-modules/modules/common/intermediate_file_removal/main.nf' addParams(
+    } from '../external/nextflow-module/modules/common/intermediate_file_removal/main.nf' addParams(
         options: [
             save_intermediate_files: params.save_intermediate_files,
             output_dir: params.output_dir,
-            log_output_dir: "${params.log_output_dir}/process-log/multi_sample_targeted"
+            log_output_dir: "${params.log_output_dir}/process-log/multi_sample_wgs"
             ]
         )
-include { flatten_samples } from './functions.nf'
+include {
+    flatten_samples as flatten_samples_merge
+    flatten_samples as flatten_samples_vcf_calling
+    flatten_samples as flatten_samples_gvcf_calling
+    } from './functions.nf'
 
-workflow multi_sample_targeted {
+workflow multi_sample_wgs {
     take:
     intervals
     split_intervals
@@ -49,23 +52,12 @@ workflow multi_sample_targeted {
     identifier_sample
 
     main:
-    run_SplitIntervals_GATK_targeted(
-        params.intervals,
-        params.reference_fasta,
-        "${params.reference_fasta}.fai",
-        "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
-        "targeted-intervals",
-        true
-        )
-
-    split_targeted_intervals = run_SplitIntervals_GATK_targeted.out.interval_list.flatten()
-
     realign_indels(
         ir_input,
         ir_input_no_interval
         )
     
-    base_recal_intervals = params.intervals
+    base_recal_intervals = intervals
 
     recalibrate_base(
         realign_indels.out.realigned_bam,
@@ -120,9 +112,9 @@ workflow multi_sample_targeted {
     // Prep the input for merging tumour BAMs
     // Flatten the input by 1 level, keeping BAM-id associations
     // Extract the BAM and id from each
-    flatten_samples(reheader_interval_bams.out.reheadered_tumour_bam)
-    
-    flatten_samples.out.och
+    flatten_samples_merge(reheader_interval_bams.out.reheadered_tumour_bam)
+
+    flatten_samples_merge.out.och
         .map{ it ->
             it[-1,0]
             }
@@ -138,8 +130,7 @@ workflow multi_sample_targeted {
         tumour_merge_ich.id_ich
         )
 
-    hc_interval = split_targeted_intervals
-    summary_intervals = split_targeted_intervals
+    summary_intervals = split_intervals
 
     calculate_contamination_normal(
         run_MergeSamFiles_Picard_normal.out.merged_bam,
@@ -179,32 +170,46 @@ workflow multi_sample_targeted {
         )
 
     // Prep input for VCF calling
-    // Replicate the merged normal + tumour BAMs and BAIs for every split interval
-    run_MergeSamFiles_Picard_normal.out.merged_bam
-        .concat(run_MergeSamFiles_Picard_tumour.out.merged_bam)
-        .collect()
-        .combine(hc_interval)
-        .map{ it ->
-            it[0..-2]
+    // Use the interval basename as the join index
+    // Keep only the BAM, index, and interval
+    reheader_interval_bams.out.reheadered_normal_bam
+        .multiMap{ it ->
+            bams: [it[2].getFileName().toString(), it[0]]
+            bais: [it[2].getFileName().toString(), it[1]]
+            intervals: [it[2].getFileName().toString(), it[2]]
             }
-        .set{ hc_vcf_bams_ich }
+        .set{ normal_for_mix }
 
-    run_MergeSamFiles_Picard_normal.out.merged_bam_index
-        .concat(run_MergeSamFiles_Picard_tumour.out.merged_bam_index)
-        .collect()
-        .combine(hc_interval)
-        .map{ it ->
-            it[0..-2]
+    flatten_samples_vcf_calling(reheader_interval_bams.out.reheadered_tumour_bam)
+
+    flatten_samples_vcf_calling.out.och
+        .multiMap{ it ->
+            bams: [it[2].getFileName().toString(), it[0]]
+            bais: [it[2].getFileName().toString(), it[1]]
+            intervals: [it[2].getFileName().toString(), it[2]]
             }
-        .set{ hc_vcf_bais_ich }
+        .set{ tumour_for_mix }
 
-    // Replicate the sample identifier for every interval
-    identifier_sample.combine(hc_vcf_bams_ich)
+    normal_for_mix.bams
+        .mix(tumour_for_mix.bams)
+        .groupTuple(by: 0)
+        .map{ it -> it[1].flatten() }
+        .set{ vcf_caller_bams_ich }
+
+    normal_for_mix.bais
+        .mix(tumour_for_mix.bais)
+        .groupTuple(by: 0)
+        .map{ it -> it[1].flatten() }
+        .set{ vcf_caller_bais_ich }
+
+    normal_for_mix.intervals
+        .mix(tumour_for_mix.intervals)
+        .groupTuple(by: 0)
+        .map{ it -> it[1][0] } // Take the first interval path since all of the intervals after grouping are the same
+        .set{ vcf_caller_intervals_ich }
+    
+    identifier_sample.combine(vcf_caller_bams_ich)
         .map{it ->
-            it[0]
-            }
-        .combine(hc_interval)
-        .map{ it ->
             it[0]
             }
         .set{ hc_vcf_ids_ich }
@@ -216,49 +221,17 @@ workflow multi_sample_targeted {
         params.bundle_v0_dbsnp138_vcf_gz,
         "${params.bundle_v0_dbsnp138_vcf_gz}.tbi",
         hc_vcf_ids_ich,
-        hc_vcf_bams_ich,
-        hc_vcf_bais_ich,
-        hc_interval
+        vcf_caller_bams_ich,
+        vcf_caller_bais_ich,
+        vcf_caller_intervals_ich
         )
 
     // Prep input for GVCF calling
-    // Add indices for joining inputs for GVCF calling
-    hc_bam_counter = 0
-    run_MergeSamFiles_Picard_normal.out.merged_bam
-        .concat(run_MergeSamFiles_Picard_tumour.out.merged_bam)
-        .map{ it ->
-            [hc_bam_counter = hc_bam_counter + 1, it]
-            }
-        .set{ hc_gvcf_bams }
+    // Flatten and combine the inputs for normal and tumour BAMs
+    flatten_samples_gvcf_calling(reheader_interval_bams.out.reheadered_tumour_bam)
 
-    hc_bai_counter = 0
-    run_MergeSamFiles_Picard_normal.out.merged_bam_index
-        .concat(run_MergeSamFiles_Picard_tumour.out.merged_bam_index)
-        .map{ it ->
-            [hc_bai_counter = hc_bai_counter + 1, it]
-            }
-        .set{ hc_gvcf_bais }
-    
-    hc_ids_counter = 0
-    run_MergeSamFiles_Picard_normal.out.associated_id
-        .concat(run_MergeSamFiles_Picard_tumour.out.associated_id)
-        .map{ it ->
-            [hc_ids_counter = hc_ids_counter + 1, it]
-            }
-        .set{ hc_gvcf_ids }
-
-    // Join and remove join index
-    // Replicate for each split interval
-    hc_gvcf_bams
-        .join(hc_gvcf_bais, by: 0)
-        .join(hc_gvcf_ids, by: 0)
-        .map{ it ->
-            it[1..-1]
-            }
-        .combine(hc_interval)
-        .map{ it ->
-            [it[0], it[1], it[3], it[2]] // Re-order to match the input order
-            }
+    flatten_samples_gvcf_calling.out.och
+        .mix(reheader_interval_bams.out.reheadered_normal_bam)
         .set{ gvcf_caller_ich }
 
     run_HaplotypeCallerGVCF_GATK(
@@ -270,9 +243,20 @@ workflow multi_sample_targeted {
         gvcf_caller_ich
         )
 
-    reheadered_deletion_signal_normal = run_MergeSamFiles_Picard_normal.out.merged_bam.last()
+    hc_completion_signal = run_HaplotypeCallerVCF_GATK.out.vcfs.last().mix(
+        run_HaplotypeCallerGVCF_GATK.out.gvcfs.last()
+        )
+        .last()
 
-    reheadered_deletion_signal_tumour = run_MergeSamFiles_Picard_tumour.out.merged_bam.last()
+    reheadered_deletion_signal_normal = run_MergeSamFiles_Picard_normal.out.merged_bam.mix(
+        hc_completion_signal
+        )
+        .last()
+
+    reheadered_deletion_signal_tumour = run_MergeSamFiles_Picard_tumour.out.merged_bam.last().mix(
+        hc_completion_signal
+        )
+        .last()
 
     reheadered_normal_bams_to_delete = reheader_interval_bams.out.reheadered_normal_bam.flatten()
         .filter { it.toString().endsWith('.bam') || it.toString().endsWith('.bai') }
