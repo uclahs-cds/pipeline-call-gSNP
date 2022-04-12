@@ -75,29 +75,44 @@ def indexFile(bam_or_vcf) {
   }
 }
 
-if (params.is_NT_paired) {
+if (params.input_mode == 'csv') {
+    // Inputs from CSV
+    if (params.is_NT_paired) {
+        Channel
+            .fromPath(params.input_csv, checkIfExists: true)
+            .splitCsv(header:true)
+            .map{
+                [normal_index: indexFile(it.normal_BAM)] + [tumour_index: indexFile(it.tumour_BAM)] + it
+                }
+            .set { input_ch_input_csv }
+    } else {
+        Channel
+            .fromPath(params.input_csv, checkIfExists: true)
+            .splitCsv(header:true)
+            .map{
+                // Move single sample to be under normal regardless of type
+                it.normal_BAM = it["${params.single_sample_type}_BAM"];
+                it.normal_index = indexFile(it["${params.single_sample_type}_BAM"]);
+                it.normal_id = it["${params.single_sample_type}_id"]];
+                // Add filler values for tumour sample if in single sample mode
+                it + [[tumour_id: 'NA'] + [tumour_BAM: '/NO_PATH/NO_FILE.bam'] + [tumour_index: '/NO_PATH/NO_FILE.bam.bai']
+                }
+            .set { input_ch_input_csv }
+    }
+} else {
+    // Inputs from YAML
     Channel
-        .fromPath(params.input_csv, checkIfExists: true)
-        .splitCsv(header:true)
+        .from( params.input.BAM.tumour )
         .map{
             [normal_index: indexFile(it.normal_BAM)] + [tumour_index: indexFile(it.tumour_BAM)] + it
-            }
+        }
         .set { input_ch_input_csv }
+}
 
-    // Validation channel    
+// Set validation channel
+if (params.is_NT_paired) {
     input_ch_input_csv.flatMap{it -> [it.normal_BAM, it.normal_index, it.tumour_BAM, it.tumour_index]}.unique().map{it -> ['file-input', it]}.set{input_validation}
-
 } else {
-    Channel
-        .fromPath(params.input_csv, checkIfExists: true)
-        .splitCsv(header:true)
-        .map{
-            // Add filler values for tumour sample if in single sample mode
-            [normal_index: indexFile(it.normal_BAM)] + [tumour_id: 'NA'] + [tumour_BAM: '/scratch/NA.bam'] + [tumour_index: '/scratch/NA.bam.bai'] + it
-            }
-        .set { input_ch_input_csv }
-
-    // Validation channel    
     input_ch_input_csv.flatMap{it -> [it.normal_BAM, it.normal_index]}.unique().map{it -> ['file-input', it]}.set{input_validation}
 }
 

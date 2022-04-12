@@ -1,0 +1,11 @@
+---
+project_id: "project_id"
+sample_id: "sample_id"
+input:
+  BAM:
+    normal:
+      - id: "id of specific sample"
+        BAM: "/path/to/bam"
+    tumor:
+      - id: "id of specific sample"
+        BAM: "/path/to/bam"
