@@ -5,7 +5,7 @@ input:
   BAM:
     normal:
       - id: "id of specific sample"
-        BAM: "/path/to/bam"
+        path: "/path/to/bam"
     tumour:
       - id: "id of specific sample"
-        BAM: "/path/to/bam"
+        path: "/path/to/bam"
