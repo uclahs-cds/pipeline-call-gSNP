@@ -23,9 +23,11 @@ This pipeline takes BAM and BAM index from [pipeline-align-DNA](https://github.c
 
 1. Update the params section of the .config file (Example config in pipeline/config/call-gSNP.config).
 
-2. Update the input csv.
+2. Update the input CSV or YAML. For CSV, add the path to the config.
 
 3. Download the submission script (submit_nextflow_pipeline.py) from [here](https://github.com/uclahs-cds/tool-submit-nf), and submit your pipeline below.
+
+- CSV input
 ```
 python submit_nextflow_pipeline.py \
        --nextflow_script /path/to/main.nf \
@@ -33,10 +35,21 @@ python submit_nextflow_pipeline.py \
        --multi_node_mode False \
        --nextflow_config /path/to/call-gSNP.config \
        --pipeline_run_name job_name \
-       --partition_type midmem_or_execute \
+       --partition_type <type> \
        --email email_address
 ```
-
+- YAML input
+```
+python submit_nextflow_pipeline.py \
+       --nextflow_script /path/to/main.nf \
+       --sge_scheduler False \
+       --multi_node_mode False \
+       --nextflow_config /path/to/call-gSNP.config \
+       --nextflow_yaml /path/to/sample.yaml \
+       --pipeline_run_name job_name \
+       --partition_type <type> \
+       --email email_address
+```
 ---
 
 ## Flow Diagram
