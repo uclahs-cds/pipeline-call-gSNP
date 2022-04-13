@@ -91,11 +91,11 @@ if (params.input_mode == 'csv') {
             .splitCsv(header:true)
             .map{
                 // Move single sample to be under normal regardless of type
-                it.normal_BAM = it["${params.single_sample_type}_BAM"];
-                it.normal_index = indexFile(it["${params.single_sample_type}_BAM"]);
-                it.normal_id = it["${params.single_sample_type}_id"]];
+                it.normal_BAM = it["${params.single_sample_type}_BAM"]
+                it.normal_index = indexFile(it["${params.single_sample_type}_BAM"])
+                it.normal_id = it["${params.single_sample_type}_id"]
                 // Add filler values for tumour sample if in single sample mode
-                it + [[tumour_id: 'NA'] + [tumour_BAM: '/NO_PATH/NO_FILE.bam'] + [tumour_index: '/NO_PATH/NO_FILE.bam.bai']
+                it + [tumour_id: 'NA'] + [tumour_BAM: '/NO_PATH/NO_FILE.bam'] + [tumour_index: '/NO_PATH/NO_FILE.bam.bai']
                 }
             .set { input_ch_input_csv }
     }
