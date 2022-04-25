@@ -23,9 +23,11 @@ This pipeline takes BAM and BAM index from [pipeline-align-DNA](https://github.c
 
 1. Update the params section of the .config file (Example config in pipeline/config/call-gSNP.config).
 
-2. Update the input csv.
+2. Update the input CSV or YAML. For CSV, add the path to the config.
 
 3. Download the submission script (submit_nextflow_pipeline.py) from [here](https://github.com/uclahs-cds/tool-submit-nf), and submit your pipeline below.
+
+- CSV input
 ```
 python submit_nextflow_pipeline.py \
        --nextflow_script /path/to/main.nf \
@@ -33,10 +35,21 @@ python submit_nextflow_pipeline.py \
        --multi_node_mode False \
        --nextflow_config /path/to/call-gSNP.config \
        --pipeline_run_name job_name \
-       --partition_type midmem_or_execute \
+       --partition_type <type> \
        --email email_address
 ```
-
+- YAML input
+```
+python submit_nextflow_pipeline.py \
+       --nextflow_script /path/to/main.nf \
+       --sge_scheduler False \
+       --multi_node_mode False \
+       --nextflow_config /path/to/call-gSNP.config \
+       --nextflow_yaml /path/to/sample.yaml \
+       --pipeline_run_name job_name \
+       --partition_type <type> \
+       --email email_address
+```
 ---
 
 ## Flow Diagram
@@ -107,12 +120,12 @@ Generate sha512 checksum for final BAM, filtered VCF, and GVCFs for SNPs and IND
 
 | Field | Type | Description |
 |:------|:-----|:------------|
-| projectID | string | Project ID (will be standardized according to data storage structure in the near future) |
-| sampleID | string | Sample ID, patient ID, or study participant ID (to be standardized) |
-| normalID | string | Must be strictly set to the sample tag (SM:) in the BAM header @RG line (should be also in the pipeline-align-DNA input .csv file) |
-| normalBAM | path | Set to absolute path to normal BAM |
-| tumourID | string | Set to placeholder 'NA1' if normal only; otherwise must be strictly set to the sample tag (SM:) in the BAM header @RG line (should be also in the pipeline-align-DNA input .csv file) |
-| tumourBAM | path | Set to placeholder 'NA2' if normal only; otherwise absolute path to tumour BAM |
+| patient_id | string | Patient ID (will be standardized according to data storage structure in the near future) |
+| sample_id | string | Sample ID |
+| normal_id | string | Must be strictly set to the sample tag (SM:) in the BAM header @RG line (should be also in the pipeline-align-DNA input .csv file) |
+| normal_BAM | path | Set to absolute path to normal BAM |
+| tumour_id | string | Set to placeholder 'NA1' if normal only; otherwise must be strictly set to the sample tag (SM:) in the BAM header @RG line (should be also in the pipeline-align-DNA input .csv file) |
+| tumour_BAM | path | Set to placeholder 'NA2' if normal only; otherwise absolute path to tumour BAM |
 
 For inputs with one normal sample and multiple tumour samples, add rows. Keep the non-tumour related fields identical for each row and update the tumour fields.
 
