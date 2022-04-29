@@ -10,6 +10,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ## [Unreleased]
 ### Added
 - Option for YAML input
+- Config for F16 node
 ### Changed
 - Reorganize repo with pipeline entrypoint at root of repo and singular directory names
 
