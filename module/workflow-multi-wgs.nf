@@ -16,9 +16,9 @@ include { realign_indels } from './indel-realignment.nf'
 include { recalibrate_base } from './workflow-bqsr.nf'
 include { reheader_interval_bams } from './workflow-reheader.nf'
 include {
-    run_MergeSamFiles_Picard as run_MergeSamFiles_Picard_normal
-    run_MergeSamFiles_Picard as run_MergeSamFiles_Picard_tumour
-    } from './bam-processing.nf'
+    merge_and_deduplicate as run_MergeSamFiles_Picard_normal
+    merge_and_deduplicate as run_MergeSamFiles_Picard_tumour
+    } from './workflow-merge-dedup.nf'
 include {
     calculate_contamination_normal
     calculate_contamination_tumour
