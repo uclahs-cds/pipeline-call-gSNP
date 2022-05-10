@@ -80,6 +80,7 @@ process deduplicate_records_SAMtools {
     output:
     path(".command.*")
     tuple val(id), path("${id}_realigned_recalibrated_merged_dedup.bam"), emit: merged_bam
+    path(bam), emit: bam_for_deletion
 
     script:
     """

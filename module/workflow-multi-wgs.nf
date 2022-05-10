@@ -33,7 +33,7 @@ include {
         options: [
             save_intermediate_files: params.save_intermediate_files,
             output_dir: params.output_dir,
-            log_output_dir: "${params.log_output_dir}/process-log/multi_sample_wgs"
+            log_output_dir: params.log_output_dir
             ]
         )
 include {
