@@ -112,7 +112,7 @@ process run_index_SAMtools {
     publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}",
         mode: "copy",
         enabled: params.save_intermediate_files && !params.is_dedup_bam,
-        pattern: "*.bai"
+        pattern: "*_reheadered_*"
 
     publishDir path: "${params.output_dir}/output",
         mode: "copy",
