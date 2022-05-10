@@ -57,18 +57,10 @@ include { extract_GenomeIntervals } from './external/nextflow-module/modules/com
         save_intermediate_files: params.save_intermediate_files
         ]
     )
-include { single_sample_wgs } from './module/workflow-single-wgs.nf' addParams(
-        log_output_dir: "${params.log_output_dir}/process-log/single_sample_wgs"
-        )
-include { single_sample_targeted } from './module/workflow-single-targeted.nf' addParams(
-        log_output_dir: "${params.log_output_dir}/process-log/single_sample_targeted"
-        )
-include { multi_sample_wgs } from './module/workflow-multi-wgs.nf' addParams(
-        log_output_dir: "${params.log_output_dir}/process-log/multi_sample_wgs"
-        )
-include { multi_sample_targeted } from './module/workflow-multi-targeted.nf' addParams(
-        log_output_dir: "${params.log_output_dir}/process-log/multi_sample_targeted"
-        )
+include { single_sample_wgs } from './module/workflow-single-wgs.nf'
+include { single_sample_targeted } from './module/workflow-single-targeted.nf'
+include { multi_sample_wgs } from './module/workflow-multi-wgs.nf'
+include { multi_sample_targeted } from './module/workflow-multi-targeted.nf'
 
 // Returns the index file for the given bam or vcf
 def indexFile(bam_or_vcf) {

@@ -13,7 +13,7 @@ include {
         options: [
             save_intermediate_files: params.save_intermediate_files,
             output_dir: params.output_dir,
-            log_output_dir: params.log_output_dir
+            log_output_dir: params.log_output_dir_deletion
             ]
         )
 workflow merge_and_deduplicate {
