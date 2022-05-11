@@ -51,7 +51,13 @@ process run_reheader_SAMtools {
 }
 
 /*
-    Nextflow module for removing duplicated identical records from interval processing
+    Nextflow module for removing duplicated identical records from interval processing.
+    Due to parallelization via interval splitting, reads that overlap two intervals end up in 
+    the BAMs for both intervals. When merged, these records get duplicated, causing potential
+    issues in downstream pipelines and analysis. Since records are sorted, uniq is able to de-deuplicate
+    these records.
+
+    See Issue #79 (https://github.com/uclahs-cds/pipeline-call-gSNP/issues/79)
 
     input:
         bam: path to input BAM
