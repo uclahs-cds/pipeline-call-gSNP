@@ -15,7 +15,9 @@ include {
     } from './variant-recalibration.nf'
 include { realign_indels } from './indel-realignment.nf'
 include { recalibrate_base } from './workflow-bqsr.nf'
-include { run_MergeSamFiles_Picard } from './bam-processing.nf'
+include { merge_and_deduplicate as run_MergeSamFiles_Picard } from './workflow-merge-dedup.nf' addParams(
+    log_output_dir_deletion: "${params.log_output_dir}/process-log/single_sample_targeted"
+    )
 include {
     calculate_contamination_normal
     run_DepthOfCoverage_GATK
