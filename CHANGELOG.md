@@ -9,6 +9,11 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 ### Added
+
+---
+
+## [9.0.0] - 2022-05-12
+### Added
 - Option for YAML input
 - Record deduplication workflow
 ### Changed
