@@ -9,10 +9,18 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 ### Added
+
+---
+
+## [9.0.0] - 2022-05-12
+### Added
 - Option for YAML input
+- Record deduplication workflow
 - Config for F16 node
 ### Changed
 - Reorganize repo with pipeline entrypoint at root of repo and singular directory names
+### Fixed
+- Bug with records being duplicated through the parallelized processing of BAMs ([#79](https://github.com/uclahs-cds/pipeline-call-gSNP/issues/79))
 
 ---
 

@@ -51,6 +51,56 @@ process run_reheader_SAMtools {
 }
 
 /*
+    Nextflow module for removing duplicated identical records from interval processing.
+    Due to parallelization via interval splitting, reads that overlap two intervals end up in
+    the BAMs for both intervals. When merged, these records get duplicated, causing potential
+    issues in downstream pipelines and analysis. Since records are sorted, uniq is able to de-deuplicate
+    these records.
+
+    See Issue #79 (https://github.com/uclahs-cds/pipeline-call-gSNP/issues/79)
+
+    input:
+        bam: path to input BAM
+        id: ID of sample in BAM
+
+    params:
+        params.output_dir: string(path)
+        params.log_output_dir: string(path)
+        params.docker_image_samtools: string
+*/
+process deduplicate_records_SAMtools {
+    container params.docker_image_samtools
+    publishDir path: "${params.output_dir}/output",
+        mode: "copy",
+        pattern: "*_merged_dedup*"
+
+    publishDir path: "${params.log_output_dir}/process-log",
+        pattern: ".command.*",
+        mode: "copy",
+        saveAs: { "${task.process.replace(':', '/')}-${id}/log${file(it).getName()}" }
+
+    input:
+    path(bam)
+    val(id)
+
+    output:
+    path(".command.*")
+    tuple val(id), path("${id}_realigned_recalibrated_merged_dedup.bam"), emit: merged_bam
+    path(bam), emit: bam_for_deletion
+
+    script:
+    """
+    samtools view \
+        -h \
+        ${bam} | \
+        uniq | \
+        samtools view \
+        -b \
+        -o ${id}_realigned_recalibrated_merged_dedup.bam
+    """
+}
+
+/*
     Nextflow module for indexing BAM files
 
     input:
@@ -67,13 +117,20 @@ process run_index_SAMtools {
     container params.docker_image_samtools
     publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}",
         mode: "copy",
-        enabled: params.save_intermediate_files,
+        enabled: params.save_intermediate_files && !params.is_dedup_bam,
         pattern: "*_reheadered_*"
+
+    publishDir path: "${params.output_dir}/output",
+        mode: "copy",
+        enabled: params.is_dedup_bam,
+        pattern: "*.bai"
 
     publishDir path: "${params.log_output_dir}/process-log",
         pattern: ".command.*",
         mode: "copy",
-        saveAs: { "${task.process.replace(':', '/')}-${id}-${interval_id}/log${file(it).getName()}" }
+        saveAs: { params.is_dedup_bam ?
+            "${task.process.replace(':', '/')}-${id}-dedup/log${file(it).getName()}" :
+            "${task.process.replace(':', '/')}-${id}-${interval_id}/log${file(it).getName()}" }
 
     input:
     tuple val(id), path(bam)
@@ -110,10 +167,10 @@ process run_index_SAMtools {
 */
 process run_MergeSamFiles_Picard {
     container params.docker_image_picard
-    publishDir path: "${params.output_dir}/output",
+    publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}",
         mode: "copy",
-        pattern: "*_merged*",
-        saveAs: { filename -> (file(filename).getExtension() == "bai") ? "${file(filename).baseName}.bam.bai" : "${filename}" }
+        enabled: params.save_intermediate_files,
+        pattern: "*_merged*"
 
     publishDir path: "${params.log_output_dir}/process-log",
         pattern: ".command.*",
@@ -127,7 +184,6 @@ process run_MergeSamFiles_Picard {
     output:
     path(".command.*")
     path("${id}_realigned_recalibrated_merged.bam"), emit: merged_bam
-    path("${id}_realigned_recalibrated_merged.bai"), emit: merged_bam_index
     val(id), emit: associated_id
 
     script:
@@ -138,7 +194,6 @@ process run_MergeSamFiles_Picard {
         -jar /usr/local/share/picard-slim-2.26.10-0/picard.jar MergeSamFiles \
         ${all_bams} \
         -OUTPUT ${id}_realigned_recalibrated_merged.bam \
-        -CREATE_INDEX true \
         -SORT_ORDER coordinate \
         -ASSUME_SORTED false \
         -USE_THREADING true \
