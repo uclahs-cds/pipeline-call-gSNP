@@ -1,7 +1,15 @@
 nextflow.enable.dsl=2
 
-include { run_reheader_SAMtools as run_reheader_SAMtools_normal; run_reheader_SAMtools as run_reheader_SAMtools_tumour } from './bam-processing.nf'
-include { run_index_SAMtools as run_index_SAMtools_normal; run_index_SAMtools as run_index_SAMtools_tumour } from './bam-processing.nf'
+include {
+    run_reheader_SAMtools as run_reheader_SAMtools_normal
+    run_reheader_SAMtools as run_reheader_SAMtools_tumour
+    } from './bam-processing.nf'
+include {
+    run_index_SAMtools as run_index_SAMtools_normal
+    run_index_SAMtools as run_index_SAMtools_tumour
+    } from './bam-processing.nf' addParams(
+        is_dedup_bam: false
+        )
 include {
     flatten_samples as flatten_samples_bam_index
     flatten_samples as flatten_samples_bam
