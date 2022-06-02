@@ -8,7 +8,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ---
 
 ## [Unreleased]
-### Added
+### Fixed
+- Bug with improper output directory due to CSV parsing error
 
 ---
 
