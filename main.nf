@@ -75,39 +75,39 @@ def indexFile(bam_or_vcf) {
   }
 }
 
-if (params.input_mode == 'csv') {
-    // Inputs from CSV
-    if (params.is_NT_paired) {
-        Channel
-            .fromPath(params.input_csv, checkIfExists: true)
-            .splitCsv(header:true)
-            .map{
-                [normal_index: indexFile(it.normal_BAM)] + [tumour_index: indexFile(it.tumour_BAM)] + it
-                }
-            .set { input_ch_input_csv }
-    } else {
-        Channel
-            .fromPath(params.input_csv, checkIfExists: true)
-            .splitCsv(header:true)
-            .map{
-                // Move single sample to be under normal regardless of type
-                it.normal_BAM = it["${params.single_sample_type}_BAM"]
-                it.normal_index = indexFile(it["${params.single_sample_type}_BAM"])
-                it.normal_id = it["${params.single_sample_type}_id"]
-                // Add filler values for tumour sample if in single sample mode
-                it + [tumour_id: 'NA'] + [tumour_BAM: "${workDir}/NO_FILE.bam"] + [tumour_index: "${workDir}/NO_FILE.bam.bai"]
-                }
-            .set { input_ch_input_csv }
+// if (params.input_mode == 'csv') {
+//     // Inputs from CSV
+//     if (params.is_NT_paired) {
+//         Channel
+//             .fromPath(params.input_csv, checkIfExists: true)
+//             .splitCsv(header:true)
+//             .map{
+//                 [normal_index: indexFile(it.normal_BAM)] + [tumour_index: indexFile(it.tumour_BAM)] + it
+//                 }
+//             .set { input_ch_input_csv }
+//     } else {
+//         Channel
+//             .fromPath(params.input_csv, checkIfExists: true)
+//             .splitCsv(header:true)
+//             .map{
+//                 // Move single sample to be under normal regardless of type
+//                 it.normal_BAM = it["${params.single_sample_type}_BAM"]
+//                 it.normal_index = indexFile(it["${params.single_sample_type}_BAM"])
+//                 it.normal_id = it["${params.single_sample_type}_id"]
+//                 // Add filler values for tumour sample if in single sample mode
+//                 it + [tumour_id: 'NA'] + [tumour_BAM: "${workDir}/NO_FILE.bam"] + [tumour_index: "${workDir}/NO_FILE.bam.bai"]
+//                 }
+//             .set { input_ch_input_csv }
+//     }
+// } else {
+// Inputs from YAML
+Channel
+    .from( params.input.BAM.tumour )
+    .map{
+        [normal_index: indexFile(it.normal_BAM)] + [tumour_index: indexFile(it.tumour_BAM)] + it
     }
-} else {
-    // Inputs from YAML
-    Channel
-        .from( params.input.BAM.tumour )
-        .map{
-            [normal_index: indexFile(it.normal_BAM)] + [tumour_index: indexFile(it.tumour_BAM)] + it
-        }
-        .set { input_ch_input_csv }
-}
+    .set { input_ch_input_csv }
+// }
 
 // Set validation channel
 if (params.is_NT_paired) {
