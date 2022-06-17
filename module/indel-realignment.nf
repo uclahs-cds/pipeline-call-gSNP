@@ -145,7 +145,7 @@ process run_IndelRealigner_GATK {
         --analysis_type IndelRealigner \
         ${bam_input_str} \
         --reference_sequence ${reference_fasta} \
-        --bam_compression 0 \
+        --bam_compression ${params.gatk_ir_compression} \
         --knownAlleles ${bundle_mills_and_1000g_gold_standards_vcf_gz} \
         --knownAlleles ${bundle_known_indels_vcf_gz} \
         --allow_potentially_misencoded_quality_scores \
