@@ -8,6 +8,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ---
 
 ## [Unreleased]
+### Added
+- IndelRealignment compression parameter
 ### Changed
 - Parse CSV inputs using modularized `csv_parser`
 ### Fixed
