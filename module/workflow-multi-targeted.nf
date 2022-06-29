@@ -272,9 +272,9 @@ workflow multi_sample_targeted {
         gvcf_caller_ich
         )
 
-    reheadered_deletion_signal_normal = run_MergeSamFiles_Picard_normal.out.merged_bam.last()
+    reheadered_deletion_signal_normal = run_MergeSamFiles_Picard_normal.out.merging_complete_signal.last()
 
-    reheadered_deletion_signal_tumour = run_MergeSamFiles_Picard_tumour.out.merged_bam.last()
+    reheadered_deletion_signal_tumour = run_MergeSamFiles_Picard_tumour.out.merging_complete_signal.last()
 
     reheadered_normal_bams_to_delete = reheader_interval_bams.out.reheadered_normal_bam.flatten()
         .filter { it.toString().endsWith('.bam') || it.toString().endsWith('.bai') }

@@ -54,4 +54,5 @@ workflow merge_and_deduplicate {
     merged_bam = merged_dedup.bam
     merged_bam_index = merged_dedup.bai
     associated_id = merged_dedup.id
+    merging_complete_signal = run_MergeSamFiles_Picard.out.merged_bam
 }

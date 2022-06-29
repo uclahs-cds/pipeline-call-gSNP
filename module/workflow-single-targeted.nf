@@ -207,7 +207,7 @@ workflow single_sample_targeted {
         recalibrate_base.out.recalibrated_normal_bam_index.map{ it -> it[1] }
         )
 
-    reheadered_deletion_signal = run_MergeSamFiles_Picard.out.merged_bam.last()
+    reheadered_deletion_signal = run_MergeSamFiles_Picard.out.merging_complete_signal.last()
 
     remove_reheadered_bams(
         reheadered_bams_to_delete,
