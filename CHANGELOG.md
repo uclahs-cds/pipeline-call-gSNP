@@ -12,6 +12,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - IndelRealignment compression parameter
 ### Changed
 - Parse CSV inputs using modularized `csv_parser`
+- Delete merged but un-deduplicated BAMs earlier for more efficient disk usage
 ### Fixed
 - Bug with M64 and F2 detection
 
