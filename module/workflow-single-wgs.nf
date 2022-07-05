@@ -174,7 +174,7 @@ workflow single_sample_wgs {
         recalibrate_base.out.recalibrated_normal_bam_index.map{ it -> it[1] }
         )
 
-    reheadered_deletion_signal = run_MergeSamFiles_Picard.out.merged_bam.mix(
+    reheadered_deletion_signal = run_MergeSamFiles_Picard.out.merging_complete_signal.mix(
         hc_completion_signal
         )
         .collect()

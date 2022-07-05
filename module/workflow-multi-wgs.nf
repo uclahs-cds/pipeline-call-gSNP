@@ -250,12 +250,12 @@ workflow multi_sample_wgs {
         )
         .last()
 
-    reheadered_deletion_signal_normal = run_MergeSamFiles_Picard_normal.out.merged_bam.mix(
+    reheadered_deletion_signal_normal = run_MergeSamFiles_Picard_normal.out.merging_complete_signal.mix(
         hc_completion_signal
         )
         .last()
 
-    reheadered_deletion_signal_tumour = run_MergeSamFiles_Picard_tumour.out.merged_bam.last().mix(
+    reheadered_deletion_signal_tumour = run_MergeSamFiles_Picard_tumour.out.merging_complete_signal.last().mix(
         hc_completion_signal
         )
         .last()
