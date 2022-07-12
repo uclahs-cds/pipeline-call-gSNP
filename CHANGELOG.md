@@ -8,6 +8,10 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ---
 
 ## [Unreleased]
+
+---
+
+## [9.1.0] - 2022-07-12
 ### Added
 - IndelRealignment compression parameter
 - Param validation
