@@ -27,6 +27,8 @@ This pipeline takes BAM and BAM index from [pipeline-align-DNA](https://github.c
 
 3. Download the submission script (submit_nextflow_pipeline.py) from [here](https://github.com/uclahs-cds/tool-submit-nf), and submit your pipeline below.
 
+> **Note**: Because this pipeline uses an image stored in the GitHub Container Registry, you must follow the steps listed in the [Docker Introduction](https://confluence.mednet.ucla.edu/display/BOUTROSLAB/Docker+Introduction#DockerIntroduction-GitHubContainerRegistryGitHubContainerRegistry|Setup) on Confluence to set up a PAT for your GitHub account and log into the registry on the cluster before running this pipeline.
+
 - CSV input
 ```
 python submit_nextflow_pipeline.py \
