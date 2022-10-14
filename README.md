@@ -158,6 +158,7 @@ For inputs with one normal sample and multiple tumour samples, add rows. Keep th
 | `bundle_contest_hapmap_3p3_vcf_gz` | Yes | path | Absolute path to HapMap 3.3 biallelic sites file, e.g., `/hot/users/shutao/Biallelic/hapmap_3.3.hg38.BIALLELIC.PASS.vcf.gz` |
 | `work_dir` | optional | path | Path of working directory for Nextflow. When included in the sample config file, Nextflow intermediate files and logs will be saved to this directory. With ucla_cds, the default is `/scratch` and should only be changed for testing/development. Changing this directory to `/hot` or `/tmp` can lead to high server latency and potential disk space limitations, respectively. |
 | `docker_container_registry` | optional | string | Registry containing tool Docker images. Default: `ghcr.io/uclahs-cds` |
+| `emit_all_confident_sites` | optional | boolean | Whether to emit all confident sites in GVCFs |
 
 ---
 
