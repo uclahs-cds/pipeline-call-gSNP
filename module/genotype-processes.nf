@@ -194,7 +194,7 @@ process run_HaplotypeCallerGVCF_GATK {
     output_filename = "${id}_${interval_id}_raw_variants.g.vcf.gz"
     interval_str = "--intervals ${interval}"
     interval_padding = params.is_targeted ? "--interval-padding 100" : ""
-
+    output_mode = params.emit_all_confident_sites ? "EMIT_ALL_CONFIDENT_SITES" : "EMIT_VARIANTS_ONLY"
     """
     set -euo pipefail
 
@@ -204,7 +204,7 @@ process run_HaplotypeCallerGVCF_GATK {
         --output ${output_filename} \
         --reference ${reference_fasta} \
         --verbosity INFO \
-        --output-mode EMIT_VARIANTS_ONLY \
+        --output-mode ${output_mode} \
         --emit-ref-confidence GVCF \
         --dbsnp ${dbsnp_bundle} \
         --sample-ploidy 2 \
