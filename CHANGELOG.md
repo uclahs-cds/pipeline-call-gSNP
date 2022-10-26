@@ -12,6 +12,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Use external resource allocation module
 - Parameterize Docker registry
 - Use `ghcr.io/uclahs-cds` as default registry
+### Added
+- Option to emit all confident sites in GVCFs
 
 ---
 
