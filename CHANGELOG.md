@@ -8,6 +8,12 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ---
 
 ## [Unreleased]
+
+---
+
+## [9.2.0] - 2022-11-18
+### Added
+- `F32.config` for resource allocation
 ### Changed
 - Use external resource allocation module
 - Parameterize Docker registry
