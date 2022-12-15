@@ -145,7 +145,12 @@ process run_index_SAMtools {
     interval_id = interval.baseName.split('-')[0]
     """
     set -euo pipefail
-    
+
+    if [[ "${task.attempt}" -eq 1 ]]
+    then
+        exit 143
+    fi
+
     samtools index ${bam}
     """
 }
