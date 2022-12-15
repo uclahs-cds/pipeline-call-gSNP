@@ -146,11 +146,6 @@ process run_index_SAMtools {
     """
     set -euo pipefail
 
-    if [[ "${task.attempt}" -eq 1 ]]
-    then
-        exit 143
-    fi
-
     samtools index ${bam}
     """
 }
