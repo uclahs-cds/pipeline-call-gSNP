@@ -145,7 +145,7 @@ process run_index_SAMtools {
     interval_id = interval.baseName.split('-')[0]
     """
     set -euo pipefail
-    
+
     samtools index ${bam}
     """
 }
