@@ -90,31 +90,10 @@ process deduplicate_records_SAMtools {
 
     script:
     """
-    PREV_LINE="empty-start-str"
-    PREV_LINE_PARTS="empty-start-parts"
-
     samtools view \
         -h \
         ${bam} | \
-        {
-        while read -r line
-        do
-            if [ "\$PREV_LINE" == "empty-start-str" ]
-            then
-                PREV_LINE="\$line"
-                PREV_LINE_PARTS=`echo "\$line" | cut -f 1-11`
-            else
-                CURR_LINE_PARTS=`echo "\$line" | cut -f 1-11`
-                if [ "\$PREV_LINE_PARTS" != "\$CURR_LINE_PARTS" ]
-                then
-                    echo "\$PREV_LINE"
-                fi
-                PREV_LINE="\$line"
-                PREV_LINE_PARTS=\$CURR_LINE_PARTS
-            fi
-        done
-        echo "\$PREV_LINE"
-        } | \
+        awk '(\$1 \$2 \$3 \$4 \$5 \$6 \$7 \$8 \$9 \$10 \$11)!=f_p && NR>1 {print f} {f=\$0} {f_p=(\$1 \$2 \$3 \$4 \$5 \$6 \$7 \$8 \$9 \$10 \$11)} END {print f}' | \
         samtools view \
         -b \
         -o ${id}_realigned_recalibrated_merged_dedup.bam
