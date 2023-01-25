@@ -93,7 +93,7 @@ process deduplicate_records_SAMtools {
     samtools view \
         -h \
         ${bam} | \
-        uniq | \
+        awk '(\$1 \$2 \$3 \$4 \$5 \$6 \$7 \$8 \$9 \$10 \$11)!=f_p && NR>1 {print f} {f=\$0} {f_p=(\$1 \$2 \$3 \$4 \$5 \$6 \$7 \$8 \$9 \$10 \$11)} END {print f}' | \
         samtools view \
         -b \
         -o ${id}_realigned_recalibrated_merged_dedup.bam

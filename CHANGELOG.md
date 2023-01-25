@@ -8,6 +8,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ---
 
 ## [Unreleased]
+### Fixed
+- Remove duplicated records based on only 11 required fields of each record
 
 ---
 
