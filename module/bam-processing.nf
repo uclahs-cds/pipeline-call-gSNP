@@ -47,7 +47,7 @@ process run_reheader_SAMtools {
         id,
         [
             'additional_tools': ["GATK-${params.gatk_version}"],
-            'additional_information': ["recalibrated_reheadered_${interval_id}.bam"]
+            'additional_information': "recalibrated_reheadered_${interval_id}.bam"
         ]
     )
     """
@@ -105,7 +105,7 @@ process deduplicate_records_SAMtools {
         id,
         [
             'additional_tools': ["GATK-${params.gatk_version}"],
-            'additional_information': ["realigned_recalibrated_merged_dedup.bam"]
+            'additional_information': "realigned_recalibrated_merged_dedup.bam"
         ]
     )
     """
@@ -213,7 +213,7 @@ process run_MergeSamFiles_Picard {
         id,
         [
             'additional_tools': ["GATK-${params.gatk_version}"],
-            'additional_information': ["realigned_recalibrated_merged.bam"]
+            'additional_information': "realigned_recalibrated_merged.bam"
         ]
     )
     """
