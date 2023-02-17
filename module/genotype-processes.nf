@@ -1,3 +1,4 @@
+include { generate_standardized_filename } from '../external/nextflow-module/modules/common/generate_standardized_filename/main.nf'
 /*
     Nextflow module for splitting input intervals into multiple intervals for parallelization
 
@@ -106,14 +107,21 @@ process run_HaplotypeCallerVCF_GATK {
 
     output:
     path(".command.*")
-    tuple val(sample_id), path("${sample_id}_${interval_id}.vcf"), path("${sample_id}_${interval_id}.vcf.idx"), emit: vcfs
+    tuple val(sample_id), path(output_filename), path("${output_filename}.idx"), emit: vcfs
     path(bams), emit: bams_for_deletion
     path(bams_index), emit: bams_index_for_deletion
 
     script:
     // Get split interval number to serve as task ID
     interval_id = interval.baseName.split('-')[0]
-    output_filename = "${sample_id}_${interval_id}.vcf"
+    output_filename = generate_standardized_filename(
+        "GATK-${params.gatk_version}",
+        params.dataset_id,
+        sample_id,
+        [
+            'additional_information': "${interval_id}.vcf"
+        ]
+    )
     interval_str = "--intervals ${interval}"
     bam_input_str = bams.collect{ "--input '$it'" }.join(' ')
     interval_padding = params.is_targeted ? "--interval-padding 100" : ""
@@ -184,14 +192,21 @@ process run_HaplotypeCallerGVCF_GATK {
 
     output:
     path(".command.*")
-    tuple val(id), path("*_raw_variants.g.vcf.gz"), path("*_raw_variants.g.vcf.gz.tbi"), emit: gvcfs
+    tuple val(id), path(output_filename), path("${output_filename}.tbi"), emit: gvcfs
     path(bam), emit: bam_for_deletion
     path(bam_index), emit: bam_index_for_deletion
 
     script:
     // Get split interval number to serve as task ID
     interval_id = interval.baseName.split('-')[0]
-    output_filename = "${id}_${interval_id}_raw_variants.g.vcf.gz"
+    output_filename = generate_standardized_filename(
+        "GATK-${params.gatk_version}",
+        params.dataset_id,
+        id,
+        [
+            'additional_information': "${interval_id}_raw_variants.g.vcf.gz"
+        ]
+    )
     interval_str = "--intervals ${interval}"
     interval_padding = params.is_targeted ? "--interval-padding 100" : ""
 
@@ -253,7 +268,9 @@ process run_MergeVcfs_Picard {
 
     script:
     all_vcfs = vcfs.collect{ "-INPUT '$it'" }.join(' ')
-    output_filename = (vcf_type == "GVCF") ? "${id}_merged_raw_variants.g.vcf.gz" : "${id}_merged_raw.vcf"
+    output_filename = (vcf_type == "GVCF") ?
+        generate_standardized_filename("GATK-${params.gatk_version}", params.dataset_id, id, ['additional_information': "merged_raw_variants.g.vcf.gz"]) :
+        generate_standardized_filename("GATK-${params.gatk_version}", params.dataset_id, id, ['additional_information': "merged_raw.vcf"])
 
     """
     set -euo pipefail
