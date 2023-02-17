@@ -15,7 +15,7 @@ Current Configuration:
           version: ${workflow.manifest.version}
 
       - input:
-          input_csv: ${(params.containsKey("input")) ? "YAML input used" : params.input_csv}
+          input_csv: ${(params.containsKey("input_csv") && params.input_csv) ? params.input_csv : "YAML input used"}
           aligner: ${params.aligner}
           intervals: ${params.intervals}
           bundle_v0_dbsnp138_vcf_gz: ${params.bundle_v0_dbsnp138_vcf_gz}
