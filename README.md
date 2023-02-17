@@ -141,6 +141,7 @@ For inputs with one normal sample and multiple tumour samples, add rows. Keep th
 | `output_dir` | Yes | string | Need to set if `blcds_registered_dataset = false` |
 | `input_csv` | Yes | path | Absolute path to input CSV file |
 | `save_intermediate_files` | Yes | boolean | Set to false to disable publishing of intermediate files; true otherwise; disabling option will delete intermediate files to allow for processing of large BAMs |
+| `aligner` | Yes | string | Original aligner used to align input BAMs; formatted as \<aligner\>-\<aligner-version\> |
 | `cache_intermediate_pipeline_steps` | No | boolean | Set to true to enable process caching from Nextflow; defaults to false |
 | `is_emit_original_quals` | Yes | boolean | Set to true to emit original quality scores; false to omit |
 | `is_NT_paired` | Yes | boolean | Set to true for normal-tumour paired mode, and to false for normal only mode |
