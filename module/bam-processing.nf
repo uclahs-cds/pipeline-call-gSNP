@@ -82,7 +82,7 @@ process deduplicate_records_SAMtools {
     container params.docker_image_samtools
     publishDir path: "${params.output_dir}/output",
         mode: "copy",
-        pattern: "*_merged_dedup*"
+        pattern: "*merged-dedup*"
 
     publishDir path: "${params.log_output_dir}/process-log",
         pattern: ".command.*",
@@ -137,7 +137,7 @@ process run_index_SAMtools {
     publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}",
         mode: "copy",
         enabled: params.save_intermediate_files && !params.is_dedup_bam,
-        pattern: "*_reheadered_*"
+        pattern: "*reheadered*"
 
     publishDir path: "${params.output_dir}/output",
         mode: "copy",
@@ -189,7 +189,7 @@ process run_MergeSamFiles_Picard {
     publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}",
         mode: "copy",
         enabled: params.save_intermediate_files,
-        pattern: "*_merged*"
+        pattern: "*merged*"
 
     publishDir path: "${params.log_output_dir}/process-log",
         pattern: ".command.*",
