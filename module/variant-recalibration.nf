@@ -1,4 +1,4 @@
-include { generate_standard_filename } from '../external/nextflow-module/modules/common/generate_standard_filename/main.nf'
+include { generate_standard_filename } from '../external/nextflow-module/modules/common/generate_standardized_filename/main.nf'
 /*
     Nextflow module for generating INDEL variant recalibration
 
