@@ -1,4 +1,4 @@
-include { generate_standardized_filename } from '../external/nextflow-module/modules/common/generate_standardized_filename/main.nf'
+include { generate_standard_filename } from '../external/nextflow-module/modules/common/generate_standard_filename/main.nf'
 /*
     Nextflow module for splitting input intervals into multiple intervals for parallelization
 
@@ -114,7 +114,7 @@ process run_HaplotypeCallerVCF_GATK {
     script:
     // Get split interval number to serve as task ID
     interval_id = interval.baseName.split('-')[0]
-    output_filename = generate_standardized_filename(
+    output_filename = generate_standard_filename(
         "GATK-${params.gatk_version}",
         params.dataset_id,
         sample_id,
@@ -199,7 +199,7 @@ process run_HaplotypeCallerGVCF_GATK {
     script:
     // Get split interval number to serve as task ID
     interval_id = interval.baseName.split('-')[0]
-    output_filename = generate_standardized_filename(
+    output_filename = generate_standard_filename(
         "GATK-${params.gatk_version}",
         params.dataset_id,
         id,
@@ -269,8 +269,8 @@ process run_MergeVcfs_Picard {
     script:
     all_vcfs = vcfs.collect{ "-INPUT '$it'" }.join(' ')
     output_filename = (vcf_type == "GVCF") ?
-        generate_standardized_filename("GATK-${params.gatk_version}", params.dataset_id, id, ['additional_information': "merged_raw_variants.g.vcf.gz"]) :
-        generate_standardized_filename("GATK-${params.gatk_version}", params.dataset_id, id, ['additional_information': "merged_raw.vcf"])
+        generate_standard_filename("GATK-${params.gatk_version}", params.dataset_id, id, ['additional_information': "merged_raw_variants.g.vcf.gz"]) :
+        generate_standard_filename("GATK-${params.gatk_version}", params.dataset_id, id, ['additional_information': "merged_raw.vcf"])
 
     """
     set -euo pipefail

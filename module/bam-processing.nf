@@ -1,4 +1,4 @@
-include { generate_standardized_filename } from '../external/nextflow-module/modules/common/generate_standardized_filename/main.nf'
+include { generate_standard_filename } from '../external/nextflow-module/modules/common/generate_standard_filename/main.nf'
 /*
     Nextflow module for reheadering BAM files
 
@@ -41,7 +41,7 @@ process run_reheader_SAMtools {
     script:
     // Get split interval number to serve as task ID
     interval_id = interval.baseName.split('-')[0]
-    output_file_name = generate_standardized_filename(
+    output_file_name = generate_standard_filename(
         params.aligner,
         params.dataset_id,
         id,
@@ -99,7 +99,7 @@ process deduplicate_records_SAMtools {
     path(bam), emit: bam_for_deletion
 
     script:
-    output_file_name = generate_standardized_filename(
+    output_file_name = generate_standard_filename(
         params.aligner,
         params.dataset_id,
         id,
@@ -207,7 +207,7 @@ process run_MergeSamFiles_Picard {
 
     script:
     all_bams = bams.collect{ "-INPUT '$it'" }.join(' ')
-    output_file_name = generate_standardized_filename(
+    output_file_name = generate_standard_filename(
         params.aligner,
         params.dataset_id,
         id,

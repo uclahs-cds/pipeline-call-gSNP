@@ -1,4 +1,4 @@
-include { generate_standardized_filename } from '../external/nextflow-module/modules/common/generate_standardized_filename/main.nf'
+include { generate_standard_filename } from '../external/nextflow-module/modules/common/generate_standard_filename/main.nf'
 /*
     Nextflow module for getting pileup summaries of BAMs
 
@@ -49,7 +49,7 @@ process run_GetPileupSummaries_GATK {
 
     script:
     interval_options = all_intervals.collect{ "--intervals '$it'" }.join(' ')
-    output_filename = generate_standardized_filename(
+    output_filename = generate_standard_filename(
         "GATK-${params.gatk_version}",
         params.dataset_id,
         id,
@@ -108,7 +108,7 @@ process run_CalculateContamination_GATK {
     path("*_with-matched-normal.table"), emit: tumour_normal_matched_contamination optional true
 
     script:
-    single_output_filename = generate_standardized_filename(
+    single_output_filename = generate_standard_filename(
         "GATK-${params.gatk_version}",
         params.dataset_id,
         id
@@ -183,7 +183,7 @@ process run_DepthOfCoverage_GATK {
 
     script:
     interval_options = params.is_targeted ? "--intervals ${params.intervals}" : all_intervals.collect{ "--intervals '$it'" }.join(' ')
-    output_filename = generate_standardized_filename(
+    output_filename = generate_standard_filename(
         "GATK-${params.gatk_version}",
         params.dataset_id,
         id,

@@ -1,4 +1,4 @@
-include { generate_standardized_filename } from '../external/nextflow-module/modules/common/generate_standardized_filename/main.nf'
+include { generate_standard_filename } from '../external/nextflow-module/modules/common/generate_standard_filename/main.nf'
 /*
     Nextflow module for generating INDEL variant recalibration
 
@@ -59,7 +59,7 @@ process run_VariantRecalibratorINDEL_GATK {
 
     script:
     variable_mode_options = params.is_NT_paired ? "--use-annotation MQRankSum --use-annotation ReadPosRankSum" : ""
-    output_filename = generate_standardized_filename(
+    output_filename = generate_standard_filename(
         "GATK-${params.gatk_version}",
         params.dataset_id,
         sample_id
@@ -159,7 +159,7 @@ process run_VariantRecalibratorSNP_GATK {
 
     script:
     variable_mode_options = params.is_NT_paired ? "--use-annotation MQRankSum --use-annotation ReadPosRankSum" : ""
-    output_filename = generate_standardized_filename(
+    output_filename = generate_standard_filename(
         "GATK-${params.gatk_version}",
         params.dataset_id,
         sample_id
@@ -243,7 +243,7 @@ process run_ApplyVQSR_GATK {
     val(sample_id), emit: associated_id
 
     script:
-    output_filename = generate_standardized_filename(
+    output_filename = generate_standard_filename(
         "GATK-${params.gatk_version}",
         params.dataset_id,
         sample_id,

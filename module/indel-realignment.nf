@@ -1,4 +1,4 @@
-include { generate_standardized_filename } from '../external/nextflow-module/modules/common/generate_standardized_filename/main.nf'
+include { generate_standard_filename } from '../external/nextflow-module/modules/common/generate_standard_filename/main.nf'
 /*
     Nextflow module for generating realignment targets
 
@@ -139,7 +139,7 @@ process run_IndelRealigner_GATK {
     unmapped_interval_option = (interval_id == '0000') ? "--intervals unmapped" : ""
     has_unmapped = (interval_id == '0000') ? true : false
     combined_interval_options = "--intervals ${scatter_intervals} ${unmapped_interval_option}"
-    output_filename = generate_standardized_filename(
+    output_filename = generate_standard_filename(
         "GATK-${params.gatk_version}",
         params.dataset_id,
         sample_id[0],
