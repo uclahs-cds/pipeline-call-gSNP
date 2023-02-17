@@ -1,3 +1,4 @@
+include { generate_standardized_filename } from '../external/nextflow-module/modules/common/generate_standardized_filename/main.nf'
 /*
     Nextflow module for getting pileup summaries of BAMs
 
@@ -44,11 +45,18 @@ process run_GetPileupSummaries_GATK {
 
     output:
     path(".command.*")
-    path("*_getpileupsummaries.table"), emit: pileupsummaries
+    path("*getpileupsummaries.table"), emit: pileupsummaries
 
     script:
     interval_options = all_intervals.collect{ "--intervals '$it'" }.join(' ')
-    output_filename = "${id}_getpileupsummaries.table"
+    output_filename = generate_standardized_filename(
+        "GATK-${params.gatk_version}",
+        params.dataset_id,
+        id,
+        [
+            'additional_information': "getpileupsummaries.table"
+        ]
+    )
     """
     set -euo pipefail
     gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=${workDir}" \
@@ -97,10 +105,14 @@ process run_CalculateContamination_GATK {
     output:
     path(".command.*")
     path("*_alone.table"), emit: contamination
-    path("*_with_matched_normal.table"), emit: tumour_normal_matched_contamination optional true
+    path("*_with-matched-normal.table"), emit: tumour_normal_matched_contamination optional true
 
     script:
-    single_output_filename = "${id}_calculatecontamination_${sample_type}"
+    single_output_filename = generate_standardized_filename(
+        "GATK-${params.gatk_version}",
+        params.dataset_id,
+        id
+    )
     calc_matched = (sample_type == "normal") ? false : true
     """
     set -euo pipefail
@@ -115,7 +127,7 @@ process run_CalculateContamination_GATK {
           CalculateContamination \
           --input ${pileupsummaries} \
           --matched-normal ${matched_normal_pileupsummaries} \
-          --output ${single_output_filename}_with_matched_normal.table
+          --output ${single_output_filename}_with-matched-normal.table
     fi
     """
 }
@@ -171,12 +183,20 @@ process run_DepthOfCoverage_GATK {
 
     script:
     interval_options = params.is_targeted ? "--intervals ${params.intervals}" : all_intervals.collect{ "--intervals '$it'" }.join(' ')
+    output_filename = generate_standardized_filename(
+        "GATK-${params.gatk_version}",
+        params.dataset_id,
+        id,
+        [
+            'additional_information': "DOC"
+        ]
+    )
     """
     set -euo pipefail
     gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=${workDir}" \
         DepthOfCoverage \
         --input ${bam} \
-        --output ${id}_DOC \
+        --output ${output_filename}_DOC \
         --output-format TABLE \
         --reference ${reference_fasta} \
         --omit-depth-output-at-each-base \
