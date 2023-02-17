@@ -1,3 +1,4 @@
+include { generate_standardized_filename } from '../external/nextflow-module/modules/common/generate_standardized_filename/main.nf'
 /*
     Nextflow module for generating realignment targets
 
@@ -103,7 +104,7 @@ process run_IndelRealigner_GATK {
     publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}",
       mode: "copy",
       enabled: params.save_intermediate_files,
-      pattern: "*_indelrealigned_*",
+      pattern: "*indelrealigned*",
       saveAs: { filename -> (file(filename).getExtension() == "bai") ? "${file(filename).baseName}.bam.bai" : "${filename}" }
 
     publishDir path: "${params.log_output_dir}/process-log",
@@ -127,8 +128,8 @@ process run_IndelRealigner_GATK {
     path(".command.*")
     path(scatter_intervals), emit: associated_interval
     val(has_unmapped), emit: includes_unmapped
-    path("${sample_id[0]}_indelrealigned_${interval_id}.bam"), emit: realigned_indels_bam
-    path("${sample_id[0]}_indelrealigned_${interval_id}.bai"), emit: realigned_indels_bam_index
+    path("${output_filename}.bam"), emit: realigned_indels_bam
+    path("${output_filename}.bai"), emit: realigned_indels_bam_index
 
     script:
     // Get split interval number to serve as task ID
@@ -138,6 +139,14 @@ process run_IndelRealigner_GATK {
     unmapped_interval_option = (interval_id == '0000') ? "--intervals unmapped" : ""
     has_unmapped = (interval_id == '0000') ? true : false
     combined_interval_options = "--intervals ${scatter_intervals} ${unmapped_interval_option}"
+    output_filename = generate_standardized_filename(
+        "GATK-${params.gatk_version}",
+        params.dataset_id,
+        sample_id[0],
+        [
+            'additional_information': "indelrealigned_${interval_id}"
+        ]
+    )
     """
     set -euo pipefail
     java -Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=${workDir} \
@@ -150,7 +159,7 @@ process run_IndelRealigner_GATK {
         --knownAlleles ${bundle_known_indels_vcf_gz} \
         --allow_potentially_misencoded_quality_scores \
         --targetIntervals ${target_intervals_RTC} \
-        --out ${sample_id[0]}_indelrealigned_${interval_id}.bam \
+        --out ${output_filename}.bam \
         ${combined_interval_options}
     """
 }
