@@ -50,11 +50,12 @@ process run_reheader_SAMtools {
             'additional_information': "recalibrated_reheadered_${interval_id}.bam"
         ]
     )
+    id_generalized = id.replace('-', '[-,_]')
     """
     set -euo pipefail
 
     samtools reheader \
-        -c 'sed "/^@RG/! s/.*/keep&/" | sed "/^@RG/ s/.*SM:${id}\$/keep&/" | sed "/^@RG/ s/.*SM:${id}\t/keep&/" | grep "^keep" | sed "s/^keep//g"' \
+        -c 'sed "/^@RG/! s/.*/keep&/" | sed "/^@RG/ s/.*SM:${id_generalized}\$/keep&/" | sed "/^@RG/ s/.*SM:${id_generalized}\t/keep&/" | grep "^keep" | sed "s/^keep//g"' \
         ${bam} \
         > ${output_file_name}
     """
@@ -202,7 +203,7 @@ process run_MergeSamFiles_Picard {
 
     output:
     path(".command.*")
-    path("${id}_realigned_recalibrated_merged.bam"), emit: merged_bam
+    path(output_file_name), emit: merged_bam
     val(id), emit: associated_id
 
     script:

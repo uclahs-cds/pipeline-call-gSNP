@@ -111,7 +111,8 @@ process run_CalculateContamination_GATK {
     single_output_filename = generate_standard_filename(
         "GATK-${params.gatk_version}",
         params.dataset_id,
-        id
+        id,
+        [:]
     )
     calc_matched = (sample_type == "normal") ? false : true
     """

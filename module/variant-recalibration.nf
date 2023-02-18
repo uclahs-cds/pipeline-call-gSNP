@@ -62,7 +62,8 @@ process run_VariantRecalibratorINDEL_GATK {
     output_filename = generate_standard_filename(
         "GATK-${params.gatk_version}",
         params.dataset_id,
-        sample_id
+        sample_id,
+        [:]
     )
     """
     set -euo pipefail
@@ -162,7 +163,8 @@ process run_VariantRecalibratorSNP_GATK {
     output_filename = generate_standard_filename(
         "GATK-${params.gatk_version}",
         params.dataset_id,
-        sample_id
+        sample_id,
+        [:]
     )
     """
     set -euo pipefail

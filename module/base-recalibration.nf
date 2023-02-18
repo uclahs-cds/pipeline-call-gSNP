@@ -146,7 +146,7 @@ process run_ApplyBQSR_GATK {
         --read-filter SampleReadFilter \\
         ${combined_interval_options} \\
         --emit-original-quals ${params.is_emit_original_quals} \\
-        --output ${generate_standard_filename(params.aligner, params.dataset_id, it.split("-")[0..-2].join("-"), ['additional_tools': "GATK-${params.gatk_version}"])}_recalibrated-${interval_id}.bam \\
+        --output ${generate_standard_filename(params.aligner, params.dataset_id, it, ['additional_tools': "GATK-${params.gatk_version}"])}_recalibrated-${interval_id}.bam \\
         --sample ${it.split("-")[0..-2].join("-")}
       """
       }
