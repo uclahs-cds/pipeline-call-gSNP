@@ -268,10 +268,10 @@ process run_MergeVcfs_Picard {
 
     script:
     all_vcfs = vcfs.collect{ "-INPUT '$it'" }.join(' ')
+    output_filename_base = generate_standard_filename("GATK-${params.gatk_version}", params.dataset_id, id, [:])
     output_filename = (vcf_type == "GVCF") ?
-        generate_standard_filename("GATK-${params.gatk_version}", params.dataset_id, id, ['additional_information': "merged_raw_variants.g.vcf.gz"]) :
-        generate_standard_filename("GATK-${params.gatk_version}", params.dataset_id, id, ['additional_information': "merged_raw.vcf"])
-
+        "${output_filename_base}.g.vcf.gz" :
+        "${output_filename_base}.vcf"
     """
     set -euo pipefail
 

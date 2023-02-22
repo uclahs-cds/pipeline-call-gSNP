@@ -83,7 +83,7 @@ process deduplicate_records_SAMtools {
     container params.docker_image_samtools
     publishDir path: "${params.output_dir}/output",
         mode: "copy",
-        pattern: "*merged-dedup*"
+        pattern: "${output_file_name}.bam"
 
     publishDir path: "${params.log_output_dir}/process-log",
         pattern: ".command.*",
@@ -96,7 +96,7 @@ process deduplicate_records_SAMtools {
 
     output:
     path(".command.*")
-    tuple val(id), path(output_file_name), emit: merged_bam
+    tuple val(id), path("${output_file_name}.bam"), emit: merged_bam
     path(bam), emit: bam_for_deletion
 
     script:
@@ -105,8 +105,7 @@ process deduplicate_records_SAMtools {
         params.dataset_id,
         id,
         [
-            'additional_tools': ["GATK-${params.gatk_version}"],
-            'additional_information': "realigned_recalibrated_merged_dedup.bam"
+            'additional_tools': ["GATK-${params.gatk_version}"]
         ]
     )
     """
@@ -116,7 +115,7 @@ process deduplicate_records_SAMtools {
         awk '(\$1 \$2 \$3 \$4 \$5 \$6 \$7 \$8 \$9 \$10 \$11)!=f_p && NR>1 {print f} {f=\$0} {f_p=(\$1 \$2 \$3 \$4 \$5 \$6 \$7 \$8 \$9 \$10 \$11)} END {print f}' | \
         samtools view \
         -b \
-        -o ${output_file_name}
+        -o ${output_file_name}.bam
     """
 }
 

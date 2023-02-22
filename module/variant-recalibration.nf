@@ -218,11 +218,11 @@ process run_ApplyVQSR_GATK {
     publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}/",
       mode: "copy",
       enabled: params.save_intermediate_files,
-      pattern: "*_merged_recalibrated_SNP.vcf.gz{,.tbi}"
+      pattern: "*-SNP.vcf.gz{,.tbi}"
 
     publishDir path: "${params.output_dir}/output/",
       mode: "copy",
-      pattern: "*_merged_recalibrated_SNP_AND_INDEL.vcf.gz{,.tbi}"
+      pattern: "*SNP-AND-INDEL.vcf.gz{,.tbi}"
 
     publishDir path: "${params.log_output_dir}/process-log",
       pattern: ".command.*",
@@ -250,7 +250,7 @@ process run_ApplyVQSR_GATK {
         params.dataset_id,
         sample_id,
         [
-            'additional_information': "merged_recalibrated_${suffix}.vcf.gz"
+            'additional_information': "recalibrated_${suffix}.vcf.gz"
         ]
     )
     """
