@@ -135,7 +135,7 @@ For inputs with one normal sample and multiple tumour samples, add rows. Keep th
 
 | Input Parameter | Required | Type | Description |
 |:----------------|:---------|:-----|:------------|
-| `dataset_id` | optional | string | Dataset ID placeholder for now (will be standardized according to data storage structure in the near future) |
+| `dataset_id` | Yes | string | Dataset ID |
 | `avere_prefix` | Yes | string | Prefix for location of avere cache |
 | `blcds_registered_dataset` | Yes | boolean | Set to true when using BLCDS folder structure; use false for now |
 | `output_dir` | Yes | string | Need to set if `blcds_registered_dataset = false` |
@@ -166,18 +166,28 @@ For inputs with one normal sample and multiple tumour samples, add rows. Keep th
 
 | Output | Description |
 |:-------|:------------|
-| `${normal_id}_realigned_recalibrated_merged.bam` | Post-processed normal BAM |
-| `${normal_id}_realigned_recalibrated_merged.bam.bai` | Post-processed normal BAM index |
-| `${normal_id}_realigned_recalibrated_merged.bam.sha512` | Post-processed normal BAM sha512 checksum |
-| `${tumour_id}_realigned_recalibrated_merged.bam` | Post-processed tumour BAM if in normal-tumour paired mode |
-| `${tumour_id}_realigned_recalibrated_merged.bam.bai` | Post-processed tumour BAM index if in normal-tumour paired mode |
-| `${tumour_id}_realigned_recalibrated_merged.bam.sha512` | Post-processed tumour BAM sha512 checksum if in normal-tumour paired mode |
+| `<aligner>-<GATK>-<dataset_id>-<normal_id>.bam` | Post-processed normal BAM |
+| `<aligner>-<GATK>-<dataset_id>-<normal_id>.bam.bai` | Post-processed normal BAM index |
+| `<aligner>-<GATK>-<dataset_id>-<normal_id>.bam.sha512` | Post-processed normal BAM sha512 checksum |
+| `<aligner>-<GATK>-<dataset_id>-<tumor_id>.bam` | Post-processed tumour BAM if in normal-tumour paired mode |
+| `<aligner>-<GATK>-<dataset_id>-<tumor_id>.bam.bai` | Post-processed tumour BAM index if in normal-tumour paired mode |
+| `<aligner>-<GATK>-<dataset_id>-<tumor_id>.bam.sha512` | Post-processed tumour BAM sha512 checksum if in normal-tumour paired mode |
 | `filtered_germline_snv_${samplel_id}_nosomatic.vcf.gz` | Filtered germline SNVs |
 | `filtered_germline_snv_${samplel_id}_nosomatic.vcf.gz.tbi` | Filtered germline SNVs index |
 | `filtered_germline_snv_${samplel_id}_nosomatic.vcf.gz.sha512` | Filtered germline SNVs sha512 checksum |
 | `filtered_germline_indel_${samplel_id}_nosomatic.vcf.gz` | Filtered germline INDELs |
 | `filtered_germline_indel_${samplel_id}_nosomatic.vcf.gz.tbi` | Filtered germline INDELs index |
 | `filtered_germline_indel_${samplel_id}_nosomatic.vcf.gz.sha512` | Filtered germline INDELs sha512 checksum |
+| `<GATK>-<dataset_id>-<normal_id\|tumor_id>.g.vcf.gz` | Per-sample GVCF |
+| `<GATK>-<dataset_id>-<normal_id\|tumor_id>.g.vcf.gz.sha512` | Per-sample GVCF checksum |
+| `<GATK>-<dataset_id>-<normal_id\|tumor_id>.g.vcf.gz.tbi` | Per-sample GVCF index |
+| `<GATK>-<dataset_id>-<normal_id\|tumor_id>.g.vcf.gz.tbi.sha512` | Per-sample GVCF index checksum |
+| `<GATK>-<dataset_id>-<sample_id>.vcf` | Raw variant calls |
+| `<GATK>-<dataset_id>-<sample_id>.vcf.idx` | Raw variant calls index |
+| `<GATK>-<dataset_id>-<sample_id>_recalibrated-SNP-AND_INDEL.vcf.gz` | SNP and INDEL recalibrated variants |
+| `<GATK>-<dataset_id>-<sample_id>_recalibrated-SNP-AND_INDEL.vcf.gz.sha512` | SNP and INDEL recalibrated variants checksum |
+| `<GATK>-<dataset_id>-<sample_id>_recalibrated-SNP-AND_INDEL.vcf.gz.tbi` | SNP and INDEL recalibrated variants index |
+| `<GATK>-<dataset_id>-<sample_id>_recalibrated-SNP-AND_INDEL.vcf.gz.tbi.sha512` | SNP and INDEL recalibrated variants index checksum |
 | `report.html`, `timeline.html` and `trace.txt` | Nextflow report, timeline and trace files |
 | `*.command.*` | Process specific logging files created by nextflow |
 
