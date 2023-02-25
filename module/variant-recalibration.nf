@@ -250,7 +250,7 @@ process run_ApplyVQSR_GATK {
         params.dataset_id,
         sample_id,
         [
-            'additional_information': "recalibrated_${suffix}.vcf.gz"
+            'additional_information': "VQSR_${suffix}.vcf.gz"
         ]
     )
     """
@@ -288,7 +288,14 @@ process filter_gSNP_GATK {
     container params.docker_image_gatkfilter
     publishDir path: "${params.output_dir}/output",
       mode: "copy",
-      pattern: "filtered_germline_*"
+      pattern: "filtered_germline_*",
+      saveAs: {
+          if (it.contains('_snv_')) { "${output_filename}_snv.${file(it).name.split('\\.').tail().join('.')}" }
+          else if (it.contains('_indel_')) { "${output_filename}_indel.${file(it).name.split('\\.').tail().join('.')}" }
+          else if (it.contains('_variant_class_count_')) { "${output_filename}_variant-class-count.${file(it).name.split('\\.').tail().join('.')}" }
+          else if (it.contains('_genotype_count_')) { "${output_filename}_genotype-count.${file(it).name.split('\\.').tail().join('.')}" }
+          else { "${file(it).name}" }
+      }
 
     publishDir path: "${params.log_output_dir}/process-log",
       pattern: ".command.*",
@@ -315,6 +322,12 @@ process filter_gSNP_GATK {
 
     script:
     identifier_opts = identifiers_options.collect{ "$it" }.join(' ')
+    output_filename = generate_standard_filename(
+        "GATK-${params.gatk_version}",
+        params.dataset_id,
+        sample_id,
+        [:]
+    )
     """
     set -euo pipefail
     /src/NGS-Tools-GATK/bin/filter_GATK_SNV_calls.pl \
