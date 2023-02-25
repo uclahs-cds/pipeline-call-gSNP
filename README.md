@@ -166,28 +166,28 @@ For inputs with one normal sample and multiple tumour samples, add rows. Keep th
 
 | Output | Description |
 |:-------|:------------|
-| `<aligner>-<GATK>-<dataset_id>-<normal_id>.bam` | Post-processed normal BAM |
-| `<aligner>-<GATK>-<dataset_id>-<normal_id>.bam.bai` | Post-processed normal BAM index |
-| `<aligner>-<GATK>-<dataset_id>-<normal_id>.bam.sha512` | Post-processed normal BAM sha512 checksum |
-| `<aligner>-<GATK>-<dataset_id>-<tumor_id>.bam` | Post-processed tumour BAM if in normal-tumour paired mode |
-| `<aligner>-<GATK>-<dataset_id>-<tumor_id>.bam.bai` | Post-processed tumour BAM index if in normal-tumour paired mode |
-| `<aligner>-<GATK>-<dataset_id>-<tumor_id>.bam.sha512` | Post-processed tumour BAM sha512 checksum if in normal-tumour paired mode |
-| `filtered_germline_snv_${samplel_id}_nosomatic.vcf.gz` | Filtered germline SNVs |
-| `filtered_germline_snv_${samplel_id}_nosomatic.vcf.gz.tbi` | Filtered germline SNVs index |
-| `filtered_germline_snv_${samplel_id}_nosomatic.vcf.gz.sha512` | Filtered germline SNVs sha512 checksum |
-| `filtered_germline_indel_${samplel_id}_nosomatic.vcf.gz` | Filtered germline INDELs |
-| `filtered_germline_indel_${samplel_id}_nosomatic.vcf.gz.tbi` | Filtered germline INDELs index |
-| `filtered_germline_indel_${samplel_id}_nosomatic.vcf.gz.sha512` | Filtered germline INDELs sha512 checksum |
-| `<GATK>-<dataset_id>-<normal_id\|tumor_id>.g.vcf.gz` | Per-sample GVCF |
-| `<GATK>-<dataset_id>-<normal_id\|tumor_id>.g.vcf.gz.sha512` | Per-sample GVCF checksum |
-| `<GATK>-<dataset_id>-<normal_id\|tumor_id>.g.vcf.gz.tbi` | Per-sample GVCF index |
-| `<GATK>-<dataset_id>-<normal_id\|tumor_id>.g.vcf.gz.tbi.sha512` | Per-sample GVCF index checksum |
-| `<GATK>-<dataset_id>-<sample_id>.vcf` | Raw variant calls |
-| `<GATK>-<dataset_id>-<sample_id>.vcf.idx` | Raw variant calls index |
-| `<GATK>-<dataset_id>-<sample_id>_recalibrated-SNP-AND_INDEL.vcf.gz` | SNP and INDEL recalibrated variants |
-| `<GATK>-<dataset_id>-<sample_id>_recalibrated-SNP-AND_INDEL.vcf.gz.sha512` | SNP and INDEL recalibrated variants checksum |
-| `<GATK>-<dataset_id>-<sample_id>_recalibrated-SNP-AND_INDEL.vcf.gz.tbi` | SNP and INDEL recalibrated variants index |
-| `<GATK>-<dataset_id>-<sample_id>_recalibrated-SNP-AND_INDEL.vcf.gz.tbi.sha512` | SNP and INDEL recalibrated variants index checksum |
+| `<aligner>_<GATK>_<dataset_id>_<normal_id>.bam` | Post-processed normal BAM |
+| `<aligner>_<GATK>_<dataset_id>_<normal_id>.bam.bai` | Post-processed normal BAM index |
+| `<aligner>_<GATK>_<dataset_id>_<normal_id>.bam.sha512` | Post-processed normal BAM sha512 checksum |
+| `<aligner>_<GATK>_<dataset_id>_<tumor_id>.bam` | Post-processed tumour BAM if in normal-tumour paired mode |
+| `<aligner>_<GATK>_<dataset_id>_<tumor_id>.bam.bai` | Post-processed tumour BAM index if in normal-tumour paired mode |
+| `<aligner>_<GATK>_<dataset_id>_<tumor_id>.bam.sha512` | Post-processed tumour BAM sha512 checksum if in normal-tumour paired mode |
+| `<GATK>_<dataset_id>_<normal_id\|tumor_id>.g.vcf.gz` | Per-sample GVCF |
+| `<GATK>_<dataset_id>_<normal_id\|tumor_id>.g.vcf.gz.sha512` | Per-sample GVCF checksum |
+| `<GATK>_<dataset_id>_<normal_id\|tumor_id>.g.vcf.gz.tbi` | Per-sample GVCF index |
+| `<GATK>_<dataset_id>_<normal_id\|tumor_id>.g.vcf.gz.tbi.sha512` | Per-sample GVCF index checksum |
+| `<GATK>_<dataset_id>_<sample_id>.vcf` | Raw variant calls |
+| `<GATK>_<dataset_id>_<sample_id>.vcf.idx` | Raw variant calls index |
+| `<GATK>_<dataset_id>_<sample_id>_VQSR-SNP-AND_INDEL.vcf.gz` | SNP and INDEL recalibrated variants |
+| `<GATK>_<dataset_id>_<sample_id>_VQSR-SNP-AND_INDEL.vcf.gz.sha512` | SNP and INDEL recalibrated variants checksum |
+| `<GATK>_<dataset_id>_<sample_id>_VQSR-SNP-AND_INDEL.vcf.gz.tbi` | SNP and INDEL recalibrated variants index |
+| `<GATK>_<dataset_id>_<sample_id>_VQSR-SNP-AND_INDEL.vcf.gz.tbi.sha512` | SNP and INDEL recalibrated variants index checksum |
+| `<GATK>_<dataset_id>_<sample_id>_snv.vcf.gz` | Filtered SNVs with non-germline and ambiguous variants removed |
+| `<GATK>_<dataset_id>_<sample_id>_snv.vcf.gz.tbi` | Filtered germline SNVs index |
+| `<GATK>_<dataset_id>_<sample_id>_snv.vcf.gz.sha512` | Filtered germline SNVs sha512 checksum |
+| `<GATK>_<dataset_id>_<sample_id>_indel.vcf.gz` | Filtered INDELs with non-germline and ambiguous variants removed |
+| `<GATK>_<dataset_id>_<sample_id>_indel.vcf.gz.tbi` | Filtered germline INDELs index |
+| `<GATK>_<dataset_id>_<sample_id>_indel.vcf.gz.sha512` | Filtered germline INDELs sha512 checksum |
 | `report.html`, `timeline.html` and `trace.txt` | Nextflow report, timeline and trace files |
 | `*.command.*` | Process specific logging files created by nextflow |
 
