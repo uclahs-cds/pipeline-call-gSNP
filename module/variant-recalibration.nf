@@ -288,14 +288,7 @@ process filter_gSNP_GATK {
     container params.docker_image_gatkfilter
     publishDir path: "${params.output_dir}/output",
       mode: "copy",
-      pattern: "filtered_germline_*",
-      saveAs: {
-          if (it.contains('_snv_')) { "${output_filename}_snv.${file(it).name.split('\\.').tail().join('.')}" }
-          else if (it.contains('_indel_')) { "${output_filename}_indel.${file(it).name.split('\\.').tail().join('.')}" }
-          else if (it.contains('_variant_class_count_')) { "${output_filename}_variant-class-count.${file(it).name.split('\\.').tail().join('.')}" }
-          else if (it.contains('_genotype_count_')) { "${output_filename}_genotype-count.${file(it).name.split('\\.').tail().join('.')}" }
-          else { "${file(it).name}" }
-      }
+      pattern: "${output_filename}*"
 
     publishDir path: "${params.log_output_dir}/process-log",
       pattern: ".command.*",
@@ -313,12 +306,12 @@ process filter_gSNP_GATK {
 
     output:
     path(".command.*")
-    tuple path("filtered_germline_snv_${sample_id}_nosomatic.vcf.gz"),
-          path("filtered_germline_snv_${sample_id}_nosomatic.vcf.gz.tbi"),
-          path("filtered_germline_indel_${sample_id}_nosomatic.vcf.gz"),
-          path("filtered_germline_indel_${sample_id}_nosomatic.vcf.gz.tbi"), emit: germline_filtered
-    tuple path("filtered_germline_variant_class_count_${sample_id}.tsv"),
-          path("filtered_germline_genotype_count_${sample_id}.tsv"), emit: germline_filtered_tsv
+    tuple path("${output_filename}_snv.vcf.gz"),
+          path("${output_filename}_snv.vcf.gz.tbi"),
+          path("${output_filename}_indel.vcf.gz"),
+          path("${output_filename}_indel.vcf.gz.tbi"), emit: germline_filtered
+    tuple path("${output_filename}_variant-class-count.tsv"),
+          path("${output_filename}_genotype-count.tsv"), emit: germline_filtered_tsv
 
     script:
     identifier_opts = identifiers_options.collect{ "$it" }.join(' ')
@@ -339,6 +332,13 @@ process filter_gSNP_GATK {
         --filter_ambiguous Y \
         --split_calls Y \
         --output_dir `pwd`
+
+    mv filtered_germline_snv_${sample_id}_nosomatic.vcf.gz ${output_filename}_snv.vcf.gz
+    mv filtered_germline_snv_${sample_id}_nosomatic.vcf.gz.tbi ${output_filename}_snv.vcf.gz.tbi
+    mv filtered_germline_indel_${sample_id}_nosomatic.vcf.gz ${output_filename}_indel.vcf.gz
+    mv filtered_germline_indel_${sample_id}_nosomatic.vcf.gz.tbi ${output_filename}_indel.vcf.gz.tbi
+    mv filtered_germline_variant_class_count_${sample_id}.tsv ${output_filename}_variant-class-count.tsv
+    mv filtered_germline_genotype_count_${sample_id}.tsv ${output_filename}_genotype-count.tsv
     """
 }
 
