@@ -121,8 +121,8 @@ workflow recalibrate_base {
       .flatten()
       .map{ it -> [
         it.baseName.split("_recalibrated-")[-1].split(".bam")[0], // interval number
-        it.baseName.split("_")[2].split("-")[0..-2].join("-"), // sample id
-        it.baseName.split("_")[2].split("-")[-1], // sample type
+        it.baseName.split("_")[3].split("-")[0..-2].join("-"), // sample id
+        it.baseName.split("_")[3].split("-")[-1], // sample type
         it
         ]}
       .groupTuple(by: [0,1]) // Group by sample and interval to match BAM and BAI
