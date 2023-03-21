@@ -40,7 +40,7 @@ include {
             ]
         )
 include { flatten_samples } from './functions.nf'
-include { delete_input } from './workflow-delete-input.nf'
+include { delete_input } from './workflow-delete-input.nf' addParams(log_input_deletion: "${params.log_output_dir}/process-log/multi_sample_targeted")
 
 workflow multi_sample_targeted {
     take:

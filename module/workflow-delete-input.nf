@@ -4,7 +4,7 @@ include { remove_intermediate_files } from '../external/nextflow-module/modules/
     options: [
         save_intermediate_files: !params.metapipeline_delete_input_bams || params.save_intermediate_files,
         output_dir: params.output_dir,
-        log_output_dir: "${params.log_output_dir}/process-log/multi_sample_targeted"
+        log_output_dir: params.log_input_deletion
         ]
     )
 
@@ -18,11 +18,17 @@ process check_deletion_status {
     container params.docker_image_validate
     containerOptions "--volume ${params.final_metapipeline_output_dir.split('/')[0..1].join('/')}:${params.final_metapipeline_output_dir.split('/')[0..1].join('/')}"
 
+    publishDir path: "${params.log_output_dir}/process-log",
+        pattern: ".command.*",
+        mode: "copy",
+        saveAs: { "${task.process.replace(':', '/')}-${id}/log${file(it).getName()}" }
+
     input:
     path(file_to_check)
 
     output:
     path(file_to_check), emit: file_to_delete
+    path(".command.*")
 
     when:
     params.metapipeline_delete_input_bams

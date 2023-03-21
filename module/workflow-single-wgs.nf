@@ -32,7 +32,7 @@ include {
             log_output_dir: "${params.log_output_dir}/process-log/single_sample_wgs"
             ]
         )
-include { delete_input } from './workflow-delete-input.nf'
+include { delete_input } from './workflow-delete-input.nf' addParams(log_input_deletion: "${params.log_output_dir}/process-log/single_sample_wgs")
 
 workflow single_sample_wgs {
     take:
