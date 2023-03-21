@@ -29,7 +29,7 @@ process check_deletion_status {
     script:
     """
     FILE_NAME=`basename ${file_to_check}`
-    FINAL_PATH_TO_CHECK=`ls ${params.final_metapipeline_output_dir}/output/align-DNA-*/*/BWA-MEM2-*/output/\$FILE_NAME`
+    FINAL_PATH_TO_CHECK=`ls ${params.final_metapipeline_output_dir}/\$FILE_NAME`
 
     EXPECTED_SIZE=`stat --printf="%s" ${file_to_check}`
     COPIED_SIZE=`stat --printf="%s" \$FINAL_PATH_TO_CHECK`
