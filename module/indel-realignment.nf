@@ -140,11 +140,12 @@ process run_IndelRealigner_GATK {
     has_unmapped = (interval_id == '0000') ? true : false
     combined_interval_options = "--intervals ${scatter_intervals} ${unmapped_interval_option}"
     output_filename = generate_standard_filename(
-        "GATK-${params.gatk_version}",
+        params.aligner,
         params.dataset_id,
         sample_id[0],
         [
-            'additional_information': "indelrealigned_${interval_id}"
+            'additional_information': "indelrealigned_${interval_id}",
+            'additional_tools': ["GATK-${params.gatk3_version.split('-')[1]}"]
         ]
     )
     """
