@@ -61,6 +61,7 @@ workflow single_sample_wgs {
         .map{ it -> [it[3], it[5]]}
         .flatten()
         .filter{ !it.endsWith('NO_FILE.bam') }
+        .unique()
         .set{ input_files }
 
     realign_indels.out.includes_unmapped

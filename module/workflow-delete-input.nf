@@ -16,6 +16,7 @@ include { remove_intermediate_files } from '../external/nextflow-module/modules/
 */
 process check_deletion_status {
     container params.docker_image_validate
+    containerOptions "--volume ${params.final_metapipeline_output_dir.split('/')[0..1].join('/')}:${params.final_metapipeline_output_dir.split('/')[0..1].join('/')}"
 
     input:
     path(file_to_check)
@@ -26,12 +27,21 @@ process check_deletion_status {
     when:
     params.metapipeline_delete_input_bams
 
+    debug true
+
     script:
     """
+    set -euo pipefail
+
     FILE_NAME=`basename ${file_to_check}`
+    until ls ${params.final_metapipeline_output_dir}/\$FILE_NAME &> /dev/null
+    do
+        sleep 30
+    done
+
     FINAL_PATH_TO_CHECK=`ls ${params.final_metapipeline_output_dir}/\$FILE_NAME`
 
-    EXPECTED_SIZE=`stat --printf="%s" ${file_to_check}`
+    EXPECTED_SIZE=`stat --printf="%s" \$(readlink ${file_to_check})`
     COPIED_SIZE=`stat --printf="%s" \$FINAL_PATH_TO_CHECK`
 
     while [ \$EXPECTED_SIZE != \$COPIED_SIZE ]
@@ -47,6 +57,7 @@ workflow delete_input {
     files_to_delete
 
     main:
+    files_to_delete.view()
     check_deletion_status(files_to_delete)
 
     remove_intermediate_files(
