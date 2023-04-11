@@ -63,7 +63,6 @@ workflow delete_input {
     files_to_delete
 
     main:
-    files_to_delete.view()
     check_deletion_status(files_to_delete)
 
     remove_intermediate_files(
