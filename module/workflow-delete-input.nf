@@ -33,8 +33,6 @@ process check_deletion_status {
     when:
     params.metapipeline_delete_input_bams
 
-    debug true
-
     script:
     """
     set -euo pipefail
