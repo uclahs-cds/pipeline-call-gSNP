@@ -1,3 +1,4 @@
+include { generate_standard_filename } from '../external/nextflow-module/modules/common/generate_standardized_filename/main.nf'
 /*
     Nextflow module for generating base recalibration table
 
@@ -104,7 +105,7 @@ process run_ApplyBQSR_GATK {
     publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}",
       mode: "copy",
       enabled: params.save_intermediate_files,
-      pattern: "*_recalibrated_*",
+      pattern: "*_recalibrated-*",
       saveAs: { filename -> (file(filename).getExtension() == "bai") ? "${file(filename).baseName}.bam.bai" : "${filename}" }
 
     publishDir path: "${params.log_output_dir}/process-log",
@@ -125,8 +126,8 @@ process run_ApplyBQSR_GATK {
 
     output:
     path(".command.*")
-    tuple path("*_recalibrated_${interval_id}.bam"),
-          path("*_recalibrated_${interval_id}.bai"), emit: apply_bqsr_och
+    tuple path("*_recalibrated-${interval_id}.bam"),
+          path("*_recalibrated-${interval_id}.bai"), emit: apply_bqsr_och
     tuple path(indelrealigned_bam),
           path(indelrealigned_bam_index), emit: deletion_och
 
@@ -145,7 +146,7 @@ process run_ApplyBQSR_GATK {
         --read-filter SampleReadFilter \\
         ${combined_interval_options} \\
         --emit-original-quals ${params.is_emit_original_quals} \\
-        --output ${it}_recalibrated_${interval_id}.bam \\
+        --output ${generate_standard_filename(params.aligner, params.dataset_id, it, ['additional_tools': ["GATK-${params.gatk_version}"]])}_recalibrated-${interval_id}.bam \\
         --sample ${it.split("-")[0..-2].join("-")}
       """
       }

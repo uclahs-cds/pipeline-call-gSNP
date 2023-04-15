@@ -1,3 +1,4 @@
+include { generate_standard_filename } from '../external/nextflow-module/modules/common/generate_standardized_filename/main.nf'
 /*
     Nextflow module for reheadering BAM files
 
@@ -19,7 +20,7 @@ process run_reheader_SAMtools {
     publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}",
         mode: "copy",
         enabled: params.save_intermediate_files,
-        pattern: "*_reheadered_*"
+        pattern: "*reheadered*"
 
     publishDir path: "${params.log_output_dir}/process-log",
         pattern: ".command.*",
@@ -32,7 +33,7 @@ process run_reheader_SAMtools {
 
     output:
     path(".command.*")
-    tuple val(id), path("${id}_recalibrated_reheadered_${interval_id}.bam"), emit: bam_reheadered
+    tuple val(id), path(output_file_name), emit: bam_reheadered
     path(interval), emit: associated_interval
     path(bam), emit: bam_for_deletion
     path(bam_index), emit: bam_index_for_deletion
@@ -40,13 +41,23 @@ process run_reheader_SAMtools {
     script:
     // Get split interval number to serve as task ID
     interval_id = interval.baseName.split('-')[0]
+    output_file_name = generate_standard_filename(
+        params.aligner,
+        params.dataset_id,
+        id,
+        [
+            'additional_tools': ["GATK-${params.gatk_version}"],
+            'additional_information': "recalibrated_reheadered_${interval_id}.bam"
+        ]
+    )
+    id_generalized = id.replace('-', '[-,_]')
     """
     set -euo pipefail
 
     samtools reheader \
-        -c 'sed "/^@RG/! s/.*/keep&/" | sed "/^@RG/ s/.*SM:${id}\$/keep&/" | sed "/^@RG/ s/.*SM:${id}\t/keep&/" | grep "^keep" | sed "s/^keep//g"' \
+        -c 'sed "/^@RG/! s/.*/keep&/" | sed "/^@RG/ s/.*SM:${id_generalized}\$/keep&/" | sed "/^@RG/ s/.*SM:${id_generalized}\t/keep&/" | grep "^keep" | sed "s/^keep//g"' \
         ${bam} \
-        > ${id}_recalibrated_reheadered_${interval_id}.bam
+        > ${output_file_name}
     """
 }
 
@@ -72,7 +83,7 @@ process deduplicate_records_SAMtools {
     container params.docker_image_samtools
     publishDir path: "${params.output_dir}/output",
         mode: "copy",
-        pattern: "*_merged_dedup*"
+        pattern: "${output_file_name}.bam"
 
     publishDir path: "${params.log_output_dir}/process-log",
         pattern: ".command.*",
@@ -85,10 +96,18 @@ process deduplicate_records_SAMtools {
 
     output:
     path(".command.*")
-    tuple val(id), path("${id}_realigned_recalibrated_merged_dedup.bam"), emit: merged_bam
+    tuple val(id), path("${output_file_name}.bam"), emit: merged_bam
     path(bam), emit: bam_for_deletion
 
     script:
+    output_file_name = generate_standard_filename(
+        params.aligner,
+        params.dataset_id,
+        id,
+        [
+            'additional_tools': ["GATK-${params.gatk_version}"]
+        ]
+    )
     """
     samtools view \
         -h \
@@ -96,7 +115,7 @@ process deduplicate_records_SAMtools {
         awk '(\$1 \$2 \$3 \$4 \$5 \$6 \$7 \$8 \$9 \$10 \$11)!=f_p && NR>1 {print f} {f=\$0} {f_p=(\$1 \$2 \$3 \$4 \$5 \$6 \$7 \$8 \$9 \$10 \$11)} END {print f}' | \
         samtools view \
         -b \
-        -o ${id}_realigned_recalibrated_merged_dedup.bam
+        -o ${output_file_name}.bam
     """
 }
 
@@ -118,7 +137,7 @@ process run_index_SAMtools {
     publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}",
         mode: "copy",
         enabled: params.save_intermediate_files && !params.is_dedup_bam,
-        pattern: "*_reheadered_*"
+        pattern: "*reheadered*"
 
     publishDir path: "${params.output_dir}/output",
         mode: "copy",
@@ -170,7 +189,7 @@ process run_MergeSamFiles_Picard {
     publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}",
         mode: "copy",
         enabled: params.save_intermediate_files,
-        pattern: "*_merged*"
+        pattern: "*merged*"
 
     publishDir path: "${params.log_output_dir}/process-log",
         pattern: ".command.*",
@@ -183,17 +202,26 @@ process run_MergeSamFiles_Picard {
 
     output:
     path(".command.*")
-    path("${id}_realigned_recalibrated_merged.bam"), emit: merged_bam
+    path(output_file_name), emit: merged_bam
     val(id), emit: associated_id
 
     script:
     all_bams = bams.collect{ "-INPUT '$it'" }.join(' ')
+    output_file_name = generate_standard_filename(
+        params.aligner,
+        params.dataset_id,
+        id,
+        [
+            'additional_tools': ["GATK-${params.gatk_version}"],
+            'additional_information': "realigned_recalibrated_merged.bam"
+        ]
+    )
     """
     set -euo pipefail
     java -Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -Djava.io.tmpdir=${workDir} \
         -jar /usr/local/share/picard-slim-2.26.10-0/picard.jar MergeSamFiles \
         ${all_bams} \
-        -OUTPUT ${id}_realigned_recalibrated_merged.bam \
+        -OUTPUT ${output_file_name} \
         -SORT_ORDER coordinate \
         -ASSUME_SORTED false \
         -USE_THREADING true \

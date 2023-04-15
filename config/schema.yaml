@@ -7,6 +7,14 @@ sample_id:
   type: 'String'
   required: true
   help: 'Sample ID'
+dataset_id:
+  type: 'String'
+  required: true
+  help: 'Dataset ID'
+aligner:
+  type: 'AlignerTool'
+  required: true
+  help: 'Aligner used to align input BAMs. Provided as <Aligner>-<Aligner-version>'
 output_dir:
   type: 'Path'
   mode: 'w'
