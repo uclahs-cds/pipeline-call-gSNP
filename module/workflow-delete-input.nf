@@ -8,6 +8,17 @@ include { remove_intermediate_files } from '../external/nextflow-module/modules/
         ]
     )
 
+String get_root_directory(String directory) {
+    Path root_directory = new File(directory).toPath()
+
+    // Keep traversing parent directories until only the root directory is left
+    while (root_directory.getParent().getParent()) {
+        root_directory = root_directory.getParent()
+    }
+
+    return root_directory
+}
+
 /*
     Nextflow process to check if given input can be deleted.
 
@@ -16,7 +27,7 @@ include { remove_intermediate_files } from '../external/nextflow-module/modules/
 */
 process check_deletion_status {
     container params.docker_image_validate
-    containerOptions "--volume ${params.final_metapipeline_output_dir.split('/')[0..1].join('/')}:${params.final_metapipeline_output_dir.split('/')[0..1].join('/')}"
+    containerOptions "--volume ${get_root_directory(params.final_metapipeline_output_dir)}:${get_root_directory(params.final_metapipeline_output_dir)}"
 
     publishDir path: "${params.log_output_dir}/process-log",
         pattern: ".command.*",
@@ -38,12 +49,12 @@ process check_deletion_status {
     set -euo pipefail
 
     FILE_NAME=`basename ${file_to_check}`
-    until ls ${params.final_metapipeline_output_dir}/\$FILE_NAME &> /dev/null
+    until [ -f ${params.final_metapipeline_output_dir}/\$FILE_NAME ]
     do
         sleep 30
     done
 
-    FINAL_PATH_TO_CHECK=`ls ${params.final_metapipeline_output_dir}/\$FILE_NAME`
+    FINAL_PATH_TO_CHECK="${params.final_metapipeline_output_dir}/\$FILE_NAME"
 
     EXPECTED_SIZE=`stat --printf="%s" \$(readlink ${file_to_check})`
     COPIED_SIZE=`stat --printf="%s" \$FINAL_PATH_TO_CHECK`
