@@ -43,7 +43,7 @@ include {
     flatten_samples as flatten_samples_vcf_calling
     flatten_samples as flatten_samples_gvcf_calling
     } from './functions.nf'
-include { delete_input } from './workflow-delete-input.nf' addParams(log_input_deletion: "${params.log_output_dir}/process-log/multi_sample_wgs")
+include { delete_input } from './workflow-delete-input.nf' addParams(log_input_deletion_dir: "${params.log_output_dir}/process-log/multi_sample_wgs")
 
 workflow multi_sample_wgs {
     take:
