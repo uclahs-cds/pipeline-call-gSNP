@@ -27,7 +27,7 @@ String get_root_directory(String directory) {
 */
 process check_deletion_status {
     container params.docker_image_validate
-    containerOptions "--volume ${get_root_directory(params.final_metapipeline_output_dir)}:${get_root_directory(params.final_metapipeline_output_dir)}"
+    containerOptions "--volume ${get_root_directory(params.metapipeline_final_output_dir)}:${get_root_directory(params.metapipeline_final_output_dir)}"
 
     publishDir path: "${params.log_output_dir}/process-log",
         pattern: ".command.*",
@@ -38,7 +38,7 @@ process check_deletion_status {
     path(file_to_check)
 
     output:
-    path(file_to_check), emit: file_to_delete
+    tuple path(file_to_check), env(DELETE_INPUT), emit: file_to_delete
     path(".command.*")
 
     when:
@@ -49,21 +49,28 @@ process check_deletion_status {
     set -euo pipefail
 
     FILE_NAME=`basename ${file_to_check}`
-    until [ -f ${params.final_metapipeline_output_dir}/\$FILE_NAME ]
+    until [ -f ${params.metapipeline_final_output_dir}/\$FILE_NAME ]
     do
         sleep 30
     done
 
-    FINAL_PATH_TO_CHECK="${params.final_metapipeline_output_dir}/\$FILE_NAME"
+    EXPECTED_PATH_TO_CHECK="\$(readlink ${file_to_check})"
+    FINAL_PATH_TO_CHECK="${params.metapipeline_final_output_dir}/\$FILE_NAME"
 
-    EXPECTED_SIZE=`stat --printf="%s" \$(readlink ${file_to_check})`
-    COPIED_SIZE=`stat --printf="%s" \$FINAL_PATH_TO_CHECK`
-
-    while [ \$EXPECTED_SIZE != \$COPIED_SIZE ]
-    do
-        sleep 30
+    if [[ "\$EXPECTED_PATH_TO_CHECK" == "\$FINAL_PATH_TO_CHECK" ]]
+    then
+        DELETE_INPUT='false'
+    else
+        EXPECTED_SIZE=`stat --printf="%s" \$EXPECTED_PATH_TO_CHECK`
         COPIED_SIZE=`stat --printf="%s" \$FINAL_PATH_TO_CHECK`
-    done
+
+        while [ \$EXPECTED_SIZE != \$COPIED_SIZE ]
+        do
+            sleep 30
+            COPIED_SIZE=`stat --printf="%s" \$FINAL_PATH_TO_CHECK`
+        done
+        DELETE_INPUT='true'
+    fi
     """
 }
 
@@ -74,8 +81,13 @@ workflow delete_input {
     main:
     check_deletion_status(files_to_delete)
 
+    check_deletion_status.out.file_to_delete
+        .filter{ it[1] == 'true' }
+        .map{ it -> it[0] }
+        .set{ files_to_delete }
+
     remove_intermediate_files(
-        check_deletion_status.out.file_to_delete,
+        files_to_delete,
         "ready_to_delete"
         )
 }
