@@ -74,6 +74,12 @@ process check_deletion_status {
     """
 }
 
+/*
+    Delete pipeline input files.
+    Intended to delete pipeline input files when call-gSNP is run within a metapipeline.
+    Requires metapipeline_delete_input_bams and metapipeline_final_output_dir params to be set.
+    Deletes the input files (that reside in /scratch) once they're been copied to the final metapipeline output destination.
+*/
 workflow delete_input {
     take:
     files_to_delete
