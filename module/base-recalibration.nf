@@ -138,7 +138,7 @@ process run_ApplyBQSR_GATK {
     combined_interval_options = "--intervals ${interval} ${unmapped_interval_option}"
     all_commands = id.collect{
       """
-      gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=/scratch" \\
+      gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=${workDir}" \\
         ApplyBQSR \\
         --input ${indelrealigned_bam} \\
         --bqsr-recal-file ${it.split("-")[0..-2].join("-")}_recalibration_table.grp \\

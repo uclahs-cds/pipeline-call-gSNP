@@ -8,6 +8,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ---
 
 ## [Unreleased]
+### Added
+- Option to delete input data files for metapipeline disk usage optimization
 ### Changed
 - Standardize output file names
 
