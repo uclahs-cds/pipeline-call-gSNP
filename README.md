@@ -21,7 +21,7 @@ This pipeline takes BAM and BAM index from [pipeline-align-DNA](https://github.c
 
 **The pipeline is currently configured to run on a SINGLE NODE mode with normal only, tumour only, normal-tumour paired, or single normal-multiple tumour samples.**
 
-1. Update the params section of the .config file (Example config in pipeline/config/call-gSNP.config).
+1. Update the params section of the .config file ([Example config](config/template.config)).
 
 2. Update the input CSV or YAML. For CSV, add the path to the config.
 
