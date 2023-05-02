@@ -215,9 +215,9 @@ For inputs with one normal sample and multiple tumour samples, add rows. Keep th
 
 Authors: Yash Patel (YashPatel@mednet.ucla.edu), Shu Tao (shutao@mednet.ucla.edu), Stefan Eng (stefaneng@mednet.ucla.edu)
 
-Call-gSNP-DSL2 is licensed under the GNU General Public License version 2. See the file LICENSE for the terms of the GNU GPL license.
+Call-gSNP is licensed under the GNU General Public License version 2. See the file LICENSE for the terms of the GNU GPL license.
 
-Call-gSNP-DSL2 takes BAM files and utilizes GATK to call short germline variants (SNP and INDEL).
+Call-gSNP takes BAM files and utilizes GATK to call short germline variants (SNP and INDEL).
 
 Copyright (C) 2021-2023 University of California Los Angeles ("Boutros Lab") All rights reserved.
 
