@@ -9,7 +9,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 ### Changed
-- Set default compression for GATK IndelRealignment to 1
+- Set default compression for `GATK IndelRealignment` to 1
 
 ---
 
