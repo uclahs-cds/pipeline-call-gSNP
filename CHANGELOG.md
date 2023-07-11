@@ -8,6 +8,30 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ---
 
 ## [Unreleased]
+### Added
+- Save tumor segmentation QC output from `CalculateContamination`
+### Changed
+- Set default compression for `GATK IndelRealignment` to 1
+
+---
+
+## [10.0.0-rc.1] - 2023-05-01
+### Added
+- Option to delete input data files for metapipeline disk usage optimization
+### Changed
+- Standardize output file names
+
+---
+
+## [9.2.1] - 2023-01-25
+### Fixed
+- Remove duplicated records based on only 11 required fields of each record
+
+---
+
+## [9.2.0] - 2022-11-18
+### Added
+- `F32.config` for resource allocation
 ### Changed
 - Use external resource allocation module
 - Parameterize Docker registry

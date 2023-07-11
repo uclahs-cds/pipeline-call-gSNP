@@ -1,3 +1,4 @@
+include { generate_standard_filename } from '../external/nextflow-module/modules/common/generate_standardized_filename/main.nf'
 /*
     Nextflow module for generating INDEL variant recalibration
 
@@ -23,11 +24,11 @@ process run_VariantRecalibratorINDEL_GATK {
     publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}",
       mode: "copy",
       enabled: params.save_intermediate_files,
-      pattern: "*_output_indel.{recal*,tranches}"
+      pattern: "*_output-indel.{recal*,tranches}"
 
     publishDir path: "${params.output_dir}/QC/${task.process.replace(':', '/')}",
       mode: "copy",
-      pattern: "*_output_indel.{plots*}"
+      pattern: "*_output-indel.{plots*}"
 
     publishDir path: "${params.log_output_dir}/process-log",
       pattern: ".command.*",
@@ -47,17 +48,23 @@ process run_VariantRecalibratorINDEL_GATK {
 
     output:
     path(".command.*")
-    path("${sample_id}_output_indel.plots.R")
-    path("${sample_id}_output_indel.plots.R.pdf")
+    path("${output_filename}_output-indel.plots.R")
+    path("${output_filename}_output-indel.plots.R.pdf")
     tuple path(sample_vcf),
           path(sample_vcf_tbi),
-          path("${sample_id}_output_indel.recal"),
-          path("${sample_id}_output_indel.recal.idx"),
-          path("${sample_id}_output_indel.tranches"),
+          path("${output_filename}_output-indel.recal"),
+          path("${output_filename}_output-indel.recal.idx"),
+          path("${output_filename}_output-indel.tranches"),
           val(sample_id), emit: indel_recal
 
     script:
     variable_mode_options = params.is_NT_paired ? "--use-annotation MQRankSum --use-annotation ReadPosRankSum" : ""
+    output_filename = generate_standard_filename(
+        "GATK-${params.gatk_version}",
+        params.dataset_id,
+        sample_id,
+        [:]
+    )
     """
     set -euo pipefail
 
@@ -70,15 +77,15 @@ process run_VariantRecalibratorINDEL_GATK {
             --use-annotation FS \
             ${variable_mode_options} \
             --mode INDEL \
-            --tranches-file ${sample_id}_output_indel.tranches \
-            --output ${sample_id}_output_indel.recal \
+            --tranches-file ${output_filename}_output-indel.tranches \
+            --output ${output_filename}_output-indel.recal \
             --truth-sensitivity-tranche 100.0 \
             --truth-sensitivity-tranche 99.9 \
             --truth-sensitivity-tranche 99.0 \
             --truth-sensitivity-tranche 90.0 \
             --max-gaussians 2 \
             --max-attempts 5 \
-            --rscript-file ${sample_id}_output_indel.plots.R
+            --rscript-file ${output_filename}_output-indel.plots.R
     """
 }
 
@@ -111,11 +118,11 @@ process run_VariantRecalibratorSNP_GATK {
     publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}",
       mode: "copy",
       enabled: params.save_intermediate_files,
-      pattern: "*_output_snp.{recal*,tranches}"
+      pattern: "*_output-snp.{recal*,tranches}"
 
     publishDir path: "${params.output_dir}/QC/${task.process.replace(':', '/')}",
       mode: "copy",
-      pattern: "*_output_snp.{plots*,tranches.pdf}"
+      pattern: "*_output-snp.{plots*,tranches.pdf}"
 
     publishDir path: "${params.log_output_dir}/process-log",
       pattern: ".command.*",
@@ -141,18 +148,24 @@ process run_VariantRecalibratorSNP_GATK {
 
     output:
     path(".command.*")
-    path("${sample_id}_output_snp.plots.R")
-    path("${sample_id}_output_snp.plots.R.pdf")
-    path("${sample_id}_output_snp.tranches.pdf")
+    path("${output_filename}_output-snp.plots.R")
+    path("${output_filename}_output-snp.plots.R.pdf")
+    path("${output_filename}_output-snp.tranches.pdf")
     tuple path(sample_vcf),
           path(sample_vcf_tbi),
-          path("${sample_id}_output_snp.recal"),
-          path("${sample_id}_output_snp.recal.idx"),
-          path("${sample_id}_output_snp.tranches"),
+          path("${output_filename}_output-snp.recal"),
+          path("${output_filename}_output-snp.recal.idx"),
+          path("${output_filename}_output-snp.tranches"),
           val(sample_id), emit: snp_recal
 
     script:
     variable_mode_options = params.is_NT_paired ? "--use-annotation MQRankSum --use-annotation ReadPosRankSum" : ""
+    output_filename = generate_standard_filename(
+        "GATK-${params.gatk_version}",
+        params.dataset_id,
+        sample_id,
+        [:]
+    )
     """
     set -euo pipefail
 
@@ -170,15 +183,15 @@ process run_VariantRecalibratorSNP_GATK {
         --use-annotation MQ \
         ${variable_mode_options} \
         --mode SNP \
-        --tranches-file ${sample_id}_output_snp.tranches \
-        --output ${sample_id}_output_snp.recal \
+        --tranches-file ${output_filename}_output-snp.tranches \
+        --output ${output_filename}_output-snp.recal \
         --truth-sensitivity-tranche 100.0 \
         --truth-sensitivity-tranche 99.9 \
         --truth-sensitivity-tranche 99.0 \
         --truth-sensitivity-tranche 90.0 \
         --max-gaussians 4 \
         --max-attempts 5 \
-        --rscript-file ${sample_id}_output_snp.plots.R
+        --rscript-file ${output_filename}_output-snp.plots.R
     """
 }
 
@@ -205,11 +218,11 @@ process run_ApplyVQSR_GATK {
     publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}/",
       mode: "copy",
       enabled: params.save_intermediate_files,
-      pattern: "*_merged_recalibrated_SNP.vcf.gz{,.tbi}"
+      pattern: "*-SNP.vcf.gz{,.tbi}"
 
     publishDir path: "${params.output_dir}/output/",
       mode: "copy",
-      pattern: "*_merged_recalibrated_SNP_AND_INDEL.vcf.gz{,.tbi}"
+      pattern: "*SNP-AND-INDEL.vcf.gz{,.tbi}"
 
     publishDir path: "${params.log_output_dir}/process-log",
       pattern: ".command.*",
@@ -227,11 +240,19 @@ process run_ApplyVQSR_GATK {
 
     output:
     path(".command.*")
-    path("${sample_id}_merged_recalibrated_${suffix}.vcf.gz"), emit: vcf
-    path("${sample_id}_merged_recalibrated_${suffix}.vcf.gz.tbi"), emit: vcf_index
+    path(output_filename), emit: vcf
+    path("${output_filename}.tbi"), emit: vcf_index
     val(sample_id), emit: associated_id
 
     script:
+    output_filename = generate_standard_filename(
+        "GATK-${params.gatk_version}",
+        params.dataset_id,
+        sample_id,
+        [
+            'additional_information': "VQSR_${suffix}.vcf.gz"
+        ]
+    )
     """
     set -euo pipefail
     gatk --java-options "-DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=${workDir}" \
@@ -242,7 +263,7 @@ process run_ApplyVQSR_GATK {
            --ts-filter-level 99 \
            --tranches-file ${tranches_file} \
            --recal-file ${recal_file} \
-           --output ${sample_id}_merged_recalibrated_${suffix}.vcf.gz
+           --output ${output_filename}
     """
 }
 
@@ -267,7 +288,7 @@ process filter_gSNP_GATK {
     container params.docker_image_gatkfilter
     publishDir path: "${params.output_dir}/output",
       mode: "copy",
-      pattern: "filtered_germline_*"
+      pattern: "${output_filename}*"
 
     publishDir path: "${params.log_output_dir}/process-log",
       pattern: ".command.*",
@@ -285,15 +306,21 @@ process filter_gSNP_GATK {
 
     output:
     path(".command.*")
-    tuple path("filtered_germline_snv_${sample_id}_nosomatic.vcf.gz"),
-          path("filtered_germline_snv_${sample_id}_nosomatic.vcf.gz.tbi"),
-          path("filtered_germline_indel_${sample_id}_nosomatic.vcf.gz"),
-          path("filtered_germline_indel_${sample_id}_nosomatic.vcf.gz.tbi"), emit: germline_filtered
-    tuple path("filtered_germline_variant_class_count_${sample_id}.tsv"),
-          path("filtered_germline_genotype_count_${sample_id}.tsv"), emit: germline_filtered_tsv
+    tuple path("${output_filename}_snv.vcf.gz"),
+          path("${output_filename}_snv.vcf.gz.tbi"),
+          path("${output_filename}_indel.vcf.gz"),
+          path("${output_filename}_indel.vcf.gz.tbi"), emit: germline_filtered
+    tuple path("${output_filename}_variant-class-count.tsv"),
+          path("${output_filename}_genotype-count.tsv"), emit: germline_filtered_tsv
 
     script:
     identifier_opts = identifiers_options.collect{ "$it" }.join(' ')
+    output_filename = generate_standard_filename(
+        "GATK-${params.gatk_version}",
+        params.dataset_id,
+        sample_id,
+        [:]
+    )
     """
     set -euo pipefail
     /src/NGS-Tools-GATK/bin/filter_GATK_SNV_calls.pl \
@@ -305,6 +332,13 @@ process filter_gSNP_GATK {
         --filter_ambiguous Y \
         --split_calls Y \
         --output_dir `pwd`
+
+    mv filtered_germline_snv_${sample_id}_nosomatic.vcf.gz ${output_filename}_snv.vcf.gz
+    mv filtered_germline_snv_${sample_id}_nosomatic.vcf.gz.tbi ${output_filename}_snv.vcf.gz.tbi
+    mv filtered_germline_indel_${sample_id}_nosomatic.vcf.gz ${output_filename}_indel.vcf.gz
+    mv filtered_germline_indel_${sample_id}_nosomatic.vcf.gz.tbi ${output_filename}_indel.vcf.gz.tbi
+    mv filtered_germline_variant_class_count_${sample_id}.tsv ${output_filename}_variant-class-count.tsv
+    mv filtered_germline_genotype_count_${sample_id}.tsv ${output_filename}_genotype-count.tsv
     """
 }
 

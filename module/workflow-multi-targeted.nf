@@ -40,6 +40,7 @@ include {
             ]
         )
 include { flatten_samples } from './functions.nf'
+include { delete_input } from './workflow-delete-input.nf' addParams(log_input_deletion_dir: "${params.log_output_dir}/process-log/multi_sample_targeted")
 
 workflow multi_sample_targeted {
     take:
@@ -66,7 +67,25 @@ workflow multi_sample_targeted {
         ir_input,
         ir_input_no_interval
         )
-    
+
+    ir_input
+        .map{ it -> [it[3], it[5]]}
+        .flatten()
+        .filter{ !it.endsWith('NO_FILE.bam') }
+        .unique()
+        .set{ input_files }
+
+    realign_indels.out.includes_unmapped
+        .collect()
+        .set{ ir_complete_signal }
+
+    input_files
+        .combine(ir_complete_signal)
+        .map{ it[0] }
+        .set{ input_files_to_delete }
+
+    delete_input(input_files_to_delete)
+
     base_recal_intervals = params.intervals
 
     recalibrate_base(
