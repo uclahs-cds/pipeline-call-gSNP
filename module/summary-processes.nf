@@ -104,6 +104,7 @@ process run_CalculateContamination_GATK {
 
     output:
     path(".command.*")
+    path("*-tumor-segmentation.table")
     path("*_alone.table"), emit: contamination
     path("*_with-matched-normal.table"), emit: tumour_normal_matched_contamination optional true
 
@@ -120,7 +121,8 @@ process run_CalculateContamination_GATK {
     gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=${workDir}" \
         CalculateContamination \
         --input ${pileupsummaries} \
-        --output ${single_output_filename}_alone.table
+        --output ${single_output_filename}_alone.table \
+        --tumor-segmentation ${single_output_filename}_alone-tumor-segmentation.table
 
     if ${calc_matched}
     then
@@ -128,7 +130,8 @@ process run_CalculateContamination_GATK {
           CalculateContamination \
           --input ${pileupsummaries} \
           --matched-normal ${matched_normal_pileupsummaries} \
-          --output ${single_output_filename}_with-matched-normal.table
+          --output ${single_output_filename}_with-matched-normal.table \
+          --tumor-segmentation ${single_output_filename}_with-matched-normal-tumor-segmentation.table
     fi
     """
 }

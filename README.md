@@ -87,7 +87,7 @@ Merge BAMs from each interval to generate whole sample BAM.
 Summarizes counts of reads that support reference, alternate and other alleles for given sites. Results will be used in the next Calculate Contamination step.
 
 ### 9. Calculate contamination
-Calculates the fraction of reads coming from cross-sample contamination, given results from Step 8.
+Calculates the fraction of reads coming from cross-sample contamination, given results from Step 8. Generates a tumor segmentation file.
 
 ### 10.	DepthOfCoverage
 Calculate depth of coverage using the whole sample BAM from step 7.
