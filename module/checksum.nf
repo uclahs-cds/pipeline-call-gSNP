@@ -2,16 +2,16 @@
   Nextflow module for calculating SHA512 checksum
 
   input:
-      file_for_calc: path to file for whichc to calculate checksum
+      file_for_calc: path to file for which to calculate checksum
 
   params:
-      params.output_dir: string(path)
+      params.output_dir_base: string(path)
       params.log_output_dir: string(path)
-      params.docker_image_validate: string
+      params.docker_image_pipeval: string
 */
 process calculate_sha512 {
-    container params.docker_image_validate
-    publishDir path: "${params.output_dir}/output",
+    container params.docker_image_pipeval
+    publishDir path: "${params.output_dir_base}/output",
       mode: "copy",
       pattern: "*.sha512",
       saveAs: { filename -> (filename.endsWith(".bai.sha512") && !filename.endsWith(".bam.bai.sha512")) ? "${file(file(filename).baseName).baseName}.bam.bai.sha512" : "${filename}"}

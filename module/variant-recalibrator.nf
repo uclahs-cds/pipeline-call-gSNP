@@ -1,4 +1,4 @@
-include { generate_standard_filename } from '../external/nextflow-module/modules/common/generate_standardized_filename/main.nf'
+include { generate_standard_filename } from '../external/pipeline-Nextflow-module/modules/common/generate_standardized_filename/main.nf'
 /*
     Nextflow module for generating INDEL variant recalibration
 
@@ -8,25 +8,24 @@ include { generate_standard_filename } from '../external/nextflow-module/modules
         reference_fasta_dict: path to dictionary for reference fasta
         bundle_mills_and_1000g_gold_standards_vcf_gz: path to standard Mills and 1000 genomes variants
         bundle_mills_and_1000g_gold_standards_vcf_gz_tbi: path to index file for Mills and 1000g variants
-        (sample_id, normal_id, tumour_id): tuples of string identifiers for the samples
+        sample_id: Indentifier for sample
         sample_vcf: path to VCF to recalibrate
         sample_vcf_tbi: path to index of VCF to recalibrate
         
     params:
-        params.output_dir: string(path)
+        params.output_dir_base: string(path)
         params.log_output_dir: string(path)
         params.save_intermediate_files: bool.
         params.docker_image_gatk: string
-        params.is_NT_paired: bool. Indicator of whether input has normal and tumour samples
 */
 process run_VariantRecalibratorINDEL_GATK {
     container params.docker_image_gatk
-    publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}",
+    publishDir path: "${params.output_dir_base}/intermediate/${task.process.replace(':', '/')}",
       mode: "copy",
       enabled: params.save_intermediate_files,
       pattern: "*_output-indel.{recal*,tranches}"
 
-    publishDir path: "${params.output_dir}/QC/${task.process.replace(':', '/')}",
+    publishDir path: "${params.output_dir_base}/QC/${task.process.replace(':', '/')}",
       mode: "copy",
       pattern: "*_output-indel.{plots*}"
 
@@ -41,9 +40,7 @@ process run_VariantRecalibratorINDEL_GATK {
     path(reference_fasta_dict)
     path(bundle_mills_and_1000g_gold_standards_vcf_gz)
     path(bundle_mills_and_1000g_gold_standards_vcf_gz_tbi)
-    val(sample_id)
-    path(sample_vcf)
-    path(sample_vcf_tbi)
+    tuple val(sample_id), path(sample_vcf), path(sample_vcf_tbi)
 
 
     output:
@@ -58,7 +55,9 @@ process run_VariantRecalibratorINDEL_GATK {
           val(sample_id), emit: indel_recal
 
     script:
-    variable_mode_options = params.is_NT_paired ? "--use-annotation MQRankSum --use-annotation ReadPosRankSum" : ""
+    variable_mode_options = (params.is_NT_paired)
+        ? "--use-annotation MQRankSum --use-annotation ReadPosRankSum"
+        : ""
     output_filename = generate_standard_filename(
         "GATK-${params.gatk_version}",
         params.dataset_id,
@@ -115,12 +114,12 @@ process run_VariantRecalibratorINDEL_GATK {
 */
 process run_VariantRecalibratorSNP_GATK {
     container params.docker_image_gatk
-    publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}",
+    publishDir path: "${params.output_dir_base}/intermediate/${task.process.replace(':', '/')}",
       mode: "copy",
       enabled: params.save_intermediate_files,
       pattern: "*_output-snp.{recal*,tranches}"
 
-    publishDir path: "${params.output_dir}/QC/${task.process.replace(':', '/')}",
+    publishDir path: "${params.output_dir_base}/QC/${task.process.replace(':', '/')}",
       mode: "copy",
       pattern: "*_output-snp.{plots*,tranches.pdf}"
 
@@ -141,9 +140,7 @@ process run_VariantRecalibratorSNP_GATK {
     path(bundle_omni_1000g_2p5_vcf_gz_tbi)
     path(bundle_phase1_1000g_snps_high_conf_vcf_gz)
     path(bundle_phase1_1000g_snps_high_conf_vcf_gz_tbi)
-    val(sample_id)
-    path(sample_vcf)
-    path(sample_vcf_tbi)
+    tuple val(sample_id), path(sample_vcf), path(sample_vcf_tbi)
 
 
     output:
@@ -159,7 +156,9 @@ process run_VariantRecalibratorSNP_GATK {
           val(sample_id), emit: snp_recal
 
     script:
-    variable_mode_options = params.is_NT_paired ? "--use-annotation MQRankSum --use-annotation ReadPosRankSum" : ""
+    variable_mode_options = params.is_NT_paired
+        ? "--use-annotation MQRankSum --use-annotation ReadPosRankSum"
+        : ""
     output_filename = generate_standard_filename(
         "GATK-${params.gatk_version}",
         params.dataset_id,
@@ -215,12 +214,12 @@ process run_VariantRecalibratorSNP_GATK {
 */
 process run_ApplyVQSR_GATK {
     container params.docker_image_gatk
-    publishDir path: "${params.output_dir}/intermediate/${task.process.replace(':', '/')}/",
+    publishDir path: "${params.output_dir_base}/intermediate/${task.process.replace(':', '/')}/",
       mode: "copy",
       enabled: params.save_intermediate_files,
       pattern: "*-SNP.vcf.gz{,.tbi}"
 
-    publishDir path: "${params.output_dir}/output/",
+    publishDir path: "${params.output_dir_base}/output/",
       mode: "copy",
       pattern: "*SNP-AND-INDEL.vcf.gz{,.tbi}"
 
@@ -235,14 +234,12 @@ process run_ApplyVQSR_GATK {
     path(reference_fasta)
     path(reference_fasta_fai)
     path(reference_fasta_dict)
-    tuple(path(sample_vcf), path(sample_vcf_tbi), path(recal_file), path(recal_index_file), path(tranches_file), val(sample_id))
+    tuple path(sample_vcf), path(sample_vcf_tbi), path(recal_file), path(recal_index_file), path(tranches_file), val(sample_id)
 
 
     output:
     path(".command.*")
-    path(output_filename), emit: vcf
-    path("${output_filename}.tbi"), emit: vcf_index
-    val(sample_id), emit: associated_id
+    tuple val(sample_id), path(output_filename), path("${output_filename}.tbi"), emit: output_ch_vqsr
 
     script:
     output_filename = generate_standard_filename(
@@ -265,189 +262,4 @@ process run_ApplyVQSR_GATK {
            --recal-file ${recal_file} \
            --output ${output_filename}
     """
-}
-
-/*
-    Nextflow module for filtering GATK variant calls
-
-    input:
-        reference_fasta: path to reference genome fasta file
-        reference_fasta_fai: path to index for reference fasta
-        reference_fasta_dict: path to dictionary for reference fasta
-        sample_vcf: path to VCF to filter
-        sample_vcf_tbi: path to index of VCF to filter
-        (sample_id, normal_id, tumour_id): tuples of string identifiers for the samples
-        
-    params:
-        params.output_dir: string(path)
-        params.log_output_dir: string(path)
-        params.docker_image_gatkfilter: string
-        params.is_NT_paired: bool. Indicator of whether input has normal and tumour samples
-*/
-process filter_gSNP_GATK {
-    container params.docker_image_gatkfilter
-    publishDir path: "${params.output_dir}/output",
-      mode: "copy",
-      pattern: "${output_filename}*"
-
-    publishDir path: "${params.log_output_dir}/process-log",
-      pattern: ".command.*",
-      mode: "copy",
-      saveAs: { "${task.process.replace(':', '/')}/log${file(it).getName()}" }
-
-    input:
-    path(reference_fasta)
-    path(reference_fasta_fai)
-    path(reference_fasta_dict)
-    path(sample_vcf)
-    path(sample_vcf_tbi)
-    val(sample_id)
-    val(identifiers_options)
-
-    output:
-    path(".command.*")
-    tuple path("${output_filename}_snv.vcf.gz"),
-          path("${output_filename}_snv.vcf.gz.tbi"),
-          path("${output_filename}_indel.vcf.gz"),
-          path("${output_filename}_indel.vcf.gz.tbi"), emit: germline_filtered
-    tuple path("${output_filename}_variant-class-count.tsv"),
-          path("${output_filename}_genotype-count.tsv"), emit: germline_filtered_tsv
-
-    script:
-    identifier_opts = identifiers_options.collect{ "$it" }.join(' ')
-    output_filename = generate_standard_filename(
-        "GATK-${params.gatk_version}",
-        params.dataset_id,
-        sample_id,
-        [:]
-    )
-    """
-    set -euo pipefail
-    /src/NGS-Tools-GATK/bin/filter_GATK_SNV_calls.pl \
-        --input ${sample_vcf} \
-        --sample ${sample_id} \
-        --ref ${reference_fasta} \
-        ${identifier_opts} \
-        --filter_somatic Y \
-        --filter_ambiguous Y \
-        --split_calls Y \
-        --output_dir `pwd`
-
-    mv filtered_germline_snv_${sample_id}_nosomatic.vcf.gz ${output_filename}_snv.vcf.gz
-    mv filtered_germline_snv_${sample_id}_nosomatic.vcf.gz.tbi ${output_filename}_snv.vcf.gz.tbi
-    mv filtered_germline_indel_${sample_id}_nosomatic.vcf.gz ${output_filename}_indel.vcf.gz
-    mv filtered_germline_indel_${sample_id}_nosomatic.vcf.gz.tbi ${output_filename}_indel.vcf.gz.tbi
-    mv filtered_germline_variant_class_count_${sample_id}.tsv ${output_filename}_variant-class-count.tsv
-    mv filtered_germline_genotype_count_${sample_id}.tsv ${output_filename}_genotype-count.tsv
-    """
-}
-
-/*
-    Nextflow module for generating VCF stats
-
-    input:
-        (cohort_vcf, cohort_vcf_tbi): tuple of paths to VCF and index
-
-    params:
-        params.output_dir: string(path)
-        params.log_output_dir: string(path)
-        params.docker_image_rtg: string
-*/
-process run_vcfstats_RTG {
-    container params.docker_image_rtg
-    publishDir path: "${params.output_dir}/output",
-      mode: "copy",
-      pattern: "*.txt"
-
-    publishDir path: "${params.log_output_dir}/process-log",
-      pattern: ".command.*",
-      mode: "copy",
-      saveAs: { "${task.process.replace(':', '/')}/log${file(it).getName()}" }
-
-    input:
-    tuple(path(cohort_vcf), path(cohort_vcf_tbi))
-
-    output:
-    path(".command.*")
-    path("*.txt")
-
-    script:
-    """
-    set -euo pipefail
-    rtg vcfstats \
-      ${cohort_vcf} \
-      > ${cohort_vcf.baseName.substring(0, cohort_vcf.baseName.indexOf('.'))}_vcfstats.txt
-    """
-}
-
-workflow recalibrate_snps {
-  take:
-  merge_identifiers
-  sample_vcf
-  sample_vcf_tbi
-
-  main:
-  run_VariantRecalibratorSNP_GATK(
-      params.reference_fasta,
-      "${params.reference_fasta}.fai",
-      "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
-      params.bundle_v0_dbsnp138_vcf_gz,
-      "${params.bundle_v0_dbsnp138_vcf_gz}.tbi",
-      params.bundle_hapmap_3p3_vcf_gz,
-      "${params.bundle_hapmap_3p3_vcf_gz}.tbi",
-      params.bundle_omni_1000g_2p5_vcf_gz,
-      "${params.bundle_omni_1000g_2p5_vcf_gz}.tbi",
-      params.bundle_phase1_1000g_snps_high_conf_vcf_gz,
-      "${params.bundle_phase1_1000g_snps_high_conf_vcf_gz}.tbi",
-      merge_identifiers,
-      sample_vcf,
-      sample_vcf_tbi
-  )
-
-  run_ApplyVQSR_GATK(
-      'SNP',
-      'SNP',
-      params.reference_fasta,
-      "${params.reference_fasta}.fai",
-      "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
-      run_VariantRecalibratorSNP_GATK.out.snp_recal
-  )
-
-  emit:
-  vcf = run_ApplyVQSR_GATK.out.vcf
-  vcf_index = run_ApplyVQSR_GATK.out.vcf_index
-  associated_id = run_ApplyVQSR_GATK.out.associated_id
-}
-
-workflow recalibrate_indels {
-  take:
-  merge_identifiers
-  sample_vcf
-  sample_vcf_tbi
-
-  main:
-  run_VariantRecalibratorINDEL_GATK(
-      params.reference_fasta,
-      "${params.reference_fasta}.fai",
-      "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
-      params.bundle_mills_and_1000g_gold_standard_indels_vcf_gz,
-      "${params.bundle_mills_and_1000g_gold_standard_indels_vcf_gz}.tbi",
-      merge_identifiers,
-      sample_vcf,
-      sample_vcf_tbi
-  )
-
-  run_ApplyVQSR_GATK(
-      'INDEL',
-      'SNP_AND_INDEL',
-      params.reference_fasta,
-      "${params.reference_fasta}.fai",
-      "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
-      run_VariantRecalibratorINDEL_GATK.out.indel_recal
-  )
-
-  emit:
-  vcf = run_ApplyVQSR_GATK.out.vcf
-  vcf_index = run_ApplyVQSR_GATK.out.vcf_index
-  associated_id = run_ApplyVQSR_GATK.out.associated_id
 }
