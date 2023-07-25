@@ -8,10 +8,17 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ---
 
 ## [Unreleased]
+
+---
+
+## [10.0.0-rc.2] - 2023-07-25
 ### Added
 - Save tumor segmentation QC output from `CalculateContamination`
 ### Changed
 - Set default compression for `GATK IndelRealignment` to 1
+- Make pipeline germline variant calling only
+### Removed
+- BAM processing steps
 
 ---
 
