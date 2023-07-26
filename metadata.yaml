@@ -1,11 +1,8 @@
 ---
-Category: "pipeline"
-Description: "GATK pipeline for calling germline variants"
-Maintainers: "Boutros Lab Infrastructure - Shu Tao (shutao@mednet.ucla.edu), Stefan Eng (stefaneng@mednet.ucla.edu), and Yash Patel (yashpatel@mednet.ucla.edu)"
-Contributors: ["Yash Patel", "Shu Tao", "Stefan Eng"]
-Languages: ["Nextflow", "Docker"]
-Dependencies: ["Java", "Nextflow", "Docker"]
-References: "https://confluence.mednet.ucla.edu/display/BOUTROSLAB/Guide+to+Nextflow"
-Tools: ["SAMtools:1.12", "Picard:2.26.10", "GATK:3.7.0", "GATK:4.2.4.1"]
-Engineering_Owner: ["Yash Patel", "Shu Tao", "Stefan Eng"]
-Scientific_Owner: ["Yash Patel", "Shu Tao", "Stefan Eng"]
+category: "pipeline"
+description: "GATK pipeline for calling germline variants"
+maintainers: "Boutros Lab Infrastructure <BoutrosLabInfrastructure@mednet.ucla.edu>"
+languages: ["Nextflow", "Docker"]
+dependencies: ["Java", "Nextflow", "Docker"]
+references: "https://uclahs-cds.atlassian.net/wiki/spaces/BOUTROSLAB/pages/3189620/Guide+to+Nextflow"
+tools: ["Picard:2.26.10", "GATK:3.7.0", "GATK:4.2.4.1"]

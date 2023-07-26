@@ -2,6 +2,7 @@
 
 nextflow.enable.dsl=2
 
+
 log.info """\
 ======================================
 C A L L - G S N P  P I P E L I N E
@@ -10,195 +11,221 @@ Boutros Lab
 
 Current Configuration:
 
-      - pipeline:
-          name: ${workflow.manifest.name}
-          version: ${workflow.manifest.version}
+    - pipeline:
+        name: ${workflow.manifest.name}
+        version: ${workflow.manifest.version}
 
-      - input:
-          input_csv: ${(params.containsKey("input_csv") && params.input_csv) ? params.input_csv : "YAML input used"}
-          aligner: ${params.aligner}
-          intervals: ${params.intervals}
-          bundle_v0_dbsnp138_vcf_gz: ${params.bundle_v0_dbsnp138_vcf_gz}
-          bundle_mills_and_1000g_gold_standard_indels_vcf_gz: ${params.bundle_mills_and_1000g_gold_standard_indels_vcf_gz}
-          bundle_known_indels_vcf_gz: ${params.bundle_known_indels_vcf_gz}
-          bundle_v0_dbsnp138_vcf_gz: ${params.bundle_v0_dbsnp138_vcf_gz}
-          bundle_hapmap_3p3_vcf_gz: ${params.bundle_hapmap_3p3_vcf_gz}
-          bundle_omni_1000g_2p5_vcf_gz: ${params.bundle_omni_1000g_2p5_vcf_gz}
-          bundle_phase1_1000g_snps_high_conf_vcf_gz: ${params.bundle_phase1_1000g_snps_high_conf_vcf_gz}
-          bundle_contest_hapmap_3p3_vcf_gz: ${params.bundle_contest_hapmap_3p3_vcf_gz}
+    - input:
+        samples: ${params.samples_to_process}
+        intervals: ${params.intervals}
+        bundle_v0_dbsnp138_vcf_gz: ${params.bundle_v0_dbsnp138_vcf_gz}
+        bundle_mills_and_1000g_gold_standard_indels_vcf_gz: ${params.bundle_mills_and_1000g_gold_standard_indels_vcf_gz}
+        bundle_v0_dbsnp138_vcf_gz: ${params.bundle_v0_dbsnp138_vcf_gz}
+        bundle_hapmap_3p3_vcf_gz: ${params.bundle_hapmap_3p3_vcf_gz}
+        bundle_omni_1000g_2p5_vcf_gz: ${params.bundle_omni_1000g_2p5_vcf_gz}
+        bundle_phase1_1000g_snps_high_conf_vcf_gz: ${params.bundle_phase1_1000g_snps_high_conf_vcf_gz}
 
-       - output: 
-          output: ${params.output_dir}
+    - output: 
+        output: ${params.output_dir}
+        output_dir_base: ${params.output_dir_base}
+        log_output_dir: ${params.log_output_dir}
 
-      Tools Used:
-          tool GATK: ${params.docker_image_gatk}
-          tool validate: ${params.docker_image_validate}
-          tool Picard: ${params.docker_image_picard}
-          tool SAMtools: ${params.docker_image_samtools}
-          tool GATK3: ${params.docker_image_gatk3}
-          tool GATK Filter: ${params.docker_image_gatkfilter}
+    Tools Used:
+        tool GATK: ${params.docker_image_gatk}
+        tool PipeVal: ${params.docker_image_pipeval}
+        tool Picard: ${params.docker_image_picard}
+        tool GATK_filter: ${params.docker_image_gatkfilter}
 
-      Extra parameters:
-          ${params}
+    Extra parameters:
+        ${params}
 
 ------------------------------------
 Starting workflow...
 ------------------------------------
-        """
+"""
 
-include { run_validate_PipeVal } from './external/nextflow-module/modules/PipeVal/validate/main.nf' addParams(
+include { run_SplitIntervals_GATK } from './module/split-intervals.nf'
+include { extract_GenomeIntervals } from './external/pipeline-Nextflow-module/modules/common/extract_genome_intervals/main.nf' addParams(
     options: [
-        docker_image_version: params.pipeval_version,
-        main_process: "./" //Save logs in <log_dir>/process-log/run_validate_PipeVal
+        save_intermediate_files: params.save_intermediate_files,
+        output_dir: params.output_dir_base
         ]
     )
-include { run_SplitIntervals_GATK } from './module/genotype-processes.nf'
-include { extract_GenomeIntervals } from './external/nextflow-module/modules/common/extract_genome_intervals/main.nf' addParams(
-    options: [
-        save_intermediate_files: params.save_intermediate_files
-        ]
-    )
-include { single_sample_wgs } from './module/workflow-single-wgs.nf'
-include { single_sample_targeted } from './module/workflow-single-targeted.nf'
-include { multi_sample_wgs } from './module/workflow-multi-wgs.nf'
-include { multi_sample_targeted } from './module/workflow-multi-targeted.nf'
+include {
+    run_HaplotypeCallerVCF_GATK
+    run_HaplotypeCallerGVCF_GATK
+    } from './module/haplotypecaller.nf'
+include {
+    run_MergeVcfs_Picard as run_MergeVcfs_Picard_VCF
+    run_MergeVcfs_Picard as run_MergeVcfs_Picard_GVCF
+    } from './module/merge-vcf.nf'
+include { recalibrate_variants } from './module/workflow-recalibrate-variants.nf'
+include { filter_gSNP_GATK } from './module/filter-gsnp.nf'
+include { calculate_sha512 } from './module/checksum.nf'
 
 // Returns the index file for the given bam or vcf
 def indexFile(bam_or_vcf) {
-  if(bam_or_vcf.endsWith('.bam')) {
-    return "${bam_or_vcf}.bai"
-  }
-  else if(bam_or_vcf.endsWith('vcf.gz')) {
-    return "${bam_or_vcf}.tbi"
-  }
-  else {
-    throw new Exception("Index file for ${bam_or_vcf} file type not supported. Use .bam or .vcf.gz files.")
-  }
-}
-
-// Inputs to channel
-Channel
-    .from( params.input.BAM.tumour )
-    .map{
-        [normal_index: indexFile(it.normal_BAM)] + [tumour_index: indexFile(it.tumour_BAM)] + it
+    if (bam_or_vcf.endsWith('.bam')) {
+        return "${bam_or_vcf}.bai"
+    } else if (bam_or_vcf.endsWith('vcf.gz')) {
+        return "${bam_or_vcf}.tbi"
+    } else {
+        throw new Exception("Index file for ${bam_or_vcf} file type not supported. Use .bam or .vcf.gz files.")
     }
-    .set { input_ch_input_csv }
-
-// Set validation channel
-if (params.is_NT_paired) {
-    input_ch_input_csv.flatMap{it -> [it.normal_BAM, it.normal_index, it.tumour_BAM, it.tumour_index]}.unique().map{it -> ['file-input', it]}.set{input_validation}
-} else {
-    input_ch_input_csv.flatMap{it -> [it.normal_BAM, it.normal_index]}.unique().map{it -> ['file-input', it]}.set{input_validation}
 }
-
-// Gather the inputs into a single emission
-input_ch_input_csv.multiMap{ it ->
-  sample_id: it.sample_id
-  normal_id: it.normal_id
-  normal_BAM: it.normal_BAM
-  normal_index: it.normal_index
-  tumour_id: it.tumour_id
-  tumour_BAM: it.tumour_BAM
-  tumour_index: it.tumour_index
-  }
-  .set{ branched_input }
-
-// For the sample ID and the normal input fields, keep only the first since they should be identical for the sample
-branched_input.sample_id.first().collect().map{ it -> [sample_id: it] }.set{formatted_sample_id}
-branched_input.normal_id.first().collect().map{ it -> [normal_id: it] }.set{formatted_normal_id}
-branched_input.normal_BAM.first().collect().map{ it -> [normal_BAM: it] }.set{formatted_normal_BAM}
-branched_input.normal_index.first().collect().map{ it -> [normal_index: it] }.set{formatted_normal_index}
-
-// For the tumour input fields, keep all lines from csv
-branched_input.tumour_id.collect().map{ it -> [tumour_id: it] }.set{formatted_tumour_id}
-branched_input.tumour_BAM.collect().map{ it -> [tumour_BAM: it] }.set{formatted_tumour_BAM}
-branched_input.tumour_index.collect().map{ it -> [tumour_index: it] }.set{formatted_tumour_index}
-
-// Mix the formatted channels and gather into single emission
-formatted_sample_id.mix(
-  formatted_normal_id,
-  formatted_normal_BAM,
-  formatted_normal_index,
-  formatted_tumour_id,
-  formatted_tumour_BAM,
-  formatted_tumour_index
-  )
-  .reduce{ a, b -> a + b }
-  .set{ input_csv_formatted_ich }
-
-// Create the identifier channels
-identifiers = input_csv_formatted_ich.map{it -> it.sample_id + it.normal_id + it.tumour_id}.collect()
-identifier_sample = input_csv_formatted_ich.map{it -> it.sample_id}.flatten()
 
 workflow {
-    run_validate_PipeVal(input_validation)
-    // Collect and store input validation output
-    run_validate_PipeVal.out.validation_result.collectFile(
-      name: 'input_validation.txt',
-      storeDir: "${params.output_dir}/validation"
-      )
+    // TO-DO: Add validation for input BAMs
 
-    extract_GenomeIntervals(
-      "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict"
-      )
-    
-    intervals = extract_GenomeIntervals.out.genomic_intervals
+    /**
+    *   Input channel processing
+    */
+    Channel.from(params.samples_to_process)
+        .map{ sample -> ['index': indexFile(sample.path)] + sample }
+        .set{ input_ch_samples_with_index }
+
+    input_ch_samples_with_index
+        .reduce( ['bams': [], 'indices': []] ){ a, b ->
+            a.bams.add(b.path);
+            a.indices.add(b.index);
+            return a
+        }
+        .set{ input_ch_collected_files }
+
+    /**
+    *   Handle interval splitting based on targeted or WGS mode
+    */
+    intervals_to_split = Channel.empty()
+
+    if (params.is_targeted) {
+        intervals_to_split = Channel.from(params.intervals)
+    } else {
+        extract_GenomeIntervals("${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict")
+
+        intervals_to_split = extract_GenomeIntervals.out.genomic_intervals
+    }
 
     run_SplitIntervals_GATK(
-      intervals,
-      params.reference_fasta,
-      "${params.reference_fasta}.fai",
-      "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
-      "genome-intervals",
-      false
+        intervals_to_split,
+        params.reference_fasta,
+        "${params.reference_fasta}.fai",
+        "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict"
     )
 
-    split_intervals = run_SplitIntervals_GATK.out.interval_list.flatten()
-
-    ir_input = input_csv_formatted_ich.combine(split_intervals)
-        .map{ input_csv,interval -> [input_csv.sample_id, input_csv.normal_id, input_csv.tumour_id, input_csv.normal_BAM, input_csv.normal_index, input_csv.tumour_BAM, input_csv.tumour_index, interval] }
-    ir_input_no_interval = input_csv_formatted_ich.combine(split_intervals)
-        .map{ input_csv,interval -> [input_csv.sample_id, input_csv.normal_id, input_csv.tumour_id, input_csv.normal_BAM, input_csv.normal_index, input_csv.tumour_BAM, input_csv.tumour_index] }
-
-    if (params.is_NT_paired) {
-        if (params.is_targeted) {
-            multi_sample_targeted(
-                intervals,
-                split_intervals,
-                ir_input,
-                ir_input_no_interval,
-                identifiers,
-                identifier_sample
-                )
-        } else {
-            multi_sample_wgs(
-                intervals,
-                split_intervals,
-                ir_input,
-                ir_input_no_interval,
-                identifiers,
-                identifier_sample
-                )
+    run_SplitIntervals_GATK.out.interval_list
+        .flatten()
+        .map{ interval_path ->
+            [
+                'interval_id': file(interval_path).getName().replace('-contig.interval_list', ''),
+                'interval_path': interval_path
+            ]
         }
-    } else {
-        if (params.is_targeted) {
-            single_sample_targeted(
-                intervals,
-                split_intervals,
-                ir_input,
-                ir_input_no_interval,
-                identifiers,
-                identifier_sample
-                )
-        } else {
-            single_sample_wgs(
-                intervals,
-                split_intervals,
-                ir_input,
-                ir_input_no_interval,
-                identifiers,
-                identifier_sample
-                )
+        .set{ input_ch_intervals }
+
+    /**
+    *   Haplotype calling
+    */
+    input_ch_collected_files.combine(input_ch_intervals)
+        .map{ it ->
+            [
+                it[0].bams,
+                it[0].indices,
+                it[1].interval_path,
+                it[1].interval_id
+            ]
         }
-    }
+        .set{ input_ch_haplotypecallervcf }
+
+    run_HaplotypeCallerVCF_GATK(
+        params.reference_fasta,
+        "${params.reference_fasta}.fai",
+        "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
+        params.bundle_v0_dbsnp138_vcf_gz,
+        "${params.bundle_v0_dbsnp138_vcf_gz}.tbi",
+        input_ch_haplotypecallervcf
+    )
+
+    input_ch_samples_with_index.combine(input_ch_intervals)
+        .map{ it ->
+            [
+                it[0].id,
+                it[0].path,
+                it[0].index,
+                it[1].interval_path,
+                it[1].interval_id
+            ]
+        }
+        .set{ input_ch_haplotypecallergvcf }
+
+    run_HaplotypeCallerGVCF_GATK(
+        params.reference_fasta,
+        "${params.reference_fasta}.fai",
+        "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
+        params.bundle_v0_dbsnp138_vcf_gz,
+        "${params.bundle_v0_dbsnp138_vcf_gz}.tbi",
+        input_ch_haplotypecallergvcf
+    )
+
+    /**
+    *   Merge VCFs
+    */
+    run_HaplotypeCallerVCF_GATK.out.vcfs
+        .reduce( ['vcfs': [], 'indices': []] ){ a, b ->
+            a.vcfs.add(b[0]);
+            a.indices.add(b[1]);
+            return a
+        }
+        .map{ it ->
+            [
+                it.vcfs,
+                it.indices,
+                'VCF',
+                params.patient_id
+            ]
+        }
+        .set{ input_ch_merge_vcfs }
+
+    run_MergeVcfs_Picard_VCF(input_ch_merge_vcfs)
+
+    run_HaplotypeCallerGVCF_GATK.out.gvcfs
+        .groupTuple(by: 0) // Group by sample
+        .map{ it ->
+            [
+                it[1].flatten(), // GVCFs
+                it[2].flatten(), // Indices
+                'GVCF',
+                it[0] // Sample ID
+            ]
+        }
+        .set{ input_ch_merge_gvcfs }
+
+    run_MergeVcfs_Picard_GVCF(input_ch_merge_gvcfs)
+
+    /**
+    *   Recalibrate variants
+    */
+    recalibrate_variants(run_MergeVcfs_Picard_VCF.out.merged_vcf)
+
+    /**
+    *   Filter variants with Perl script
+    */
+    filter_gSNP_GATK(
+        params.reference_fasta,
+        "${params.reference_fasta}.fai",
+        "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
+        recalibrate_variants.out.output_ch_recalibrated_variants
+    )
+
+    /**
+    *   Calculate checksums for output files
+    */
+    run_MergeVcfs_Picard_VCF.out.merged_vcf
+        .mix(run_MergeVcfs_Picard_GVCF.out.merged_vcf)
+        .mix(recalibrate_variants.out.output_ch_recalibrated_variants)
+        .map{ [it[1], it[2]] }
+        .mix(filter_gSNP_GATK.out.germline_filtered)
+        .flatten()
+        .set{ input_ch_calculate_checksum }
+
+    calculate_sha512(input_ch_calculate_checksum)
 }
