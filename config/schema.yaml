@@ -1,0 +1,95 @@
+---
+patient_id:
+  type: 'String'
+  required: true
+  help: 'Patient ID'
+dataset_id:
+  type: 'String'
+  required: true
+  help: 'Dataset ID'
+output_dir:
+  type: 'Path'
+  mode: 'w'
+  required: true
+  help: 'Absolute path to output directory'
+save_intermediate_files:
+  type: 'Bool'
+  required: true
+  default: false
+  help: 'Whether to save intermediate files'
+intervals:
+  type: 'String'
+  allow_empty: true
+  required: true
+  help: 'Target intervals to process for DNA panel/targeted sequencing samples; leave empty for WGS'
+scatter_count:
+  type: 'Integer'
+  required: true
+  default: 50
+  help: 'How many intervals to divide the genome into for parallelization'
+split_intervals_extra_args:
+  type: 'String'
+  allow_empty: true
+  required: false
+  help: 'Extra arguments for interval splitting'
+reference_fasta:
+  type: 'Path'
+  mode: 'r'
+  required: true
+  help: 'Absolute path to reference genome fasta'
+bundle_mills_and_1000g_gold_standard_indels_vcf_gz:
+  type: 'Path'
+  mode: 'r'
+  required: true
+  help: 'Absolute path to Mills and 1000g gold standard INDELs VCF'
+bundle_v0_dbsnp138_vcf_gz:
+  type: 'Path'
+  mode: 'r'
+  required: true
+  help: 'Absolute path to v0 dbSNP 138 VCF'
+bundle_hapmap_3p3_vcf_gz:
+  type: 'Path'
+  mode: 'r'
+  required: true
+  help: 'Absolute path to hapmap 3p3 VCF'
+bundle_omni_1000g_2p5_vcf_gz:
+  type: 'Path'
+  mode: 'r'
+  required: true
+  help: 'Absolute path to OMNI 1000g 2p5 VCF'
+bundle_phase1_1000g_snps_high_conf_vcf_gz:
+  type: 'Path'
+  mode: 'r'
+  required: true
+  help: 'Absolute path to high-confidence 1000g SNPs VCF'
+base_resource_update:
+  type: 'ResourceUpdateNamespace'
+  required: false
+  help: 'User-defined modifications for adjusting base resource allocations for processes'
+  elements:
+    memory:
+      type: 'ResourceUpdateList'
+      required: false
+      help: 'List of memory updates'
+    cpus:
+      type: 'ResourceUpdateList'
+      required: false
+      help: 'List of CPU updates'
+input:
+  type: 'InputNamespace'
+  required: true
+  help: 'Input samples'
+  elements:
+    BAM:
+      type: 'InputBAMNamespace'
+      required: true
+      help: 'Input BAMs for calling'
+      elements:
+        normal:
+          type: 'BAMEntryList'
+          required: false
+          help: 'Input normal BAMs'
+        tumor:
+          type: 'BAMEntryList'
+          required: false
+          help: 'Input tumor BAMs'
