@@ -124,6 +124,54 @@ For normal-only or tumor-only samples, exclude the fields for the other state.
 | `bundle_phase1_1000g_snps_high_conf_vcf_gz` | Yes | path | Absolute path to 1000 genomes phase 1 high-confidence file, e.g., `/hot/ref/tool-specific-input/GATK/GRCh38/1000G_phase1.snps.high_confidence.hg38.vcf.gz` |
 | `work_dir` | optional | path | Path of working directory for Nextflow. When included in the sample config file, Nextflow intermediate files and logs will be saved to this directory. With ucla_cds, the default is `/scratch` and should only be changed for testing/development. Changing this directory to `/hot` or `/tmp` can lead to high server latency and potential disk space limitations, respectively. |
 | `docker_container_registry` | optional | string | Registry containing tool Docker images. Default: `ghcr.io/uclahs-cds` |
+| `base_resource_update` | optional | namespace | Namespace of parameters to update base resource allocations in the pipeline. Usage and structure are detailed in `template.config` and below. |
+
+#### Base resource allocation updaters
+To update the base resource (cpus or memory) allocations for processes, use the following structure and add the necessary parts. The default allocations can be found in the [node-specific config files](./config/)
+```Nextflow
+base_resource_update {
+    memory = [
+        [['process_name', 'process_name2'], <multiplier for resource>],
+        [['process_name3', 'process_name4'], <different multiplier for resource>]
+    ]
+    cpus = [
+        [['process_name', 'process_name2'], <multiplier for resource>],
+        [['process_name3', 'process_name4'], <different multiplier for resource>]
+    ]
+}
+```
+> **Note** Resource updates will be applied in the order they're provided so if a process is included twice in the memory list, it will be updated twice in the order it's given.
+
+Examples:
+
+- To double memory of all processes:
+```Nextflow
+base_resource_update {
+    memory = [
+        [[], 2]
+    ]
+}
+```
+- To double memory for `run_ApplyVQSR_GATK` and triple memory for `run_validate_PipeVal` and `run_HaplotypeCallerVCF_GATK`:
+```Nextflow
+base_resource_update {
+    memory = [
+        ['run_ApplyVQSR_GATK', 2],
+        [['run_validate_PipeVal', 'run_HaplotypeCallerVCF_GATK'], 3]
+    ]
+}
+```
+- To double CPUs and memory for `run_ApplyVQSR_GATK` and double memory for `run_validate_PipeVal`:
+```Nextflow
+base_resource_update {
+    cpus = [
+        ['run_ApplyVQSR_GATK', 2]
+    ]
+    memory = [
+        [['run_ApplyVQSR_GATK', 'run_validate_PipeVal'], 2]
+    ]
+}
+```
 
 ---
 
