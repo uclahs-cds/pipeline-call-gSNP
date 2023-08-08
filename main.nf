@@ -44,6 +44,12 @@ Starting workflow...
 ------------------------------------
 """
 
+include { run_validate_PipeVal } from './external/pipeline-Nextflow-module/modules/PipeVal/validate/main.nf' addParams(
+    options: [
+        docker_image_version: params.pipeval_version,
+        main_process: "./" //Save logs in <log_dir>/process-log/run_validate_PipeVal
+        ]
+    )
 include { run_SplitIntervals_GATK } from './module/split-intervals.nf'
 include { extract_GenomeIntervals } from './external/pipeline-Nextflow-module/modules/common/extract_genome_intervals/main.nf' addParams(
     options: [
@@ -85,12 +91,28 @@ workflow {
         .set{ input_ch_samples_with_index }
 
     input_ch_samples_with_index
+        .map{ sample -> [sample.path, sample.index] }
+        .flatten()
+        .set{ input_ch_validate }
+
+    input_ch_samples_with_index
         .reduce( ['bams': [], 'indices': []] ){ a, b ->
             a.bams.add(b.path);
             a.indices.add(b.index);
             return a
         }
         .set{ input_ch_collected_files }
+
+    /**
+    *   Input validation
+    */
+    run_validate_PipeVal(input_ch_validate)
+
+    run_validate_PipeVal.out.validation_result
+        .collectFile(
+            name: 'input_validation.txt',
+            storeDir: "${params.output_dir_base}/validation"
+        )
 
     /**
     *   Handle interval splitting based on targeted or WGS mode
