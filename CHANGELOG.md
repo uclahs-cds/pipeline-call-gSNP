@@ -8,6 +8,10 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ---
 
 ## [Unreleased]
+
+---
+
+## [10.0.0-rc.3] - 2023-08-16
 ### Added
 - Validation with `PipeVal`
 - Custom resource allocation updates through configuration parameters
