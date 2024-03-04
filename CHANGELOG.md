@@ -8,7 +8,10 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ---
 
 ## [Unreleased]
+### Changed
 - Resource updater to allow update for all processes
+### Removed
+- Local resource-related function definitions
 
 ---
 
