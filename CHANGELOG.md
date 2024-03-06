@@ -8,6 +8,11 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ---
 
 ## [Unreleased]
+### Added
+- Add workflow to generate SVG images from PlantUML
+- Add workflow to build and push documentation to GitHub Pages
+- Add workflow to run Nextflow configuration regression tests
+
 ### Changed
 - Resource updater to allow update for all processes
 ### Removed
