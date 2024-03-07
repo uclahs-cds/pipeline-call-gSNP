@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Pipeline Steps - pipeline-call-gSNP</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../css/version-select.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Pipeline Steps";
+        var mkdocs_page_input_path = "pipeline-steps.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> pipeline-call-gSNP
+        </a>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../overview/">Overview</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../how-to-run/">How To Run</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../flow-diagram/">Flow Diagram</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="./">Pipeline Steps</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#1-split-genome-into-intervals-for-parallelization">1. Split genome into intervals for parallelization</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#2-realign-indels">2. Realign Indels</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#3-generate-bqsr-base-quality-score-recalibration">3. Generate BQSR (Base Quality Score Recalibration)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#4-apply-bqsr-per-split-interval-in-parallel">4. Apply BQSR per split interval in parallel</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#5-reheader-interval-level-bams">5. Reheader interval-level BAMs</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#6-index-reheadered-bams">6. Index reheadered BAMs</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#7-merge-interval-level-bams">7. Merge interval-level BAMs</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#8-get-pileup-summaries">8. Get pileup summaries</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#9-calculate-contamination">9. Calculate contamination</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#10-depthofcoverage">10. DepthOfCoverage</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#11-hc-call-raw-vcf-on-each-interval-in-parallel">11. HC – call raw VCF on each interval in parallel</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#12-merge-raw-vcfs">12. Merge raw VCFs</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#13-vqsr-variant-quality-score-recalibration-generate-vqsr-model-for-snps">13. VQSR (Variant Quality Score Recalibration): Generate VQSR model for SNPs.</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#14-vqsr-generate-vqsr-model-for-indels">14. VQSR: Generate VQSR model for INDELs.</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#15-vqsr-take-the-whole-sample-raw-vcf-from-step-11-as-input-and-apply-the-model-in-step-13-to-generate-variants-in-which-only-snps-are-recalibrated">15. VQSR: Take the whole sample raw VCF from Step 11 as input, and apply the model in Step 13 to generate variants in which only SNPs are recalibrated.</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#16-vqsr-take-the-output-from-step-15-as-input-and-apply-the-model-in-step-14-to-recalibrate-only-indels">16. VQSR: Take the output from Step 15 as input, and apply the model in Step 14 to recalibrate only INDELs.</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#steps-13-through-16-model-the-technical-profile-of-variants-in-a-training-set-and-uses-that-to-filter-out-probable-artifacts-from-the-raw-vcf-after-these-four-steps-a-recalibrated-vcf-is-generated">Steps 13 through 16 model the technical profile of variants in a training set and uses that to filter out probable artifacts from the raw VCF. After these four steps, a recalibrated VCF is generated.</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#17-filter-gsnp-filter-out-ambiguous-variants">17. Filter gSNP – Filter out ambiguous variants</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#18-generate-sha512-checksum">18. Generate sha512 checksum</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../inputs/">Inputs</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../outputs/">Outputs</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../benchmarking/">Benchmarking</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../references/">References</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../license/">License</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">pipeline-call-gSNP</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Pipeline Steps</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/uclahs-cds/pipeline-call-gSNP/blob/v7.1.0/README.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h2 id="pipeline-steps">Pipeline Steps</h2>
+<h3 id="1-split-genome-into-intervals-for-parallelization">1. Split genome into intervals for parallelization</h3>
+<p>Use the input target intervals and split them into intervals for parallel processing.</p>
+<h3 id="2-realign-indels">2. Realign Indels</h3>
+<p>Generate indel realignment targets and realign indels.</p>
+<h3 id="3-generate-bqsr-base-quality-score-recalibration">3. Generate BQSR (Base Quality Score Recalibration)</h3>
+<p>Assess how sequencing errors correlate with four covariates (assigned quality score, read group the read belongs, machine cycle producing this base, and current and immediately upstream base), and output base quality score recalibration table.</p>
+<h3 id="4-apply-bqsr-per-split-interval-in-parallel">4. Apply BQSR per split interval in parallel</h3>
+<p>Print out interval-level recalibrated BAM.</p>
+<h3 id="5-reheader-interval-level-bams">5. Reheader interval-level BAMs</h3>
+<p>In paired mode, reheader the interval-level BAMs.</p>
+<h3 id="6-index-reheadered-bams">6. Index reheadered BAMs</h3>
+<p>Index each reheadered interval-level BAM. After this step, the workflow splits into two: one path (7-10) merges the BAMs for Depth of Coverage and contamination calculations while the other path proceeds with the HaplotypeCaller (11-17).</p>
+<h3 id="7-merge-interval-level-bams">7. Merge interval-level BAMs</h3>
+<p>Merge BAMs from each interval to generate whole sample BAM.</p>
+<h3 id="8-get-pileup-summaries">8. Get pileup summaries</h3>
+<p>Summarizes counts of reads that support reference, alternate and other alleles for given sites. Results will be used in the next Calculate Contamination step.</p>
+<h3 id="9-calculate-contamination">9. Calculate contamination</h3>
+<p>Calculates the fraction of reads coming from cross-sample contamination, given results from Step 8.</p>
+<h3 id="10-depthofcoverage">10. DepthOfCoverage</h3>
+<p>Calculate depth of coverage using the whole sample BAM from step 7.</p>
+<h3 id="11-hc-call-raw-vcf-on-each-interval-in-parallel">11. HC – call raw VCF on each interval in parallel</h3>
+<p>Generate raw VCF for each split interval using HaplotypeCaller. Generate GVCF for SNPs and INDELs.</p>
+<h3 id="12-merge-raw-vcfs">12. Merge raw VCFs</h3>
+<p>Merge raw variants from each interval to generate whole sample raw VCF.</p>
+<h3 id="13-vqsr-variant-quality-score-recalibration-generate-vqsr-model-for-snps">13. VQSR (Variant Quality Score Recalibration): Generate VQSR model for SNPs.</h3>
+<h3 id="14-vqsr-generate-vqsr-model-for-indels">14. VQSR: Generate VQSR model for INDELs.</h3>
+<h3 id="15-vqsr-take-the-whole-sample-raw-vcf-from-step-11-as-input-and-apply-the-model-in-step-13-to-generate-variants-in-which-only-snps-are-recalibrated">15. VQSR: Take the whole sample raw VCF from Step 11 as input, and apply the model in Step 13 to generate variants in which only SNPs are recalibrated.</h3>
+<h3 id="16-vqsr-take-the-output-from-step-15-as-input-and-apply-the-model-in-step-14-to-recalibrate-only-indels">16. VQSR: Take the output from Step 15 as input, and apply the model in Step 14 to recalibrate only INDELs.</h3>
+<h4 id="steps-13-through-16-model-the-technical-profile-of-variants-in-a-training-set-and-uses-that-to-filter-out-probable-artifacts-from-the-raw-vcf-after-these-four-steps-a-recalibrated-vcf-is-generated">Steps 13 through 16 model the technical profile of variants in a training set and uses that to filter out probable artifacts from the raw VCF. After these four steps, a recalibrated VCF is generated.</h4>
+<h3 id="17-filter-gsnp-filter-out-ambiguous-variants">17. Filter gSNP – Filter out ambiguous variants</h3>
+<p>Use customized Perl script to filter out ambiguous variants.</p>
+<h3 id="18-generate-sha512-checksum">18. Generate sha512 checksum</h3>
+<p>Generate sha512 checksum for final BAM, filtered VCF, and GVCFs for SNPs and INDELs.</p>
+<hr />
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../flow-diagram/" class="btn btn-neutral float-left" title="Flow Diagram"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../inputs/" class="btn btn-neutral float-right" title="Inputs">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/uclahs-cds/pipeline-call-gSNP/tree/v7.1.0" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="../flow-diagram/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../inputs/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../js/version-select.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
