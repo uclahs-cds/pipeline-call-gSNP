@@ -8,6 +8,10 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ---
 
 ## [Unreleased]
+
+---
+
+## [10.0.0] - 2024-03-08
 ### Added
 - Add workflow to generate SVG images from PlantUML
 - Add workflow to build and push documentation to GitHub Pages
