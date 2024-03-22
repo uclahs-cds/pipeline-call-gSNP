@@ -29,7 +29,7 @@ using HaplotypeCaller;
 ----
 Merge raw variants into whole VCF file;
 
-#palegreen:Per-sample raw VCF + index files; <<output>>
+#palegreen:Per-sample raw VCF + index files>
 
 :==run_VariantRecalibratorSNP_GATK
 ----
@@ -49,7 +49,7 @@ Generate VQSR table for INDELs;
 Filter INDELs based on VQSR table;
 
 #palegreen:SNP and INDEL recalibrated
-variants + index files; <<output>>
+variants + index files>
 
 :==filter_gSNP_GATK
 ----
@@ -57,7 +57,7 @@ Filter ambiguous variants with
 customized Perl script;
 
 #palegreen:Filtered germline
-variants + index files; <<output>>
+variants + index files>
 
 detach
 
@@ -72,7 +72,7 @@ using HaplotypeCaller;
 ----
 Merge raw variants into whole GVCF file;
 
-#palegreen:Per-sample GVCF + index files; <<output>>
+#palegreen:Per-sample GVCF + index files>
 
 detach
 
