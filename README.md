@@ -42,7 +42,7 @@ python submit_nextflow_pipeline.py \
 
 ## Flow Diagram
 
-![call-gSNP flow diagram](call-gSNP-DSL2.png)
+![call-gSNP flow diagram](docs/call-gsnp-flow.svg)
 
 ---
 
