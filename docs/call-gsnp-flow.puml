@@ -1,0 +1,86 @@
+@startuml
+
+skinparam ConditionEndStyle hline
+
+start
+
+if (Explicit intervals?) is (Yes) then
+    :==run_SplitIntervals_GATK
+    ----
+    Split reference genome into up
+    to **scatter_count** interval lists,
+    without subdividing any of the
+    input intervals;
+else (No)
+    :==run_SplitIntervals_GATK
+    ----
+    Split reference genome into
+    **scatter_count** interval lists;
+endif
+
+split
+
+:==run_HaplotypeCallerVCF_GATK
+----
+Generate VCFs for each split interval
+using HaplotypeCaller;
+
+:==run_MergeVcfs_Picard_VCF
+----
+Merge raw variants into whole VCF file;
+
+#palegreen:Per-sample raw VCF + index files; <<output>>
+
+partition "Recalibrate Variants" {
+
+:==run_VariantRecalibratorSNP_GATK
+----
+Generate Variant Quality Score Recalibration
+(VQSR) table for SNPs;
+
+:==run_ApplyVQSR_GATK_SNP
+----
+Filter SNPs based on VQSR table;
+
+:==run_VariantRecalibratorINDEL_GATK
+----
+Generate VQSR table for INDELs;
+
+:==run_ApplyVQSR_GATK_INDEL
+----
+Filter INDELs based on VQSR table;
+
+}
+
+#palegreen:SNP and INDEL recalibrated
+variants + index files; <<output>>
+
+:==filter_gSNP_GATK
+----
+Filter ambiguous variants with
+customized Perl script;
+
+#palegreen:Filtered germline
+variants + index files; <<output>>
+
+detach
+
+split again
+
+:==run_HaplotypeCallerGVCF_GATK
+----
+Generate GVCFs for each split interval
+using HaplotypeCaller;
+
+:==run_MergeVcfs_Picard_GVCF
+----
+Merge raw variants into whole GVCF file;
+
+#palegreen:Per-sample GVCF + index files; <<output>>
+detach
+
+endsplit
+
+
+@enduml
+
