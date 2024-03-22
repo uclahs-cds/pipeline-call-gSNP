@@ -31,6 +31,8 @@ Merge raw variants into whole VCF file;
 
 #palegreen:Per-sample raw VCF + index files>
 
+partition "Recalibrate Variants" {
+
 :==run_VariantRecalibratorSNP_GATK
 ----
 Generate Variant Quality Score Recalibration
@@ -47,6 +49,8 @@ Generate VQSR table for INDELs;
 :==run_ApplyVQSR_GATK_INDEL
 ----
 Filter INDELs based on VQSR table;
+
+}
 
 #palegreen:SNP and INDEL recalibrated
 variants + index files>
@@ -77,6 +81,7 @@ Merge raw variants into whole GVCF file;
 detach
 
 endsplit
+
 
 @enduml
 
