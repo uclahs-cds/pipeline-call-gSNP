@@ -120,12 +120,12 @@ process run_HaplotypeCallerGVCF_GATK {
     path(reference_fasta_dict)
     path(dbsnp_bundle)
     path(dbsnp_bundle_index)
-    tuple val(sample_id), path(bam), path(bam_index), path(interval), val(interval_id)
+    tuple val(sample_id), path(bam), path(bam_index), path(interval_path), val(interval_id)
 
 
     output:
     path(".command.*")
-    tuple val(sample_id), path(output_filename), path("${output_filename}.tbi"), emit: gvcfs
+    tuple val(sample_id), path(output_filename), path("${output_filename}.tbi"), path(interval_path), val(interval_id), emit: gvcfs
 
     script:
     output_filename = generate_standard_filename(
@@ -136,7 +136,7 @@ process run_HaplotypeCallerGVCF_GATK {
             'additional_information': "${interval_id}_raw_variants.g.vcf.gz"
         ]
     )
-    interval_str = "--intervals ${interval}"
+    interval_str = "--intervals ${interval_path}"
     interval_padding = params.is_targeted ? "--interval-padding 100" : ""
     output_mode = params.emit_all_confident_sites ? "EMIT_ALL_CONFIDENT_SITES" : "EMIT_VARIANTS_ONLY"
     """
