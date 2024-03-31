@@ -62,6 +62,7 @@ include {
     run_HaplotypeCallerGVCF_GATK
     } from './module/haplotypecaller.nf'
 include { run_GenomicsDBImport_GATK } from './module/genomicsdb-import.nf'
+include { run_CombineGVCFs_GATK } from './module/combine-gvcfs.nf'
 include { run_GenotypeGVCFs_GATK } from './module/genotype-gvcfs.nf'
 include {
     run_MergeVcfs_Picard as run_MergeVcfs_Picard_VCF
@@ -202,10 +203,13 @@ run_HaplotypeCallerGVCF_GATK.out.gvcfs
             it[4] // Interval ID
         ]
     }
-    .set { input_ch_genomicsdb }
+    .set { input_ch_combine_gvcfs }
 
-    run_GenomicsDBImport_GATK(
-        input_ch_genomicsdb
+    run_CombineGVCFs_GATK(
+        params.reference_fasta,
+        "${params.reference_fasta}.fai",
+        "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
+        input_ch_combine_gvcfs
         )
 
     run_GenotypeGVCFs_GATK(
@@ -214,7 +218,7 @@ run_HaplotypeCallerGVCF_GATK.out.gvcfs
         "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
         params.bundle_v0_dbsnp138_vcf_gz,
         "${params.bundle_v0_dbsnp138_vcf_gz}.tbi",
-        run_GenomicsDBImport_GATK.out.genomicsdb
+        run_CombineGVCFs_GATK.out.combined_gvcf
     )
 
     /**

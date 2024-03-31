@@ -3,13 +3,12 @@ include { generate_standard_filename } from '../external/pipeline-Nextflow-modul
 /*
     Nextflow module for importing GVCFs into GenomicsDB for joint genotyping with GATK
 */
-process run_GenotypeGVCFs_GATK {
+process run_CombineGVCFs_GATK {
     container params.docker_image_gatk
     publishDir path: "${params.output_dir_base}/intermediate/${task.process.replace(':', '/')}",
         mode: "copy",
         enabled: params.save_intermediate_files,
-        pattern: '*.vcf*'
-
+        pattern: '*g.gvcf.gz*'
     publishDir path: "${params.log_output_dir}/process-log",
         pattern: ".command.*",
         mode: "copy",
@@ -19,13 +18,11 @@ process run_GenotypeGVCFs_GATK {
     path(reference_fasta)
     path(reference_fasta_fai)
     path(reference_fasta_dict)
-    path(dbsnp_bundle)
-    path(dbsnp_bundle_index)
-    tuple path(combined_gvcf), path(combined_gvcf_index), path(interval_path), val(interval_id)
+    tuple path(gvcfs), path(gvcf_indices), path(interval_path), val(interval_id)
 
     output:
     path(".command.*")
-    tuple path(output_filename), path("${output_filename}.tbi"), emit: vcfs
+    tuple path(output_filename), path("${output_filename}.tbi"), path(interval_path), val(interval_id), emit: combined_gvcf
 
     script:
     output_filename = generate_standard_filename(
@@ -33,22 +30,22 @@ process run_GenotypeGVCFs_GATK {
         params.dataset_id,
         params.patient_id,
         [
-            'additional_information': "${interval_id}.vcf.gz"
+            'additional_information': "${interval_id}.g.vcf.gz"
         ]
     )
+    gvcf_input_str = gvcfs.collect{ "--variant '${it}'" }.join(' ')
     interval_str = "--intervals ${interval_path}"
     interval_padding = params.is_targeted ? "--interval-padding 100" : ""
     """
     set -euo pipefail
 
     gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m" \
-        GenotypeGVCFs \
-        --variant ${combined_gvcf} \
+        CombineGVCFs \
         --reference ${reference_fasta} \
-        --verbosity INFO \
+        ${gvcf_input_str} \
         --output ${output_filename} \
-        --dbsnp ${dbsnp_bundle} \
-        --standard-min-confidence-threshold-for-calling 50 \
+        --create-output-variant-index true \
+        --verbosity INFO \
         ${interval_str} \
         ${interval_padding}
     """
