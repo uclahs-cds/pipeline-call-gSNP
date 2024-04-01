@@ -1,7 +1,7 @@
 include { generate_standard_filename } from '../external/pipeline-Nextflow-module/modules/common/generate_standardized_filename/main.nf'
 
 /*
-    Nextflow module for importing GVCFs into GenomicsDB for joint genotyping with GATK
+    Nextflow module for merging GVCFs for joint genotyping with GATK
 */
 process run_CombineGVCFs_GATK {
     container params.docker_image_gatk

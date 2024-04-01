@@ -109,13 +109,13 @@ workflow {
     /**
     *   Input validation
     */
-//    run_validate_PipeVal(input_ch_validate)
-//
-//    run_validate_PipeVal.out.validation_result
-//        .collectFile(
-//            name: 'input_validation.txt',
-//            storeDir: "${params.output_dir_base}/validation"
-//        )
+    run_validate_PipeVal(input_ch_validate)
+
+    run_validate_PipeVal.out.validation_result
+        .collectFile(
+            name: 'input_validation.txt',
+            storeDir: "${params.output_dir_base}/validation"
+        )
 
     /**
     *   Handle interval splitting based on targeted or WGS mode
@@ -150,25 +150,6 @@ workflow {
     /**
     *   Haplotype calling
     */
-//    input_ch_collected_files.combine(input_ch_intervals)
-//        .map{ it ->
-//            [
-//                it[0].bams,
-//                it[0].indices,
-//                it[1].interval_path,
-//                it[1].interval_id
-//            ]
-//        }
-//        .set{ input_ch_haplotypecallervcf }
-
-//    run_HaplotypeCallerVCF_GATK(
-//        params.reference_fasta,
-//        "${params.reference_fasta}.fai",
-//        "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
-//        params.bundle_v0_dbsnp138_vcf_gz,
-//        "${params.bundle_v0_dbsnp138_vcf_gz}.tbi",
-//        input_ch_haplotypecallervcf
-//    )
 
     input_ch_samples_with_index.combine(input_ch_intervals)
         .map{ it ->
@@ -192,9 +173,7 @@ workflow {
     )
 
 run_HaplotypeCallerGVCF_GATK.out.gvcfs
-// [sample, gvcf, index, interval_path, interval_id]
     .groupTuple(by: 4) // Group by interval_path
-// [interval_id, [[sample1, sample2, ...], [gvcf1, gvcf2, ...], [index1, index2, ...], interval_path, ]]
     .map{ it ->
         [
             it[1].flatten(), // GVCFs
