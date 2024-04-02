@@ -172,16 +172,16 @@ workflow {
         input_ch_haplotypecallergvcf
     )
 
-run_HaplotypeCallerGVCF_GATK.out.gvcfs
-    .groupTuple(by: 4) // Group by interval_path
-    .map{ it ->
-        [
-            it[1].flatten(), // GVCFs
-            it[2].flatten(), // Indices
-            it[3][0], // Interval path
-            it[4] // Interval ID
-        ]
-    }
+    run_HaplotypeCallerGVCF_GATK.out.gvcfs
+        .groupTuple(by: 4) // Group by interval_path
+        .map{ it ->
+            [
+                it[1].flatten(), // GVCFs
+                it[2].flatten(), // Indices
+                it[3][0], // Interval path
+                it[4] // Interval ID
+            ]
+        }
     .set { input_ch_combine_gvcfs }
 
     run_CombineGVCFs_GATK(
