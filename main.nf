@@ -61,7 +61,6 @@ include {
     run_HaplotypeCallerVCF_GATK
     run_HaplotypeCallerGVCF_GATK
     } from './module/haplotypecaller.nf'
-include { run_GenomicsDBImport_GATK } from './module/genomicsdb-import.nf'
 include { run_CombineGVCFs_GATK } from './module/combine-gvcfs.nf'
 include { run_GenotypeGVCFs_GATK } from './module/genotype-gvcfs.nf'
 include {
