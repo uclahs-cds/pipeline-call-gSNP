@@ -58,7 +58,6 @@ include { extract_GenomeIntervals } from './external/pipeline-Nextflow-module/mo
         ]
     )
 include {
-    run_HaplotypeCallerVCF_GATK
     run_HaplotypeCallerGVCF_GATK
     } from './module/haplotypecaller.nf'
 include { run_CombineGVCFs_GATK } from './module/combine-gvcfs.nf'
