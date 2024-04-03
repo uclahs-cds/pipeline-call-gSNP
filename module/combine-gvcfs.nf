@@ -8,7 +8,7 @@ process run_CombineGVCFs_GATK {
     publishDir path: "${params.output_dir_base}/intermediate/${task.process.replace(':', '/')}",
         mode: "copy",
         enabled: params.save_intermediate_files,
-        pattern: '*g.gvcf.gz*'
+        pattern: '*g.vcf.gz*'
     publishDir path: "${params.log_output_dir}/process-log",
         pattern: ".command.*",
         mode: "copy",
