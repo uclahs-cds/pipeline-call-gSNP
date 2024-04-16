@@ -42,7 +42,7 @@ process run_SplitIntervals_GATK {
     set -euo pipefail
     gatk SplitIntervals \
         -R ${reference} \
-        -L ${intervals} \
+        -L "\$(realpath ${intervals})" \
         --scatter-count ${params.scatter_count} \
         ${subdivision_mode} \
         ${params.split_intervals_extra_args} \

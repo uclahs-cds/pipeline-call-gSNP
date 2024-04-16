@@ -8,9 +8,15 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ---
 
 ## [Unreleased]
+
+---
+
+## [10.0.1] - 2024-04-15
 ### Changed
 - Replace workflow diagram with PlantUML version
 - Update PlantUML action to v1.0.1
+### Fixed
+- Resolve intervals before splitting to allow for index discovery
 
 ---
 
