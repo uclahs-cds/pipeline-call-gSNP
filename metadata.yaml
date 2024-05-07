@@ -1,6 +1,6 @@
 ---
 category: "pipeline"
-description: "GATK pipeline for calling germline variants"
+description: "Nextflow pipeline to call germline short variants using GATK"
 maintainers: "Boutros Lab Infrastructure <BoutrosLabInfrastructure@mednet.ucla.edu>"
 languages: ["Nextflow", "Docker"]
 dependencies: ["Java", "Nextflow", "Docker"]
