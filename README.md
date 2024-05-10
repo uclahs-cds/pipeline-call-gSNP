@@ -18,6 +18,8 @@ This pipeline takes BAMs and corresponding indices from [recalibrate-BAM](https:
 
 ## How To Run
 
+**Requirements**: Currently supported Nextflow versions: `v23.04.2`
+
 **The pipeline is currently configured to run on a SINGLE NODE mode with normal only, tumor only, normal-tumor paired, or multiple normal and tumor samples.**
 
 1. Update the params section of the .config file ([Example config](config/template.config)).
@@ -42,7 +44,7 @@ python submit_nextflow_pipeline.py \
 
 ## Flow Diagram
 
-![call-gSNP flow diagram](call-gSNP-DSL2.png)
+![call-gSNP flow diagram](docs/call-gsnp-flow.svg)
 
 ---
 
