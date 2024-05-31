@@ -171,7 +171,7 @@ workflow {
     )
 
     run_HaplotypeCallerGVCF_GATK.out.gvcfs
-        .groupTuple(by: 4) // Group by interval_path
+        .groupTuple(by: 4) // Group by interval ID
         .map{ it ->
             [
                 it[1].flatten(), // GVCFs
