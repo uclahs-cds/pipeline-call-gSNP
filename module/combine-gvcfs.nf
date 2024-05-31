@@ -34,8 +34,6 @@ process run_CombineGVCFs_GATK {
         ]
     )
     gvcf_input_str = gvcfs.collect{ "--variant '${it}'" }.join(' ')
-    interval_str = "--intervals ${interval_path}"
-    interval_padding = params.is_targeted ? "--interval-padding 100" : ""
     """
     set -euo pipefail
 
@@ -45,8 +43,6 @@ process run_CombineGVCFs_GATK {
         ${gvcf_input_str} \
         --output ${output_filename} \
         --create-output-variant-index true \
-        --verbosity INFO \
-        ${interval_str} \
-        ${interval_padding}
+        --verbosity INFO
     """
 }
