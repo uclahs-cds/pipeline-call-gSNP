@@ -5,4 +5,4 @@ maintainers: "Boutros Lab Infrastructure <BoutrosLabInfrastructure@mednet.ucla.e
 languages: ["Nextflow", "Docker"]
 dependencies: ["Java", "Nextflow", "Docker"]
 references: "https://uclahs-cds.atlassian.net/wiki/spaces/BOUTROSLAB/pages/3189620/Guide+to+Nextflow"
-tools: ["Picard:2.26.10", "GATK:3.7.0", "GATK:4.2.4.1"]
+tools: ["Picard:2.26.10", "GATK:3.7.0", "GATK:4.5.0.0"]

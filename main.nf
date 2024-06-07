@@ -25,7 +25,7 @@ Current Configuration:
         bundle_omni_1000g_2p5_vcf_gz: ${params.bundle_omni_1000g_2p5_vcf_gz}
         bundle_phase1_1000g_snps_high_conf_vcf_gz: ${params.bundle_phase1_1000g_snps_high_conf_vcf_gz}
 
-    - output: 
+    - output:
         output: ${params.output_dir}
         output_dir_base: ${params.output_dir_base}
         log_output_dir: ${params.log_output_dir}
@@ -58,9 +58,10 @@ include { extract_GenomeIntervals } from './external/pipeline-Nextflow-module/mo
         ]
     )
 include {
-    run_HaplotypeCallerVCF_GATK
     run_HaplotypeCallerGVCF_GATK
     } from './module/haplotypecaller.nf'
+include { run_CombineGVCFs_GATK } from './module/combine-gvcfs.nf'
+include { run_GenotypeGVCFs_GATK } from './module/genotype-gvcfs.nf'
 include {
     run_MergeVcfs_Picard as run_MergeVcfs_Picard_VCF
     run_MergeVcfs_Picard as run_MergeVcfs_Picard_GVCF
@@ -147,25 +148,6 @@ workflow {
     /**
     *   Haplotype calling
     */
-    input_ch_collected_files.combine(input_ch_intervals)
-        .map{ it ->
-            [
-                it[0].bams,
-                it[0].indices,
-                it[1].interval_path,
-                it[1].interval_id
-            ]
-        }
-        .set{ input_ch_haplotypecallervcf }
-
-    run_HaplotypeCallerVCF_GATK(
-        params.reference_fasta,
-        "${params.reference_fasta}.fai",
-        "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
-        params.bundle_v0_dbsnp138_vcf_gz,
-        "${params.bundle_v0_dbsnp138_vcf_gz}.tbi",
-        input_ch_haplotypecallervcf
-    )
 
     input_ch_samples_with_index.combine(input_ch_intervals)
         .map{ it ->
@@ -188,10 +170,38 @@ workflow {
         input_ch_haplotypecallergvcf
     )
 
+    run_HaplotypeCallerGVCF_GATK.out.gvcfs
+        .groupTuple(by: 4) // Group by interval ID
+        .map{ it ->
+            [
+                it[1].flatten(), // GVCFs
+                it[2].flatten(), // Indices
+                it[3][0], // Interval path
+                it[4] // Interval ID
+            ]
+        }
+    .set { input_ch_combine_gvcfs }
+
+    run_CombineGVCFs_GATK(
+        params.reference_fasta,
+        "${params.reference_fasta}.fai",
+        "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
+        input_ch_combine_gvcfs
+        )
+
+    run_GenotypeGVCFs_GATK(
+        params.reference_fasta,
+        "${params.reference_fasta}.fai",
+        "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
+        params.bundle_v0_dbsnp138_vcf_gz,
+        "${params.bundle_v0_dbsnp138_vcf_gz}.tbi",
+        run_CombineGVCFs_GATK.out.combined_gvcf
+    )
+
     /**
     *   Merge VCFs
     */
-    run_HaplotypeCallerVCF_GATK.out.vcfs
+    run_GenotypeGVCFs_GATK.out.vcfs
         .reduce( ['vcfs': [], 'indices': []] ){ a, b ->
             a.vcfs.add(b[0]);
             a.indices.add(b[1]);

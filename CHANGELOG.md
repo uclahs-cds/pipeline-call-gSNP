@@ -8,8 +8,11 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ---
 
 ## [Unreleased]
+### Added
+- Add workflow for genotyping from GVCFs
 ### Changed
 - Standardize description
+- Update GATK to 4.5.0.0
 
 ---
 
