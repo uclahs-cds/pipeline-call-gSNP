@@ -8,6 +8,10 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ---
 
 ## [Unreleased]
+
+---
+
+## [10.1.0-rc.1]
 ### Added
 - Add workflow for genotyping from GVCFs
 ### Changed
