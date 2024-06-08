@@ -9,10 +9,20 @@
     }
   },
   {
+    "version": "v10.1.0-rc.1",
+    "title": "v10.1.0-rc.1",
+    "aliases": [
+      "release-candidate"
+    ],
+    "properties": {
+      "commit": "56cc6bea9c3e9aec5894a135e2be3e0c676dc50d",
+      "date": "2024-06-07T18:04:26-07:00"
+    }
+  },
+  {
     "version": "v10.0.1",
     "title": "v10.0.1",
     "aliases": [
-      "release-candidate",
       "latest"
     ],
     "properties": {
