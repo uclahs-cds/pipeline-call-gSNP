@@ -2,18 +2,14 @@
 global:
   temp_dir: ./test/work
   nf_config: test/global.config
-  remove_temp: false
+  remove_temp: true
   clean_logs: true
 
 cases:
-  - name:
-    message:
-    nf_script:
-    nf_config:
-    reference_files:
-      - reference_parameter_name:
-        reference_parameter_path:
-        reference_checksum:
-        reference_checksum_type: 'md5'
+  - name: test-call-gSNP-paired
+    message: Test call-gSNP pipeline with one normal and one tumor pair
+    nf_script: ./main.nf
+    nf_config: test/test-call-gSNP-paired.config
+    params_file: test/Illumina-paired.yaml
     skip: false
     verbose: true
