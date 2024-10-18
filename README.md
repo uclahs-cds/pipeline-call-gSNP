@@ -1,5 +1,7 @@
 # call-gSNP
 
+[![GitHub release](https://img.shields.io/github/v/release/uclahs-cds/pipeline-call-gSNP)](https://github.com/uclahs-cds/pipeline-call-gSNP/actions/workflows/prepare-release.yaml)
+
 1. [Overview](#overview)
 2. [How To Run](#how-to-run)
 3. [Flow Diagram](#flow-diagram)
