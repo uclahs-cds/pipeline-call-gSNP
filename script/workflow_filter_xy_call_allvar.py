@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+Task
+    - add sample name input
+    - make script work if VCF has multiple samples
+Note
+    - script works on both single sample and multi sample vcf
+    - filtration can be done using hom GT, not necessarily AF
 """
 Filter XY calls from call-gSNP single sample VCF file
 
@@ -26,6 +32,12 @@ script_dir = os.getcwd()
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
+    '--sample_name',
+    dest='sample_name',
+    help = 'Sample name',
+    required=True
+    )
+parser.add_argument(
     '--input_vcf',
     dest='input_vcf',
     help = 'Input single sample VCF file path',
@@ -46,6 +58,7 @@ parser.add_argument(
 
 args = parser.parse_args()
 
+sample = args.sample_name
 vcf_file = args.input_vcf
 par_bed_file = args.par_bed
 output_dir = args.output_dir
