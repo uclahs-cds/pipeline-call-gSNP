@@ -84,11 +84,13 @@ vcf_matrix = hl.import_vcf(
 
 #Filter XY calls
 ##Extract XY calls
-X_contig = vcf_matrix.locus.contig.startswith('chrX')
-Y_contig = vcf_matrix.locus.contig.startswith('chrY')
+X_contig = vcf_matrix.locus.contig.startswith('chrX') | vcf_matrix.locus.contig.startswith('X')
+Y_contig = vcf_matrix.locus.contig.startswith('chrY') | vcf_matrix.locus.contig.startswith('Y')
 extract_condition = (X_contig) | (Y_contig)
 vcf_XY = vcf_matrix.filter_rows(extract_condition)
 print('variants in chrX/Y:', vcf_XY.count())
+##Extract autosomes
+vcf_autosomes = vcf_matrix.filter_rows(~extract_condition)
 
 ##Remove calls with DP=0
 #vcf_XY = vcf_XY.filter_rows(hl.agg.all(vcf_XY.DP != 0))
@@ -117,6 +119,7 @@ elif sample_sex == 'XX':
 #Combine PAR and filtered non-PAR regions
 par_non_par = [par_variants, non_par_filtered_variants]
 filterXY = hl.MatrixTable.union_rows(*par_non_par)
+
 
 #Export MatrixTable to VCF
 output_file = output_dir + '/' + sample_name + '_filterXY.vcf.bgz'
