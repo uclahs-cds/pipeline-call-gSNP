@@ -1,10 +1,4 @@
 #!/usr/bin/env python3
-Task
-    - add sample name input
-    - make script work if VCF has multiple samples
-Note
-    - script works on both single sample and multi sample vcf
-    - filtration can be done using hom GT, not necessarily AF
 """
 Filter XY calls from call-gSNP single sample VCF file
 
@@ -12,7 +6,7 @@ Filter criteria:
 - Extract XY calls
 - Extract XY calls overlapping with Pseudo-Autosomal Regions (PARs)
 - For non-PAR
-    - Male sample: Filter out chrX calls where VAF < 80%
+    - Male sample: Filter out heterozygous GT calls in chrX
     - Female sample: Filter out chrY calls
 
 Dependencies:
@@ -44,6 +38,12 @@ parser.add_argument(
     required=True
     )
 parser.add_argument(
+    '--sample_sex',
+    dest='sample_sex',
+    help = 'Sample sex, XY or XX',
+    required=True
+    )
+parser.add_argument(
     '--par_bed',
     dest='par_bed',
     help = 'Input BED file path for Pseudo-Autosomal Regions (PAR)',
@@ -58,7 +58,8 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-sample = args.sample_name
+sample_name = args.sample_name
+sample_sex = args.sample_sex
 vcf_file = args.input_vcf
 par_bed_file = args.par_bed
 output_dir = args.output_dir
@@ -81,9 +82,6 @@ vcf_matrix = hl.import_vcf(
     force_bgz = True
     )
 
-###Get Sample ID
-sample_name = vcf_matrix.s.collect()[0] #list has one sample ID
-
 #Filter XY calls
 ##Extract XY calls
 X_contig = vcf_matrix.locus.contig.startswith('chrX')
@@ -93,49 +91,31 @@ vcf_XY = vcf_matrix.filter_rows(extract_condition)
 print('variants in chrX/Y:', vcf_XY.count())
 
 ##Remove calls with DP=0
-depth_field = sample_name + '.DP'
-depth = vcf_XY.make_table()
-zero_depth = depth.filter(depth[depth_field] == 0)
-zero_depth_count = zero_depth.count()
-print('variants with zero depth:', zero_depth_count)
-zero_depth_contig = zero_depth.locus.contig.collect()
-zero_depth_pos = zero_depth.locus.position.collect()
-
-for allele in range(zero_depth_count):
-    zero_depth_match = (vcf_XY.locus.contig == zero_depth_contig[allele]) & (vcf_XY.locus.position == zero_depth_pos[allele])
-    vcf_XY = vcf_XY.filter_rows(
-        ~(zero_depth_match)
-    )
-
-print('variants after filtering zero depth:', vcf_XY.count())
+#vcf_XY = vcf_XY.filter_rows(hl.agg.all(vcf_XY.DP != 0))
 
 ##Extract PAR and non-PAR regions
-par_filtered = vcf_XY.filter_rows(hl.is_defined(par[vcf_XY.locus]))
-non_par_filtered = vcf_XY.filter_rows(hl.is_missing(par[vcf_XY.locus]))
+par_variants = vcf_XY.filter_rows(hl.is_defined(par[vcf_XY.locus]))
+non_par_variants = vcf_XY.filter_rows(hl.is_missing(par[vcf_XY.locus]))
 
-###For non-PAR regions, extract VQSR PASS calls. (note: Hail parses PASS as an empty set {})
-#non_par_filtered = non_par_filtered.filter_rows(
-#    hl.len(non_par_filtered.filters) == 0
-#    )
-
-##Predict SEX of the sample
-#imputed_sex = hl.impute_sex(vcf_file.GT)
-#temp place holder for SEX
-SEX = 'XY'
-
-if SEX == 'XY':
-    #If MALE (XY), remove non-PAR chrX calls with AF=0.5
-    filter_non_par_call = non_par_filtered.filter_rows(
-        non_par_filtered.info.AF[0] != 0.5
+if sample_sex == 'XY':
+    #If MALE (XY), remove heterozygous non-PAR chrX calls
+    non_par_filtered_variants = non_par_variants.filter_rows(
+        hl.agg.all(
+            non_par_variants.GT.is_diploid() & non_par_variants.GT.is_hom_var()
+            )
         )
-elif SEX == 'XX':
+    non_par_filtered_variants = non_par_filtered_variants.annotate_entries(
+        GT = hl.call(non_par_filtered.GT[0])
+        )
+
+elif sample_sex == 'XX':
     #If Female (XX), remove non-PAR chrY calls
-    filter_non_par_call = non_par_filtered.filter_rows(
-        non_par_filtered.locus.contig.startswith('chrX')
+    non_par_filtered_variants = non_par_variants.filter_rows(
+        non_par_variants.locus.contig.startswith('chrX') | non_par_variants.locus.contig.startswith('X')
         )
 
 #Combine PAR and filtered non-PAR regions
-par_non_par = [par_filtered, filter_non_par_call]
+par_non_par = [par_variants, non_par_filtered_variants]
 filterXY = hl.MatrixTable.union_rows(*par_non_par)
 
 #Export MatrixTable to VCF
