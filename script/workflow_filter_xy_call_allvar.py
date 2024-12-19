@@ -2,6 +2,11 @@
 """
 Filter XY calls from call-gSNP single sample VCF file
 
+Steps:
+- Extract autosomes and chrX/Y variants from input VCF
+- Filter chrX/Y variants
+- Merge autosomal and filtered chrX/Y variants
+
 Filter criteria:
 - Extract XY calls
 - Extract XY calls overlapping with Pseudo-Autosomal Regions (PARs)
@@ -91,9 +96,6 @@ vcf_XY = vcf_matrix.filter_rows(extract_condition)
 print('chrX/Y variants before XY filtration:', vcf_XY.count())
 ##Extract autosomes
 vcf_autosomes = vcf_matrix.filter_rows(~extract_condition)
-
-##Remove calls with DP=0
-#vcf_XY = vcf_XY.filter_rows(hl.agg.all(vcf_XY.DP != 0))
 
 ##Extract PAR and non-PAR regions
 par_variants = vcf_XY.filter_rows(hl.is_defined(par[vcf_XY.locus]))
