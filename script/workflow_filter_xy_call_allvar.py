@@ -105,7 +105,7 @@ if sample_sex == 'XY':
             )
         )
     non_par_filtered_variants = non_par_filtered_variants.annotate_entries(
-        GT = hl.call(non_par_filtered.GT[0])
+        GT = hl.call(non_par_filtered_variants.GT[0])
         )
 
 elif sample_sex == 'XX':
