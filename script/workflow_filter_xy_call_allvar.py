@@ -94,6 +94,7 @@ Y_contig = vcf_matrix.locus.contig.startswith('chrY') | vcf_matrix.locus.contig.
 extract_condition = (X_contig) | (Y_contig)
 vcf_XY = vcf_matrix.filter_rows(extract_condition)
 print('chrX/Y variants before XY filtration:', vcf_XY.count())
+
 ##Extract autosomes
 vcf_autosomes = vcf_matrix.filter_rows(~extract_condition)
 
