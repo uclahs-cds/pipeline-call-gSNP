@@ -73,7 +73,7 @@ par = hl.import_bed(
 
 #Extract VCF file header
 vcf_header = hl.get_vcf_metadata(vcf_file)
-vcf_source = script_dir + '/call-gSNP_caller_source_VCF_header.txt'
+vcf_source = output_dir + '/call-gSNP_caller_source_VCF_header.txt'
 
 #Import VCF file into a hail MatrixTable
 vcf_matrix = hl.import_vcf(
