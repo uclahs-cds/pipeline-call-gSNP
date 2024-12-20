@@ -78,6 +78,10 @@ par = hl.import_bed(
 
 #Extract VCF file header
 vcf_header = hl.get_vcf_metadata(vcf_file)
+
+with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt') as temp_file:
+    temp_file.write(content)
+    temp_file_path = output_dir
 vcf_source = output_dir + '/call-gSNP_caller_source_VCF_header.txt'
 
 #Import VCF file into a hail MatrixTable
