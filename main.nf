@@ -104,6 +104,12 @@ workflow {
         }
         .set{ input_ch_collected_files }
 
+    script_dir_ch = Channel.fromPath(
+        "$projectDir/script",
+        checkIfExists: true
+        )
+        .collect()
+
     /**
     *   Input validation
     */
