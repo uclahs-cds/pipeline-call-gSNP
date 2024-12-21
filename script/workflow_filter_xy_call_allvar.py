@@ -44,6 +44,13 @@ parser.add_argument(
     required=True
     )
 parser.add_argument(
+    '--variant_caller',
+    dest='variant_caller',
+    default = 'HaplotypeCaller',
+    help = 'Name of the variant caller to set source in the output VCF header',
+    required=True
+    )
+parser.add_argument(
     '--sample_sex',
     dest='sample_sex',
     help = 'Sample sex, XY or XX',
