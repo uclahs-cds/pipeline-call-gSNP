@@ -1,4 +1,4 @@
-include { generate_standard_filename } from '../external/pipeline-Nextflow-module/modules/common/generate_standardized_filename/main.nf'
+include { generate_standard_filename; sanitize_string } from '../external/pipeline-Nextflow-module/modules/common/generate_standardized_filename/main.nf'
 
 /*
     Nextflow module for filtering chrX and chrY variant calls based on sample sex
@@ -28,6 +28,12 @@ process filter_XY {
     script:
     """
     set -euo pipefail
-
+    python ${script_dir}/filter_xy_call.py \
+        --sample_name id
+        --input_vcf vcf
+        --variant_caller 'HaplotypeCaller'
+        --sample_sex XX
+        --par_bed params.par_bed
+        --output_dir .
     """
 }
