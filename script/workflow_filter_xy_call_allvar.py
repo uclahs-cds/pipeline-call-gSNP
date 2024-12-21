@@ -11,7 +11,9 @@ Filter criteria:
 - Extract XY calls
 - Extract XY calls overlapping with Pseudo-Autosomal Regions (PARs)
 - For non-PAR
-    - Male sample: Filter out heterozygous GT calls in chrX
+    - Male sample:
+        - Filter out heterozygous GT calls in chrX and chrY
+        - Transform homozygous GT=1/1 to hemizygous GT=1
     - Female sample: Filter out chrY calls
 
 Dependencies:
