@@ -15,3 +15,19 @@ include { generate_standard_filename } from '../external/pipeline-Nextflow-modul
         params.sample_sex: string
         params.par_bed: string(path)
 */
+
+process filter_XY {
+    container params.docker_image_hail
+    publishDir path:
+    publishDir path:
+
+    input:
+
+    output:
+
+    script:
+    """
+    set -euo pipefail
+
+    """
+}
