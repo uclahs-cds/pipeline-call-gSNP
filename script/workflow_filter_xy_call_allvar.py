@@ -26,6 +26,7 @@ based on HAIL recommendation
 import os
 import argparse
 import hail as hl
+import tempfile
 
 script_dir = os.getcwd()
 
@@ -80,9 +81,8 @@ par = hl.import_bed(
 vcf_header = hl.get_vcf_metadata(vcf_file)
 
 with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt') as temp_file:
-    temp_file.write(content)
-    temp_file_path = output_dir
-vcf_source = output_dir + '/call-gSNP_caller_source_VCF_header.txt'
+    temp_file.write("##source=HaplotypeCaller")
+    vcf_source = temp_file.name
 
 #Import VCF file into a hail MatrixTable
 vcf_matrix = hl.import_vcf(
