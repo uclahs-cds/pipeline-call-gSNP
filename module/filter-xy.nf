@@ -22,18 +22,24 @@ process filter_XY {
     publishDir path:
 
     input:
+    val sample_id
+    val sample_sex
+    tuple path(recalibrated_vcf), path(recalibrated_vcf_tbi)
 
     output:
 
     script:
     """
     set -euo pipefail
+
+    zgrep "##source=" ${recalibrated_vcf} > ./vcf_source.txt
+
     python ${script_dir}/filter_xy_call.py \
-        --sample_name id
-        --input_vcf vcf
-        --variant_caller 'HaplotypeCaller'
-        --sample_sex XX
-        --par_bed params.par_bed
+        --sample_name ${sample_id} \
+        --input_vcf ${recalibrated_vcf} \
+        --vcf_source ./vcf_source.txt \
+        --sample_sex ${params.sample_sex} \
+        --par_bed ${params.par_bed} \
         --output_dir .
     """
 }
