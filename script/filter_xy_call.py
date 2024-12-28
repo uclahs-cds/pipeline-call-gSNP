@@ -138,7 +138,7 @@ autosomes_XYfiltered = [vcf_autosomes, filterXY]
 output_vcf = hl.MatrixTable.union_rows(*autosomes_XYfiltered)
 
 #Export MatrixTable to VCF
-output_file = output_dir + '/' + sample_name + '_filterXY.vcf.bgz'
+output_file = output_dir + '/' + sample_name + '_XY_filtered.vcf.bgz'
 
 hl.export_vcf(
     dataset = filterXY,
