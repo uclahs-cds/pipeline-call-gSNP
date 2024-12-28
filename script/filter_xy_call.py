@@ -46,10 +46,9 @@ parser.add_argument(
     required=True
     )
 parser.add_argument(
-    '--variant_caller',
-    dest='variant_caller',
-    default = 'HaplotypeCaller',
-    help = 'Name of the variant caller to set source in the output VCF header',
+    '--vcf_source_file',
+    dest='vcf_source_file',
+    help = 'A TXT file containing variant caller source details (eg. ##source=HaplotypeCaller)',
     required=True
     )
 parser.add_argument(
@@ -76,7 +75,7 @@ args = parser.parse_args()
 sample_name = args.sample_name
 sample_sex = args.sample_sex
 vcf_file = args.input_vcf
-variant_caller = args.variant_caller
+vcf_source_file = args.vcf_source_file
 par_bed_file = args.par_bed
 output_dir = args.output_dir
 
@@ -89,11 +88,6 @@ par = hl.import_bed(
 
 #Extract VCF file header
 vcf_header = hl.get_vcf_metadata(vcf_file)
-
-variant_caller_source = "##source=" + variant_caller
-with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt') as temp_file:
-    temp_file.write(variant_caller_source)
-    vcf_source_file = temp_file.name
 
 #Import VCF file into a hail MatrixTable
 vcf_matrix = hl.import_vcf(
