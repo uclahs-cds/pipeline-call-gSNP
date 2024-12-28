@@ -18,24 +18,43 @@ include { generate_standard_filename; sanitize_string } from '../external/pipeli
 
 process filter_XY {
     container params.docker_image_hail
-    publishDir path:
-    publishDir path:
+
+    publishDir path: "${params.output_dir_base}/output",
+      mode: "copy",
+      pattern: '*.vcf.bgz*',
+      saveAs: {
+        "${output_filename}_${sanitize_string(file(it).getName().replace("${sample_id}_", ""))}"
+        }
+
+    publishDir path: "${params.log_output_dir}/process-log",
+      pattern: ".command.*",
+      mode: "copy",
+      saveAs: {
+        "${task.process.replace(':', '/')}/${task.process.split(':')[-1]}-${sample_id}-${interval_id}/log${file(it).getName()}"
+        }
 
     input:
-    val sample_id
-    val sample_sex
-    tuple path(recalibrated_vcf), path(recalibrated_vcf_tbi)
+    tuple val(sample_id), path(recalibrated_vcf), path(recalibrated_vcf_tbi)
 
     output:
+    path(".command.*")
+    path("${output_filename}_XY_filtered.vcf.bgz")
+    path("${output_filename}_XY_filtered.vcf.bgz.tbi")
 
     script:
+    output_filename = generate_standard_filename(
+        "Hail-${params.hail_version}",
+        params.dataset_id,
+        sample_id,
+        [additional_tools:["GATK-${params.gatk_version}"]]
+        )
     """
     set -euo pipefail
 
     zgrep "##source=" ${recalibrated_vcf} > ./vcf_source.txt
 
     python ${script_dir}/filter_xy_call.py \
-        --sample_name ${sample_id} \
+        --sample_name ${output_filename} \
         --input_vcf ${recalibrated_vcf} \
         --vcf_source ./vcf_source.txt \
         --sample_sex ${params.sample_sex} \
