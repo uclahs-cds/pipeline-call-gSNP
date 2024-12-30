@@ -255,10 +255,8 @@ workflow {
         recalibrate_variants.out.output_ch_recalibrated_variants
     )
 
-    filter_xy_ch = input_ch_merge_gvcfs.map { it[-1] } //sample id
-        .mix(recalibrate_variants.out.output_ch_recalibrated_variants
-            .map{ [it[1], it[2]] } //VQSR VCF and index
-        )
+    filter_xy_ch = recalibrate_variants.out.output_ch_recalibrated_variants
+        .map { it -> [it[0], it[1], it[2]] }
 
     filter_XY(
         filter_xy_ch
