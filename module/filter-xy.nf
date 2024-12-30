@@ -35,6 +35,7 @@ process filter_XY {
 
     input:
     tuple val(sample_id), path(recalibrated_vcf), path(recalibrated_vcf_tbi)
+    path(script_dir)
 
     output:
     path(".command.*")
