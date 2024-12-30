@@ -258,8 +258,15 @@ workflow {
     filter_xy_ch = recalibrate_variants.out.output_ch_recalibrated_variants
         .map { it -> [it[0], it[1], it[2]] }
 
+    script_dir_ch = Channel.fromPath(
+        "$projectDir/script",
+        checkIfExists: true
+        )
+        .collect()
+
     filter_XY(
-        filter_xy_ch
+        filter_xy_ch,
+        script_dir_ch
         )
     /**
     *   Calculate checksums for output files
