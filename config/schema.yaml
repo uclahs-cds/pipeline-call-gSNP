@@ -3,10 +3,18 @@ patient_id:
   type: 'String'
   required: true
   help: 'Patient ID'
+sample_sex:
+  type: 'String'
+  required: true
+  help: 'Sample Sex'
 dataset_id:
   type: 'String'
   required: true
   help: 'Dataset ID'
+genome_build:
+  type: 'String'
+  required: true
+  help: 'Genome build, GRCh37 or GRCh38'
 output_dir:
   type: 'Path'
   mode: 'w'
@@ -62,6 +70,11 @@ bundle_phase1_1000g_snps_high_conf_vcf_gz:
   mode: 'r'
   required: true
   help: 'Absolute path to high-confidence 1000g SNPs VCF'
+par_bed:
+  type: 'Path'
+  mode: 'r'
+  required: true
+  help: 'Absolute path to Pseudo-autosomal Region (PAR) BED'
 base_resource_update:
   type: 'ResourceUpdateNamespace'
   required: false
