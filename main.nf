@@ -266,6 +266,7 @@ workflow {
 
     filter_XY(
         filter_xy_ch,
+        params.par_bed,
         script_dir_ch
         )
     /**
