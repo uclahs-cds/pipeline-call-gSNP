@@ -64,6 +64,12 @@ parser.add_argument(
     required=True
     )
 parser.add_argument(
+    '--genome_build',
+    dest='genome_build',
+    help = 'Genome build of input VCF, GRCh37 or GRCh38',
+    required=True
+    )
+parser.add_argument(
     '--output_dir',
     dest='output_dir',
     help = 'Output path where filtered XY variant VCF will be written',
@@ -76,13 +82,14 @@ sample_name = args.sample_name
 sample_sex = args.sample_sex
 vcf_file = args.input_vcf
 vcf_source_file = args.vcf_source_file
-par_bed_file = args.par_bed
+par_bed = args.par_bed
+genome_build = args.genome_build
 output_dir = args.output_dir
 
 #Import PAR BED file
 par = hl.import_bed(
-    path = args.par_bed,
-    reference_genome = 'GRCh38',
+    path = par_bed,
+    reference_genome = genome_build,
     skip_invalid_intervals = True
     )
 
@@ -92,7 +99,7 @@ vcf_header = hl.get_vcf_metadata(vcf_file)
 #Import VCF file into a hail MatrixTable
 vcf_matrix = hl.import_vcf(
     path = vcf_file,
-    reference_genome = 'GRCh38',
+    reference_genome = genome_build,
     force_bgz = True
     )
 
