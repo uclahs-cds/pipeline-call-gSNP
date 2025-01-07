@@ -35,6 +35,7 @@ process filter_XY {
 
     input:
     tuple val(sample_id), path(recalibrated_vcf), path(recalibrated_vcf_tbi)
+    path(par_bed)
     path(script_dir)
 
     output:
@@ -61,7 +62,7 @@ process filter_XY {
         --input_vcf ${recalibrated_vcf} \
         --vcf_source_file ./vcf_source.txt \
         --sample_sex ${params.sample_sex} \
-        --par_bed ${params.par_bed} \
+        --par_bed ${par_bed} \
         --genome_build ${params.genome_build} \
         --output_dir .
     """
