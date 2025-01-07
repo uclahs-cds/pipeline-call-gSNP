@@ -62,6 +62,7 @@ process filter_XY {
         --vcf_source_file ./vcf_source.txt \
         --sample_sex ${params.sample_sex} \
         --par_bed ${params.par_bed} \
+        --genome_build ${params.genome_build} \
         --output_dir .
     """
 }
