@@ -148,7 +148,7 @@ output_vcf = hl.MatrixTable.union_rows(*autosomes_XYfiltered)
 output_file = output_dir + '/' + sample_name + '_XY_filtered.vcf.bgz'
 
 hl.export_vcf(
-    dataset = filterXY,
+    dataset = output_vcf,
     output = output_file,
     tabix = True,
     metadata = vcf_header,
