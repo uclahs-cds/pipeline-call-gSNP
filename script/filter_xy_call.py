@@ -28,7 +28,6 @@ based on HAIL recommendation
 import os
 import argparse
 import hail as hl
-import tempfile
 
 script_dir = os.getcwd()
 
@@ -132,7 +131,8 @@ if sample_sex == 'XY':
 elif sample_sex == 'XX':
     #If Female (XX), remove non-PAR chrY calls
     non_par_filtered_variants = non_par_variants.filter_rows(
-        non_par_variants.locus.contig.startswith('chrX') | non_par_variants.locus.contig.startswith('X')
+        non_par_variants.locus.contig.startswith('chrX') | \
+            non_par_variants.locus.contig.startswith('X')
         )
 
 #Combine PAR and filtered non-PAR regions
