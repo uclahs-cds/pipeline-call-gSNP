@@ -16,7 +16,7 @@ include { generate_standard_filename; sanitize_string } from '../external/pipeli
         params.par_bed: string(path)
 */
 
-process filter_XY {
+process filter_XY_Hail {
     container params.docker_image_hail
 
     publishDir path: "${params.output_dir_base}/output",
