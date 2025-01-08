@@ -55,8 +55,6 @@ process filter_XY {
 
     zgrep "##source=" ${recalibrated_vcf} > ./vcf_source.txt
 
-    cat ./vcf_source.txt
-
     python ${script_dir}/filter_xy_call.py \
         --sample_name ${output_filename} \
         --input_vcf ${recalibrated_vcf} \
