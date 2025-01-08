@@ -30,7 +30,7 @@ process filter_XY {
       pattern: ".command.*",
       mode: "copy",
       saveAs: {
-        "${task.process.replace(':', '/')}/${task.process.split(':')[-1]}-${sample_id}-${interval_id}/log${file(it).getName()}"
+        "${task.process.replace(':', '/')}-${sample_id}/log${file(it).getName()}"
         }
 
     input:
