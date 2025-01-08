@@ -7,6 +7,9 @@ sample_sex:
   type: 'String'
   required: true
   help: 'Sample Sex'
+  choices:
+    - "XY"
+    - "XX"
 dataset_id:
   type: 'String'
   required: true
