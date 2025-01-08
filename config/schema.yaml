@@ -15,6 +15,11 @@ genome_build:
   type: 'String'
   required: true
   help: 'Genome build, GRCh37 or GRCh38'
+  default:
+    - "GRCh38"
+  choice:
+    - "GRCh37"
+    - "GRCh38"
 output_dir:
   type: 'Path'
   mode: 'w'
