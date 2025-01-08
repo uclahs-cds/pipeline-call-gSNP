@@ -68,7 +68,7 @@ include {
     } from './module/merge-vcf.nf'
 include { recalibrate_variants } from './module/workflow-recalibrate-variants.nf'
 include { filter_gSNP_GATK } from './module/filter-gsnp.nf'
-include { filter_XY } from './module/filter-xy.nf'
+include { filter_XY_hail } from './module/filter-xy.nf'
 include { calculate_sha512 } from './module/checksum.nf'
 
 // Returns the index file for the given bam or vcf
@@ -264,7 +264,7 @@ workflow {
         )
         .collect()
 
-    filter_XY(
+    filter_XY_Hail(
         filter_xy_ch,
         params.par_bed,
         script_dir_ch
