@@ -14,3 +14,13 @@
         - Transform homozygous `GT=1/1` to hemizygous `GT=1`
     - if `sample_sex` is `XX`:
         - Filter out `chrY` calls
+
+## Pseudo-Autosomal Regions (PARs)
+### GRCh38
+| CHROM | START | END | PAR | REGION | REFERENCE |
+|---|---|---|---|---|---|
+| chrX | 10001 | 2781479 | PAR1 | Xp22 | EMSEMBL |
+| chrX | 91434839 | 91438584 | PAR3/XTR | Xq21.3 | PMID:23708688 |
+| chrX | 155701383 | 156030895 | PAR2 | Xq28 | ENSEMBL |
+| chrY | 10001 | 10300000 | PAR1+PAR3/XTR | Yp11 | ENSEMBL +PMID:23708688 |
+| chrY | 56887903 | 57217415 | PAR2 | Yq12 | ENSEMBL |
