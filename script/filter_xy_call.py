@@ -25,11 +25,11 @@ Note:
 based on HAIL recommendation
 """
 
-import os
 import argparse
-import hail as hl
+import os
 import sys
 import tempfile
+import hail as hl
 
 script_dir = os.getcwd()
 
@@ -91,15 +91,15 @@ output_dir = args.output_dir
 vcf_header = hl.get_vcf_metadata(vcf_file)
 
 #Add script system command to VCF source
-script_command = ' '.join(sys.argv)
+SCRIPT_COMMAND = ' '.join(sys.argv)
 
-with open(vcf_source_file, 'r') as vcf_source:
+with open(vcf_source_file, 'r', encoding='utf-8') as vcf_source:
     vcf_source_content = vcf_source.read()
 
-script_command_entry = f'##XYFiltration=<CommandLine={script_command}>'
+script_command_entry = f'##XYFiltration=<CommandLine={SCRIPT_COMMAND}>'
 vcf_source = vcf_source_content + script_command_entry
 temp_file_path = os.path.join(tempfile.gettempdir(), 'temp_file.txt')
-with open(temp_file_path, 'w') as temp_file:
+with open(temp_file_path, 'w', encoding='utf-8') as temp_file:
     temp_file.write(vcf_source)
 
 #Import PAR BED file
