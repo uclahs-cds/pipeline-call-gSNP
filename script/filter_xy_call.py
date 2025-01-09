@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Filter XY calls from call-gSNP single sample VCF file
+Filter XY calls from a germline VCF file
 
 Steps:
 - Extract autosomes and chrX/Y variants from input VCF
