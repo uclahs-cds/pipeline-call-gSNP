@@ -78,7 +78,10 @@ Take the output from Step 6 as input, and apply the model in Step 5 to recalibra
 ### 8. Filter gSNP – Filter out ambiguous variants
 Use customized Perl script to filter out ambiguous variants.
 
-### 9. Generate sha512 checksum
+### 9. Adjust chrX and chrY genotypes based on sample sex from recalibrated VCF
+Apply XY filtration workflow to recalibrated VCF as discribed [here](docs/xy_filtration_workflow.md).
+
+### 10. Generate sha512 checksum
 Generate sha512 checksum for VCFs and GVCFs.
 
 ---
