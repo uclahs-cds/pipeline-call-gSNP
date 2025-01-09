@@ -205,6 +205,10 @@ base_resource_update {
 | `<GATK>_<dataset_id>_<patient_id>_indel.vcf.gz` | Filtered INDELs with non-germline and ambiguous variants removed |
 | `<GATK>_<dataset_id>_<patient_id>_indel.vcf.gz.tbi` | Filtered germline INDELs index |
 | `<GATK>_<dataset_id>_<patient_id>_indel.vcf.gz.sha512` | Filtered germline INDELs sha512 checksum |
+| `<Hail>_<GATK>_<dataset_id>_<patient_id>_XY_filtered.vcf.bgz` | chrX/Y filtered SNP and INDEL recalibrated variants |
+| `<Hail>_<GATK>_<dataset_id>_<patient_id>_XY_filtered.vcf.bgz.sha512` | chrX/Y filtered SNP and INDEL recalibrated variants checksum |
+| `<Hail>_<GATK>_<dataset_id>_<patient_id>_XY_filtered.vcf.bgz.tbi` | chrX/Y filtered SNP and INDEL recalibrated variants index |
+| `<Hail>_<GATK>_<dataset_id>_<patient_id>_XY_filtered.vcf.bgz.tbi.sha512` | chrX/Y filtered SNP and INDEL recalibrated variants index checksum |
 | `report.html`, `timeline.html` and `trace.txt` | Nextflow report, timeline and trace files |
 | `*.command.*` | Process specific logging files created by nextflow |
 
