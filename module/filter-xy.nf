@@ -21,10 +21,7 @@ process filter_XY_Hail {
 
     publishDir path: "${params.output_dir_base}/output",
       mode: "copy",
-      pattern: '*.vcf.bgz*',
-      saveAs: {
-        "${output_filename}_${sanitize_string(file(it).getName().replace("${sample_id}_", ""))}"
-        }
+      pattern: '*.vcf.bgz*'
 
     publishDir path: "${params.log_output_dir}/process-log",
       pattern: ".command.*",
