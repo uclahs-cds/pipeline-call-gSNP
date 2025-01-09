@@ -28,6 +28,8 @@ based on HAIL recommendation
 import os
 import argparse
 import hail as hl
+import sys
+import tempfile
 
 script_dir = os.getcwd()
 
@@ -85,15 +87,27 @@ par_bed = args.par_bed
 genome_build = args.genome_build
 output_dir = args.output_dir
 
+#Extract VCF file header
+vcf_header = hl.get_vcf_metadata(vcf_file)
+
+#Add script system command to VCF source
+script_command = ' '.join(sys.argv)
+
+with open(vcf_source_file, 'r') as vcf_source:
+    vcf_source_content = vcf_source.read()
+
+script_command_entry = f'##XYFiltration=<CommandLine={script_command}>'
+vcf_source = vcf_source_content + script_command_entry
+temp_file_path = os.path.join(tempfile.gettempdir(), 'temp_file.txt')
+with open(temp_file_path, 'w') as temp_file:
+    temp_file.write(vcf_source)
+
 #Import PAR BED file
 par = hl.import_bed(
     path = par_bed,
     reference_genome = genome_build,
     skip_invalid_intervals = True
     )
-
-#Extract VCF file header
-vcf_header = hl.get_vcf_metadata(vcf_file)
 
 #Import VCF file into a hail MatrixTable
 vcf_matrix = hl.import_vcf(
@@ -152,5 +166,5 @@ hl.export_vcf(
     output = output_file,
     tabix = True,
     metadata = vcf_header,
-    append_to_header = vcf_source_file
+    append_to_header = temp_file_path
     )
