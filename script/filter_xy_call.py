@@ -122,7 +122,7 @@ X_contig = vcf_matrix.locus.contig.startswith('chrX') | vcf_matrix.locus.contig.
 Y_contig = vcf_matrix.locus.contig.startswith('chrY') | vcf_matrix.locus.contig.startswith('Y')
 extract_condition = (X_contig) | (Y_contig)
 vcf_XY = vcf_matrix.filter_rows(extract_condition)
-print('chrX/Y variants before XY filtration:', vcf_XY.count())
+print(f'chrX/Y variants before {sample_sex} filtration:', vcf_XY.count())
 
 ##Extract autosomes
 vcf_autosomes = vcf_matrix.filter_rows(~extract_condition)
@@ -152,18 +152,18 @@ elif sample_sex == 'XX':
 #Combine PAR and filtered non-PAR regions
 par_non_par = [par_variants, non_par_filtered_variants]
 filterXY = hl.MatrixTable.union_rows(*par_non_par)
-print('chrX/Y variant counts after XY filtration:', filterXY.count())
+print(f'chrX/Y variant counts after {sample_sex} filtration:', filterXY.count())
 
 #Combine filtered X/Y + autosomal variants
 autosomes_XYfiltered = [vcf_autosomes, filterXY]
 output_vcf = hl.MatrixTable.union_rows(*autosomes_XYfiltered)
 
 #Export MatrixTable to VCF
-output_file = output_dir + '/' + sample_name + '_XY_filtered.vcf.bgz'
+OUTPUT_FILE = f'{output_dir}/{sample_name}_{sample_sex}_filtered.vcf.bgz'
 
 hl.export_vcf(
     dataset = output_vcf,
-    output = output_file,
+    output = OUTPUT_FILE,
     tabix = True,
     metadata = vcf_header,
     append_to_header = temp_file_path
