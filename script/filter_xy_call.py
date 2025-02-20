@@ -141,24 +141,25 @@ if sample_sex == 'XY':
     non_par_filtered_variants = non_par_filtered_variants.annotate_entries(
         GT = hl.call(non_par_filtered_variants.GT[0])
         )
+    #Combine PAR and filtered non-PAR regions
+    par_non_par = [par_variants, non_par_filtered_variants]
+    filterXY = hl.MatrixTable.union_rows(*par_non_par)
+    print(f'chrX/Y variant counts after {sample_sex} filtration:', filterXY.count())
+    #Combine filtered XY + autosomal variants
+    autosomes_sex_filtered = [vcf_autosomes, filterXY]
 
 elif sample_sex == 'XX':
-    #If Female (XX), remove non-PAR chrY calls
-    non_par_filtered_variants = non_par_variants.filter_rows(
-        non_par_variants.locus.contig.startswith('chrX') | \
-            non_par_variants.locus.contig.startswith('X')
+    #If Female (XX), remove ALL chrY calls
+    filterXX = vcf_XY.filter_rows(
+        vcf_XY.locus.contig.startswith('chrX') | \
+            vcf_XY.locus.contig.startswith('X')
         )
-
-#Combine PAR and filtered non-PAR regions
-par_non_par = [par_variants, non_par_filtered_variants]
-filterXY = hl.MatrixTable.union_rows(*par_non_par)
-print(f'chrX/Y variant counts after {sample_sex} filtration:', filterXY.count())
-
-#Combine filtered X/Y + autosomal variants
-autosomes_XYfiltered = [vcf_autosomes, filterXY]
-output_vcf = hl.MatrixTable.union_rows(*autosomes_XYfiltered)
+    print(f'chrX/X variant counts after {sample_sex} filtration:', filterXX.count())
+    #Combine filtered XX + autosomal variants
+    autosomes_sex_filtered = [vcf_autosomes, filterXX]
 
 #Export MatrixTable to VCF
+output_vcf = hl.MatrixTable.union_rows(*autosomes_sex_filtered)
 OUTPUT_FILE = f'{output_dir}/{sample_name}_{sample_sex}_filtered.vcf.bgz'
 
 hl.export_vcf(
