@@ -87,6 +87,17 @@ par_bed = args.par_bed
 genome_build = args.genome_build
 output_dir = args.output_dir
 
+#Function to get variant counts in chrX and chrY
+def get_xy_counts(mt, sample_sex, state):
+    #args: matrix table, 'XY' or 'XX', 'before' or 'after'
+    x = mt.filter_rows(mt.locus.contig.startswith('chrX') | mt.locus.contig.startswith('X'))
+    y = mt.filter_rows(mt.locus.contig.startswith('chrY') | mt.locus.contig.startswith('Y'))
+    result = print(
+        f'chrX variant counts {state} {sample_sex} filtration:', x.count_rows(),
+        f'\nchrY variant counts {state} {sample_sex} filtration:', y.count_rows()
+        )
+    return result
+
 #Extract VCF file header
 vcf_header = hl.get_vcf_metadata(vcf_file)
 
@@ -122,7 +133,8 @@ X_contig = vcf_matrix.locus.contig.startswith('chrX') | vcf_matrix.locus.contig.
 Y_contig = vcf_matrix.locus.contig.startswith('chrY') | vcf_matrix.locus.contig.startswith('Y')
 extract_condition = (X_contig) | (Y_contig)
 vcf_XY = vcf_matrix.filter_rows(extract_condition)
-print(f'chrX/Y variants before {sample_sex} filtration:', vcf_XY.count())
+##Show chrX/Y counts before XY filter
+get_xy_counts(vcf_XY, sample_sex, 'before')
 
 ##Extract autosomes
 vcf_autosomes = vcf_matrix.filter_rows(~extract_condition)
@@ -144,7 +156,8 @@ if sample_sex == 'XY':
     #Combine PAR and filtered non-PAR regions
     par_non_par = [par_variants, non_par_filtered_variants]
     filterXY = hl.MatrixTable.union_rows(*par_non_par)
-    print(f'chrX/Y variant counts after {sample_sex} filtration:', filterXY.count())
+    #Show chrX/Y counts after XY filter
+    get_xy_counts(filterXY, sample_sex, 'after')
     #Combine filtered XY + autosomal variants
     autosomes_sex_filtered = [vcf_autosomes, filterXY]
 
@@ -154,7 +167,8 @@ elif sample_sex == 'XX':
         vcf_XY.locus.contig.startswith('chrX') | \
             vcf_XY.locus.contig.startswith('X')
         )
-    print(f'chrX/X variant counts after {sample_sex} filtration:', filterXX.count())
+    #Show chrX/Y counts after XX filter
+    get_xy_counts(filterXX, sample_sex, 'after')
     #Combine filtered XX + autosomal variants
     autosomes_sex_filtered = [vcf_autosomes, filterXX]
 
