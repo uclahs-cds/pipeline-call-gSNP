@@ -174,7 +174,7 @@ elif sample_sex == 'XX':
 
 #Export MatrixTable to VCF
 output_vcf = hl.MatrixTable.union_rows(*autosomes_sex_filtered)
-OUTPUT_FILE = f'{output_dir}/{sample_name}_{sample_sex}_filtered.vcf.bgz'
+OUTPUT_FILE = f'{output_dir}/{sample_name}_{sample_sex}.vcf.bgz'
 
 hl.export_vcf(
     dataset = output_vcf,
