@@ -87,14 +87,18 @@ par_bed = args.par_bed
 genome_build = args.genome_build
 output_dir = args.output_dir
 
-#Function to get variant counts in chrX and chrY
-def get_xy_counts(mt, sample_sex, state):
-    #args: matrix table, 'XY' or 'XX', 'before' or 'after'
-    x = mt.filter_rows(mt.locus.contig.startswith('chrX') | mt.locus.contig.startswith('X'))
-    y = mt.filter_rows(mt.locus.contig.startswith('chrY') | mt.locus.contig.startswith('Y'))
+#args: matrix table, 'XY' or 'XX', 'before' or 'after'
+def get_xy_counts(matrix_table, input_sex, state):
+    """Function to get variant counts in chrX and chrY"""
+    chr_x = matrix_table.filter_rows(
+        matrix_table.locus.contig.startswith('chrX') | matrix_table.locus.contig.startswith('X')
+        )
+    chr_y = matrix_table.filter_rows(
+        matrix_table.locus.contig.startswith('chrY') | matrix_table.locus.contig.startswith('Y')
+        )
     result = print(
-        f'chrX variant counts {state} {sample_sex} filtration:', x.count_rows(),
-        f'\nchrY variant counts {state} {sample_sex} filtration:', y.count_rows()
+        f'chrX variant counts {state} {input_sex} filtration:', chr_x.count_rows(),
+        f'\nchrY variant counts {state} {input_sex} filtration:', chr_y.count_rows()
         )
     return result
 
