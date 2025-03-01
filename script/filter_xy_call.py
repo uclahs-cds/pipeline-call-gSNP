@@ -176,7 +176,7 @@ if sample_sex == 'XY':
     autosomes_sex_filtered = [vcf_autosomes, filterXY]
 
 elif sample_sex == 'XX':
-    #If Female (XX), remove ALL chrY calls
+    #If Female (XX), keep ONLY chrX calls
     filterXX = vcf_XY.filter_rows(
         vcf_XY.locus.contig.startswith('chrX') | \
             vcf_XY.locus.contig.startswith('X')
