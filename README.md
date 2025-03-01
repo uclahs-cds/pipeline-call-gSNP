@@ -118,7 +118,6 @@ For normal-only or tumor-only samples, exclude the fields for the other state.
 |:----------------|:---------|:-----|:------------|
 | `dataset_id` | Yes | string | Dataset ID |
 | `blcds_registered_dataset` | Yes | boolean | Set to true when using BLCDS folder structure; use false for now |
-| `genome_build` | Yes | string | Genome build, GRCh37 or GRCh38 |
 | `sample_sex` | Yes | string | Sample Sex, XY or XX |
 | `output_dir` | Yes | string | Need to set if `blcds_registered_dataset = false` |
 | `save_intermediate_files` | Yes | boolean | Set to false to disable publishing of intermediate files; true otherwise; disabling option will delete intermediate files to allow for processing of large BAMs |
@@ -131,7 +130,7 @@ For normal-only or tumor-only samples, exclude the fields for the other state.
 | `bundle_hapmap_3p3_vcf_gz` | Yes | path | Absolute path to HapMap 3.3 file, e.g., `/hot/resource/tool-specific-input/GATK/GRCh38/hapmap_3.3.hg38.vcf.gz` |
 | `bundle_omni_1000g_2p5_vcf_gz` | Yes | path | Absolute path to 1000 genomes OMNI 2.5 file, e.g., `/hot/resource/tool-specific-input/GATK/GRCh38/1000G_omni2.5.hg38.vcf.gz` |
 | `bundle_phase1_1000g_snps_high_conf_vcf_gz` | Yes | path | Absolute path to 1000 genomes phase 1 high-confidence file, e.g., `/hot/resource/tool-specific-input/GATK/GRCh38/1000G_phase1.snps.high_confidence.hg38.vcf.gz` |
-| `par_bed` | Yes | path | Absolute path to Pseudo-autosomal Region (PAR) BED |
+| `par_bed` | Yes | path | Absolute path to species' Pseudo-autosomal Region (PAR) BED |
 | `work_dir` | optional | path | Path of working directory for Nextflow. When included in the sample config file, Nextflow intermediate files and logs will be saved to this directory. With ucla_cds, the default is `/scratch` and should only be changed for testing/development. Changing this directory to `/hot` or `/tmp` can lead to high server latency and potential disk space limitations, respectively. |
 | `docker_container_registry` | optional | string | Registry containing tool Docker images. Default: `ghcr.io/uclahs-cds` |
 | `base_resource_update` | optional | namespace | Namespace of parameters to update base resource allocations in the pipeline. Usage and structure are detailed in `template.config` and below. |
