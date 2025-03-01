@@ -32,6 +32,8 @@ process filter_XY_Hail {
 
     input:
     tuple val(sample_id), path(recalibrated_vcf), path(recalibrated_vcf_tbi)
+    path(reference_fasta)
+    path(reference_index)
     path(par_bed)
     path(script_dir)
 
@@ -57,7 +59,8 @@ process filter_XY_Hail {
         --vcf_source_file ./vcf_source.txt \
         --sample_sex ${params.sample_sex} \
         --par_bed ${par_bed} \
-        --genome_build ${params.genome_build} \
+        --ref-genome ${reference_fasta} \
+        --ref-index ${reference_index} \
         --output_dir .
     """
 }

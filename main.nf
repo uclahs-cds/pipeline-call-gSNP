@@ -266,6 +266,8 @@ workflow {
 
     filter_XY_Hail(
         filter_xy_ch,
+        params.reference_fasta,
+        "${params.reference_fasta}.fai",
         params.par_bed,
         script_dir_ch
         )
