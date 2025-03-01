@@ -65,9 +65,15 @@ parser.add_argument(
     required=True
     )
 parser.add_argument(
-    '--genome_build',
-    dest='genome_build',
-    help = 'Genome build of input VCF, GRCh37 or GRCh38',
+    '--ref-genome',
+    dest='ref_genome',
+    help = 'Reference genome used to produce input VCF',
+    required=True
+    )
+parser.add_argument(
+    '--ref-index',
+    dest='ref_index',
+    help = 'Reference genome index file',
     required=True
     )
 parser.add_argument(
@@ -84,7 +90,8 @@ sample_sex = args.sample_sex
 vcf_file = args.input_vcf
 vcf_source_file = args.vcf_source_file
 par_bed = args.par_bed
-genome_build = args.genome_build
+reference_genome = args.ref_genome
+reference_index = args.ref_index
 output_dir = args.output_dir
 
 #args: matrix table, 'XY' or 'XX', 'before' or 'after'
@@ -101,6 +108,9 @@ def get_xy_counts(matrix_table, input_sex, state):
         f'\nchrY variant counts {state} {input_sex} filtration:', chr_y.count_rows()
         )
     return result
+
+#Get reference for input VCF
+input_reference = hl.ReferenceGenome.from_fasta_file("input_reference", reference_genome, reference_index)
 
 #Extract VCF file header
 vcf_header = hl.get_vcf_metadata(vcf_file)
@@ -120,14 +130,14 @@ with open(temp_file_path, 'w', encoding='utf-8') as temp_file:
 #Import PAR BED file
 par = hl.import_bed(
     path = par_bed,
-    reference_genome = genome_build,
+    reference_genome = input_reference,
     skip_invalid_intervals = True
     )
 
 #Import VCF file into a hail MatrixTable
 vcf_matrix = hl.import_vcf(
     path = vcf_file,
-    reference_genome = genome_build,
+    reference_genome = input_reference,
     force_bgz = True
     )
 
