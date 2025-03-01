@@ -280,12 +280,10 @@ workflow {
         .mix(run_MergeVcfs_Picard_GVCF.out.merged_vcf)
         .mix(recalibrate_variants.out.output_ch_recalibrated_variants)
         .map{ [it[1], it[2]] }
+        .mix(filter_XY_Hail.out.xy_filtered_vqsr).ifEmpty { Channel.empty() }
         .mix(filter_gSNP_GATK.out.germline_filtered)
         .flatten()
         .set{ input_ch_calculate_checksum }
-    if (filter_XY_Hail.out) {
-        input_ch_calculate_checksum = input_ch_calculate_checksum.mix(filter_XY_Hail.out.xy_filtered_vqsr).flatten()
-        }
 
     calculate_sha512(input_ch_calculate_checksum)
 }
