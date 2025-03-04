@@ -78,7 +78,7 @@ par_bed:
   type: 'Path'
   mode: 'r'
   required: true
-  help: 'Absolute path to species\' Pseudo-autosomal Region (PAR) BED'
+  help: 'Absolute path to Pseudo-autosomal Region (PAR) BED'
 base_resource_update:
   type: 'ResourceUpdateNamespace'
   required: false
