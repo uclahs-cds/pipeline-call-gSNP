@@ -11,6 +11,9 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### Added
 - NFTest test case
 
+### Changed
+- Update resource handling to generalized handler
+
 ---
 
 ## [10.1.0-rc.1]
