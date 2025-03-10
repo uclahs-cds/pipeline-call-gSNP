@@ -110,7 +110,11 @@ def get_xy_counts(matrix_table, input_sex, state):
     return result
 
 #Get reference for input VCF
-input_reference = hl.ReferenceGenome.from_fasta_file("input_reference", reference_genome, reference_index)
+input_reference = hl.ReferenceGenome.from_fasta_file(
+    "input_reference",
+    reference_genome,
+    reference_index
+    )
 
 #Extract VCF file header
 vcf_header = hl.get_vcf_metadata(vcf_file)
