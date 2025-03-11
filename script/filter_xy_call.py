@@ -35,12 +35,6 @@ script_dir = os.getcwd()
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    '--sample_name',
-    dest='sample_name',
-    help = 'Sample name',
-    required=True
-    )
-parser.add_argument(
     '--input_vcf',
     dest='input_vcf',
     help = 'Input single sample VCF file path',
@@ -83,6 +77,12 @@ parser.add_argument(
     required=True
     )
 parser.add_argument(
+    '--output_name',
+    dest='output_name',
+    help = 'Output file name',
+    required=True
+    )
+parser.add_argument(
     '--output_dir',
     dest='output_dir',
     help = 'Output path where filtered XY variant VCF will be written',
@@ -91,13 +91,13 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-sample_name = args.sample_name
 sample_sex = args.sample_sex
 vcf_file = args.input_vcf
 vcf_source_file = args.vcf_source_file
 par_bed = args.par_bed
 reference_genome = args.ref_genome
 reference_index = args.ref_index
+output_name = args.output_name
 output_dir = args.output_dir
 cpu = args.cpu
 
@@ -202,7 +202,7 @@ elif sample_sex == 'XX':
 
 #Export MatrixTable to VCF
 output_vcf = hl.MatrixTable.union_rows(*autosomes_sex_filtered)
-OUTPUT_FILE = f'{output_dir}/{sample_name}_{sample_sex}.vcf.bgz'
+OUTPUT_FILE = f'{output_dir}/{output_name}_{sample_sex}.vcf.bgz'
 
 hl.export_vcf(
     dataset = output_vcf,
