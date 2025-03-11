@@ -77,6 +77,12 @@ parser.add_argument(
     required=True
     )
 parser.add_argument(
+    '--cpu',
+    dest='cpu',
+    help = 'Number of CPUs to initialize hail',
+    required=True
+    )
+parser.add_argument(
     '--output_dir',
     dest='output_dir',
     help = 'Output path where filtered XY variant VCF will be written',
@@ -93,6 +99,10 @@ par_bed = args.par_bed
 reference_genome = args.ref_genome
 reference_index = args.ref_index
 output_dir = args.output_dir
+cpu = args.cpu
+
+#Initialize CPUs
+hl.init(master=f'local[{cpu}]', backend='spark')
 
 #args: matrix table, 'XY' or 'XX', 'before' or 'after'
 def get_xy_counts(matrix_table, input_sex, state):
