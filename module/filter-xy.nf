@@ -54,13 +54,14 @@ process filter_XY_Hail {
     zgrep "##source=" ${recalibrated_vcf} > ./vcf_source.txt
 
     python ${script_dir}/filter_xy_call.py \
-        --sample_name ${output_filename} \
         --input_vcf ${recalibrated_vcf} \
         --vcf_source_file ./vcf_source.txt \
         --sample_sex ${params.sample_sex} \
         --par_bed ${par_bed} \
         --ref-genome ${reference_fasta} \
         --ref-index ${reference_index} \
+        --cpu ${task.cpus} \
+        --output_name ${output_filename} \
         --output_dir .
     """
 }
