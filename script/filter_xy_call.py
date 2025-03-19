@@ -74,7 +74,7 @@ parser.add_argument(
     '--cpu',
     dest='cpu',
     help = 'Number of CPUs to initialize hail',
-    required=True
+    required=False
     )
 parser.add_argument(
     '--output_name',
@@ -99,10 +99,11 @@ reference_genome = args.ref_genome
 reference_index = args.ref_index
 output_name = args.output_name
 output_dir = args.output_dir
-cpu = args.cpu
 
-#Initialize CPUs
-hl.init(master=f'local[{cpu}]', backend='spark')
+if args.cpu is not None:
+    #Initialize CPUs
+    cpu = args.cpu
+    hl.init(master=f'local[{cpu}]', backend='spark')
 
 #args: matrix table, 'XY' or 'XX', 'before' or 'after'
 def get_xy_counts(matrix_table, input_sex, state):
