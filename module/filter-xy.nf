@@ -60,7 +60,6 @@ process filter_XY_Hail {
         --par_bed ${par_bed} \
         --ref-genome ${reference_fasta} \
         --ref-index ${reference_index} \
-        --cpu ${task.cpus} \
         --output_name ${output_filename} \
         --output_dir .
     """
