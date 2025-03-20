@@ -39,7 +39,7 @@ process filter_XY_Hail {
 
     output:
     path(".command.*")
-    tuple path("${output_filename}_${params.sample_sex}.vcf.bgz"), path("${output_filename}_${params.sample_sex}.vcf.bgz.tbi"), emit: xy_filtered_vqsr
+    tuple path("${output_filename}.vcf.bgz"), path("${output_filename}.vcf.bgz.tbi"), emit: xy_filtered_vqsr
 
     script:
     output_filename = generate_standard_filename(
