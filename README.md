@@ -118,7 +118,8 @@ For normal-only or tumor-only samples, exclude the fields for the other state.
 |:----------------|:---------|:-----|:------------|
 | `dataset_id` | Yes | string | Dataset ID |
 | `blcds_registered_dataset` | Yes | boolean | Set to true when using BLCDS folder structure; use false for now |
-| `sample_sex` | Yes | string | Sample Sex, XY or XX |
+| `xy_filter` | Yes | boolean | Set to true to produce an XY Filtered VCF |
+| `sample_sex` | Yes | string | Sample Sex, `XY` or `XX` if `xy_filter = true` |
 | `output_dir` | Yes | string | Need to set if `blcds_registered_dataset = false` |
 | `save_intermediate_files` | Yes | boolean | Set to false to disable publishing of intermediate files; true otherwise; disabling option will delete intermediate files to allow for processing of large BAMs |
 | `cache_intermediate_pipeline_steps` | No | boolean | Set to true to enable process caching from Nextflow; defaults to false |
@@ -204,10 +205,10 @@ base_resource_update {
 | `<GATK>_<dataset_id>_<patient_id>_indel.vcf.gz` | Filtered INDELs with non-germline and ambiguous variants removed |
 | `<GATK>_<dataset_id>_<patient_id>_indel.vcf.gz.tbi` | Filtered germline INDELs index |
 | `<GATK>_<dataset_id>_<patient_id>_indel.vcf.gz.sha512` | Filtered germline INDELs sha512 checksum |
-| `<Hail>_<GATK>_<dataset_id>_<patient_id>_<sample_sex>.vcf.bgz` | chrX/Y filtered SNP and INDEL recalibrated variants |
-| `<Hail>_<GATK>_<dataset_id>_<patient_id>_<sample_sex>.vcf.bgz.sha512` | chrX/Y filtered SNP and INDEL recalibrated variants checksum |
-| `<Hail>_<GATK>_<dataset_id>_<patient_id>_<sample_sex>.vcf.bgz.tbi` | chrX/Y filtered SNP and INDEL recalibrated variants index |
-| `<Hail>_<GATK>_<dataset_id>_<patient_id>_<sample_sex>.vcf.bgz.tbi.sha512` | chrX/Y filtered SNP and INDEL recalibrated variants index checksum |
+| `<Hail>_<GATK>_<dataset_id>_<patient_id>.vcf.bgz` | chrX/Y filtered SNP and INDEL recalibrated variants |
+| `<Hail>_<GATK>_<dataset_id>_<patient_id>.vcf.bgz.sha512` | chrX/Y filtered SNP and INDEL recalibrated variants checksum |
+| `<Hail>_<GATK>_<dataset_id>_<patient_id>.vcf.bgz.tbi` | chrX/Y filtered SNP and INDEL recalibrated variants index |
+| `<Hail>_<GATK>_<dataset_id>_<patient_id>.vcf.bgz.tbi.sha512` | chrX/Y filtered SNP and INDEL recalibrated variants index checksum |
 | `report.html`, `timeline.html` and `trace.txt` | Nextflow report, timeline and trace files |
 | `*.command.*` | Process specific logging files created by nextflow |
 
