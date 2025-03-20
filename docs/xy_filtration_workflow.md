@@ -16,14 +16,26 @@
     - Filter out any `chrY` calls regardless of PAR or non-PAR
 
 ## Pseudo-Autosomal Regions (PARs)
-### GRCh38
-| CHROM | START | END | PAR | REGION | REFERENCE |
-|---|---|---|---|---|---|
-| chrX | 10001 | 2781479 | PAR1 | Xp22 | EMSEMBL |
-| chrX | 91434839 | 91438584 | PAR3/XTR | Xq21.3 | PMID:23708688 |
-| chrX | 155701383 | 156030895 | PAR2 | Xq28 | ENSEMBL |
-| chrY | 10001 | 10300000 | PAR1+PAR3/XTR | Yp11 | ENSEMBL +PMID:23708688 |
-| chrY | 56887903 | 57217415 | PAR2 | Yq12 | ENSEMBL |
+### GRCh38 - GIAB XY Stratitification PAR [v3.5](https://ftp-trace.ncbi.nlm.nih.gov/ReferenceSamples/giab/release/genome-stratifications/v3.5/GRCh38@all/XY/)
+| CHROM | START | END | PAR |
+|---|---|---|---|---|
+| chrX | 10000 | 44821 | PAR1 |
+| chrX | 94821 | 133871 | PAR1 |
+| chrX | 222346 | 226276 | PAR1 |
+| chrX | 226351 | 1949345 | PAR1 |
+| chrX | 2132994 | 2137388 | PAR1 |
+| chrX | 2137488 | 2781479 | PAR1 |
+| chrX | 89140830 | 93428068 | PAR3/XTR |
+| chrX | 155701383 | 156030895 | PAR2 |
+| chrY | 10001 | 44821 | PAR1+PAR3/XTR |
+| chrY | 94821 | 133871 | PAR1+PAR3/XTR |
+| chrY | 222346 | 226276 | PAR1+PAR3/XTR |
+| chrY | 226351 | 1949345 | PAR1+PAR3/XTR |
+| chrY | 2132994 | 2137388 | PAR1+PAR3/XTR |
+| chrY | 2137488 | 2781479 | PAR1+PAR3/XTR |
+| chrY | 3050044 | 6235111 | PAR1+PAR3/XTR |
+| chrY | 6532906 | 6748713 | PAR1+PAR3/XTR |
+| chrY | 56887902 | 57217415 | PAR2 |
 
 ### GRCm39
 | CHROM | START | END | PAR | REFERENCE |
