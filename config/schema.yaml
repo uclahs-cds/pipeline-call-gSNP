@@ -8,7 +8,7 @@ xy_filter:
   required: true
   default: true
   help: 'Whether to run XY Filtration on variant calls'
-sample_sex:
+genetic_sex:
   type: 'String'
   required: true
   help: 'Sample Sex'

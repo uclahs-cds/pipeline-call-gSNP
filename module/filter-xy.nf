@@ -12,7 +12,7 @@ include { generate_standard_filename; sanitize_string } from '../external/pipeli
         params.output_dir_base: string(path)
         params.log_output_dir: string(path)
         params.docker_image_hail: string
-        params.sample_sex: string
+        params.genetic_sex: string
         params.par_bed: string(path)
 */
 
@@ -56,7 +56,7 @@ process filter_XY_Hail {
     python ${script_dir}/filter_xy_call.py \
         --input_vcf ${recalibrated_vcf} \
         --vcf_source_file ./vcf_source.txt \
-        --sample_sex ${params.sample_sex} \
+        --genetic_sex ${params.genetic_sex} \
         --par_bed ${par_bed} \
         --ref-genome ${reference_fasta} \
         --ref-index ${reference_index} \

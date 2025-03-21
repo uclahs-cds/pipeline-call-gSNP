@@ -10,11 +10,11 @@ Steps:
 Filter criteria:
 - Extract XY calls
 - Extract XY calls overlapping with Pseudo-Autosomal Regions (PARs)
-- For non-PAR
-    - Male sample:
+- Male sample (XY):
+    - For non-PAR
         - Filter out heterozygous GT calls in chrX and chrY
         - Transform homozygous GT=1/1 to hemizygous GT=1
-    - Female sample: Filter out chrY calls
+- Female sample (XX): Filter out any chrY calls
 
 Dependencies:
 - Python 3
@@ -47,8 +47,8 @@ parser.add_argument(
     required=True
     )
 parser.add_argument(
-    '--sample_sex',
-    dest='sample_sex',
+    '--genetic_sex',
+    dest='genetic_sex',
     help = 'Sample sex, XY or XX',
     required=True
     )
@@ -91,7 +91,7 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-sample_sex = args.sample_sex
+genetic_sex = args.genetic_sex
 vcf_file = args.input_vcf
 vcf_source_file = args.vcf_source_file
 par_bed = args.par_bed
@@ -163,7 +163,7 @@ Y_contig = vcf_matrix.locus.contig.startswith('chrY') | vcf_matrix.locus.contig.
 extract_condition = (X_contig) | (Y_contig)
 vcf_XY = vcf_matrix.filter_rows(extract_condition)
 ##Show chrX/Y counts before XY filter
-get_xy_counts(vcf_XY, sample_sex, 'before')
+get_xy_counts(vcf_XY, genetic_sex, 'before')
 
 ##Extract autosomes
 vcf_autosomes = vcf_matrix.filter_rows(~extract_condition)
@@ -172,7 +172,7 @@ vcf_autosomes = vcf_matrix.filter_rows(~extract_condition)
 par_variants = vcf_XY.filter_rows(hl.is_defined(par[vcf_XY.locus]))
 non_par_variants = vcf_XY.filter_rows(hl.is_missing(par[vcf_XY.locus]))
 
-if sample_sex == 'XY':
+if genetic_sex == 'XY':
     #If MALE (XY), remove heterozygous non-PAR chrX calls
     non_par_filtered_variants = non_par_variants.filter_rows(
         hl.agg.all(
@@ -186,18 +186,18 @@ if sample_sex == 'XY':
     par_non_par = [par_variants, non_par_filtered_variants]
     filterXY = hl.MatrixTable.union_rows(*par_non_par)
     #Show chrX/Y counts after XY filter
-    get_xy_counts(filterXY, sample_sex, 'after')
+    get_xy_counts(filterXY, genetic_sex, 'after')
     #Combine filtered XY + autosomal variants
     autosomes_sex_filtered = [vcf_autosomes, filterXY]
 
-elif sample_sex == 'XX':
+elif genetic_sex == 'XX':
     #If Female (XX), keep ONLY chrX calls
     filterXX = vcf_XY.filter_rows(
         vcf_XY.locus.contig.startswith('chrX') | \
             vcf_XY.locus.contig.startswith('X')
         )
     #Show chrX/Y counts after XX filter
-    get_xy_counts(filterXX, sample_sex, 'after')
+    get_xy_counts(filterXX, genetic_sex, 'after')
     #Combine filtered XX + autosomal variants
     autosomes_sex_filtered = [vcf_autosomes, filterXX]
 

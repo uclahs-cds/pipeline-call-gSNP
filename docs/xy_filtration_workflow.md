@@ -8,11 +8,11 @@
 ## chrX/Y Filter Criteria:
 - Extract chrX/Y calls
 - Extract chrX/Y calls overlapping with Pseudo-Autosomal Regions (PARs)
-- if `sample_sex` is `XY`:
+- if `genetic_sex` is `XY`:
     - For non-PAR chrX/Y calls
         - Filter out heterozygous `GT` calls in chrX and chrY
         - Transform homozygous `GT=1/1` to hemizygous `GT=1`
-- If `sample_sex` is `XX`:
+- If `genetic_sex` is `XX`:
     - Filter out any `chrY` calls regardless of PAR or non-PAR
 
 ## Pseudo-Autosomal Regions (PARs)
