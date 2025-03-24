@@ -6,7 +6,7 @@ patient_id:
 genetic_sex:
   type: 'String'
   required: true
-  help: 'Sample Sex'
+  help: 'Sample Genetic Sex'
   choices:
     - "XY"
     - "XX"

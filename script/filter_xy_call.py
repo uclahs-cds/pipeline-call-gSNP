@@ -49,7 +49,7 @@ parser.add_argument(
 parser.add_argument(
     '--genetic_sex',
     dest='genetic_sex',
-    help = 'Sample sex, XY or XX',
+    help = 'Sample genetic sex, XY or XX',
     required=True
     )
 parser.add_argument(
