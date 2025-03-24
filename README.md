@@ -118,8 +118,7 @@ For normal-only or tumor-only samples, exclude the fields for the other state.
 |:----------------|:---------|:-----|:------------|
 | `dataset_id` | Yes | string | Dataset ID |
 | `blcds_registered_dataset` | Yes | boolean | Set to true when using BLCDS folder structure; use false for now |
-| `xy_filter` | Yes | boolean | Set to true to produce an XY Filtered VCF |
-| `genetic_sex` | Yes | string | Sample Sex, `XY` or `XX` |
+| `genetic_sex` | Yes | string | Sample Sex, `XY`, `XX` or `unknown` |
 | `output_dir` | Yes | string | Need to set if `blcds_registered_dataset = false` |
 | `save_intermediate_files` | Yes | boolean | Set to false to disable publishing of intermediate files; true otherwise; disabling option will delete intermediate files to allow for processing of large BAMs |
 | `cache_intermediate_pipeline_steps` | No | boolean | Set to true to enable process caching from Nextflow; defaults to false |
