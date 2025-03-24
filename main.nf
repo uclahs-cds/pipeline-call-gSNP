@@ -256,7 +256,7 @@ workflow {
     )
 
     filter_xy_output_ch = Channel.empty()
-    if (params.xy_filter) {
+    if (params.genetic_sex != 'unknown') {
         filter_xy_ch = recalibrate_variants.out.output_ch_recalibrated_variants
             .map { it -> [it[0], it[1], it[2]] }
 

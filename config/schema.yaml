@@ -3,11 +3,6 @@ patient_id:
   type: 'String'
   required: true
   help: 'Patient ID'
-xy_filter:
-  type: 'Bool'
-  required: true
-  default: true
-  help: 'Whether to run XY Filtration on variant calls'
 genetic_sex:
   type: 'String'
   required: true
@@ -15,6 +10,7 @@ genetic_sex:
   choices:
     - "XY"
     - "XX"
+    - "unknown"
 dataset_id:
   type: 'String'
   required: true
