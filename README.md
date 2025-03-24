@@ -79,7 +79,7 @@ Take the output from Step 6 as input, and apply the model in Step 5 to recalibra
 Use customized Perl script to filter out ambiguous variants.
 
 ### 9. Adjust chrX and chrY genotypes based on sample sex from recalibrated VCF
-Apply XY filtration workflow to recalibrated VCF as described [here](docs/xy_filtration_workflow.md).
+Apply XY filtration workflow to recalibrated VCF as described [here](docs/xy_filtration_workflow.md). XY Filtration will be skipped when `genetic_sex = 'unknown'`.
 
 ### 10. Generate sha512 checksum
 Generate sha512 checksum for VCFs and GVCFs.
