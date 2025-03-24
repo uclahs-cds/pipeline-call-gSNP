@@ -1,5 +1,7 @@
 # Filter XY calls from a germline VCF file
 > **Note**: Currently, the XY Filter would only work on species with XY/XX sex chromosome model.
+> **Note**: XY Filter will only run when `genetic_sex` is either `XY` or `XX`.
+
 ## Steps:
 1. Extract autosomes and chrX/Y variants from input VCF
 2. Filter chrX/Y variants
