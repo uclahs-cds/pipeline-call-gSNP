@@ -75,7 +75,9 @@
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#8-filter-gsnp-filter-out-ambiguous-variants">8. Filter gSNP – Filter out ambiguous variants</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#9-generate-sha512-checksum">9. Generate sha512 checksum</a>
+    <li class="toctree-l2"><a class="reference internal" href="#9-adjust-chrx-and-chry-genotypes-based-on-sample-sex-from-recalibrated-vcf">9. Adjust chrX and chrY genotypes based on sample sex from recalibrated VCF</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#10-generate-sha512-checksum">10. Generate sha512 checksum</a>
     </li>
     </ul>
                 </li>
@@ -120,7 +122,7 @@
     <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
       <li class="breadcrumb-item active">Pipeline Steps</li>
     <li class="wy-breadcrumbs-aside">
-          <a href="https://github.com/uclahs-cds/pipeline-call-gSNP/blob/155d3518b329ec582b6382e50306be22a7aab629/README.md" class="icon icon-github"> Edit on GitHub</a>
+          <a href="https://github.com/uclahs-cds/pipeline-call-gSNP/blob/1fbb47331191c699b0c21d9e6d4d8b31a66cd584/README.md" class="icon icon-github"> Edit on GitHub</a>
     </li>
   </ul>
   <hr/>
@@ -146,7 +148,9 @@
 <h4 id="steps-4-through-7-model-the-technical-profile-of-variants-in-a-training-set-and-uses-that-to-filter-out-probable-artifacts-from-the-raw-vcf-after-these-four-steps-a-recalibrated-vcf-is-generated">Steps 4 through 7 model the technical profile of variants in a training set and uses that to filter out probable artifacts from the raw VCF. After these four steps, a recalibrated VCF is generated.</h4>
 <h3 id="8-filter-gsnp-filter-out-ambiguous-variants">8. Filter gSNP – Filter out ambiguous variants</h3>
 <p>Use customized Perl script to filter out ambiguous variants.</p>
-<h3 id="9-generate-sha512-checksum">9. Generate sha512 checksum</h3>
+<h3 id="9-adjust-chrx-and-chry-genotypes-based-on-sample-sex-from-recalibrated-vcf">9. Adjust chrX and chrY genotypes based on sample sex from recalibrated VCF</h3>
+<p>Apply XY filtration workflow to recalibrated VCF as described <a href="../xy_filtration_workflow/">here</a>. XY Filtration will be skipped when <code>genetic_sex = 'unknown'</code>.</p>
+<h3 id="10-generate-sha512-checksum">10. Generate sha512 checksum</h3>
 <p>Generate sha512 checksum for VCFs and GVCFs.</p>
 <hr />
               

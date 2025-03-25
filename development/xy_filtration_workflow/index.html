@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="shortcut icon" href="../img/favicon.ico" />
-    <title>Contributors - pipeline-call-gSNP</title>
+    <title>Filter XY calls from a germline VCF file - pipeline-call-gSNP</title>
     <link rel="stylesheet" href="../css/theme.css" />
     <link rel="stylesheet" href="../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
@@ -13,8 +13,8 @@
     
       <script>
         // Current page data
-        var mkdocs_page_name = "Contributors";
-        var mkdocs_page_input_path = "contributors.md";
+        var mkdocs_page_name = "Filter XY calls from a germline VCF file";
+        var mkdocs_page_input_path = "xy_filtration_workflow.md";
         var mkdocs_page_url = null;
       </script>
     
@@ -68,10 +68,8 @@
                 <li class="toctree-l1"><a class="reference internal" href="../discussions/">Discussions</a>
                 </li>
               </ul>
-              <ul class="current">
-                <li class="toctree-l1 current"><a class="reference internal current" href="./">Contributors</a>
-    <ul class="current">
-    </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../contributors/">Contributors</a>
                 </li>
               </ul>
               <ul>
@@ -96,7 +94,7 @@
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
-      <li class="breadcrumb-item active">Contributors</li>
+      <li class="breadcrumb-item active">Filter XY calls from a germline VCF file</li>
     <li class="wy-breadcrumbs-aside">
           <a href="https://github.com/uclahs-cds/pipeline-call-gSNP/blob/1fbb47331191c699b0c21d9e6d4d8b31a66cd584/README.md" class="icon icon-github"> Edit on GitHub</a>
     </li>
@@ -106,16 +104,93 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h2 id="contributors">Contributors</h2>
-<p>Please see list of <a href="https://github.com/uclahs-cds/pipeline-call-gSNP/graphs/contributors">Contributors</a> at GitHub.</p>
-<hr />
+                <h1 id="filter-xy-calls-from-a-germline-vcf-file">Filter XY calls from a germline VCF file</h1>
+<blockquote>
+<p><strong>Note</strong>: Currently, the XY Filter would only work on species with XY/XX sex chromosome model.
+<strong>Note</strong>: XY Filter will only run when <code>genetic_sex</code> is either <code>XY</code> or <code>XX</code>.</p>
+</blockquote>
+<h2 id="steps">Steps:</h2>
+<ol>
+<li>Extract autosomes and chrX/Y variants from input VCF</li>
+<li>Filter chrX/Y variants</li>
+<li>Merge autosomal and filtered chrX/Y variants</li>
+</ol>
+<h2 id="chrxy-filter-criteria">chrX/Y Filter Criteria:</h2>
+<ul>
+<li>Extract chrX/Y calls</li>
+<li>Extract chrX/Y calls overlapping with Pseudo-Autosomal Regions (PARs)</li>
+<li>if <code>genetic_sex</code> is <code>XY</code>:<ul>
+<li>For non-PAR chrX/Y calls<ul>
+<li>Filter out heterozygous <code>GT</code> calls in chrX and chrY</li>
+<li>Transform homozygous <code>GT=1/1</code> to hemizygous <code>GT=1</code></li>
+</ul>
+</li>
+</ul>
+</li>
+<li>If <code>genetic_sex</code> is <code>XX</code>:<ul>
+<li>Filter out any <code>chrY</code> calls regardless of PAR or non-PAR</li>
+</ul>
+</li>
+</ul>
+<h2 id="pseudo-autosomal-regions-pars">Pseudo-Autosomal Regions (PARs)</h2>
+<h3 id="grch38-giab-xy-stratitification-par-v35">GRCh38 - GIAB XY Stratitification PAR <a href="https://ftp-trace.ncbi.nlm.nih.gov/ReferenceSamples/giab/release/genome-stratifications/v3.5/GRCh38@all/XY/">v3.5</a></h3>
+<p>| CHROM | START | END | PAR |
+|---|---|---|---|---|
+| chrX | 10000 | 44821 | PAR1 |
+| chrX | 94821 | 133871 | PAR1 |
+| chrX | 222346 | 226276 | PAR1 |
+| chrX | 226351 | 1949345 | PAR1 |
+| chrX | 2132994 | 2137388 | PAR1 |
+| chrX | 2137488 | 2781479 | PAR1 |
+| chrX | 89140830 | 93428068 | PAR3/XTR |
+| chrX | 155701383 | 156030895 | PAR2 |
+| chrY | 10001 | 44821 | PAR1+PAR3/XTR |
+| chrY | 94821 | 133871 | PAR1+PAR3/XTR |
+| chrY | 222346 | 226276 | PAR1+PAR3/XTR |
+| chrY | 226351 | 1949345 | PAR1+PAR3/XTR |
+| chrY | 2132994 | 2137388 | PAR1+PAR3/XTR |
+| chrY | 2137488 | 2781479 | PAR1+PAR3/XTR |
+| chrY | 3050044 | 6235111 | PAR1+PAR3/XTR |
+| chrY | 6532906 | 6748713 | PAR1+PAR3/XTR |
+| chrY | 56887902 | 57217415 | PAR2 |</p>
+<h3 id="grcm39">GRCm39</h3>
+<table>
+<thead>
+<tr>
+<th>CHROM</th>
+<th>START</th>
+<th>END</th>
+<th>PAR</th>
+<th>REFERENCE</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>X</td>
+<td>168752755</td>
+<td>169376592</td>
+<td>PAR</td>
+<td>GRCm39</td>
+</tr>
+<tr>
+<td>Y</td>
+<td>4072168</td>
+<td>4161965</td>
+<td>CEN</td>
+<td>GRCm39</td>
+</tr>
+<tr>
+<td>Y</td>
+<td>90757114</td>
+<td>91355967</td>
+<td>PAR</td>
+<td>GRCm39</td>
+</tr>
+</tbody>
+</table>
               
             </div>
           </div><footer>
-    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../discussions/" class="btn btn-neutral float-left" title="Discussions"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../references/" class="btn btn-neutral float-right" title="References">Next <span class="icon icon-circle-arrow-right"></span></a>
-    </div>
 
   <hr/>
 
@@ -141,10 +216,6 @@
         </span>
     
     
-      <span><a href="../discussions/" style="color: #fcfcfc">&laquo; Previous</a></span>
-    
-    
-      <span><a href="../references/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>
