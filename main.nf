@@ -68,6 +68,7 @@ include {
     } from './module/merge-vcf.nf'
 include { recalibrate_variants } from './module/workflow-recalibrate-variants.nf'
 include { filter_gSNP_GATK } from './module/filter-gsnp.nf'
+include { filter_XY_Hail } from './module/filter-xy.nf'
 include { calculate_sha512 } from './module/checksum.nf'
 
 // Returns the index file for the given bam or vcf
@@ -103,6 +104,12 @@ workflow {
             return a
         }
         .set{ input_ch_collected_files }
+
+    script_dir_ch = Channel.fromPath(
+        "$projectDir/script",
+        checkIfExists: true
+        )
+        .collect()
 
     /**
     *   Input validation
@@ -248,6 +255,26 @@ workflow {
         recalibrate_variants.out.output_ch_recalibrated_variants
     )
 
+    filter_xy_output_ch = Channel.empty()
+    if (params.genetic_sex != 'unknown') {
+        filter_xy_ch = recalibrate_variants.out.output_ch_recalibrated_variants
+            .map { it -> [it[0], it[1], it[2]] }
+
+        script_dir_ch = Channel.fromPath(
+            "$projectDir/script",
+            checkIfExists: true
+            )
+            .collect()
+
+        filter_XY_Hail(
+            filter_xy_ch,
+            params.reference_fasta,
+            "${params.reference_fasta}.fai",
+            params.par_bed,
+            script_dir_ch
+            )
+        filter_xy_output_ch = filter_xy_output_ch.mix(filter_XY_Hail.out.xy_filtered_vqsr)
+        }
     /**
     *   Calculate checksums for output files
     */
@@ -255,6 +282,7 @@ workflow {
         .mix(run_MergeVcfs_Picard_GVCF.out.merged_vcf)
         .mix(recalibrate_variants.out.output_ch_recalibrated_variants)
         .map{ [it[1], it[2]] }
+        .mix(filter_xy_output_ch)
         .mix(filter_gSNP_GATK.out.germline_filtered)
         .flatten()
         .set{ input_ch_calculate_checksum }
