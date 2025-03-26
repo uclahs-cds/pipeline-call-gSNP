@@ -241,6 +241,24 @@
                     "operand": 2
                 }
             }
+        },
+        "filter_XY_Hail": {
+            "cpus": {
+                "min": 1,
+                "fraction": 0.06,
+                "max": 1
+            },
+            "memory": {
+                "min": "2 GB",
+                "fraction": 0.07,
+                "max": "2 GB"
+            },
+            "retry_strategy": {
+                "memory": {
+                    "strategy": "exponential",
+                    "operand": 2
+                }
+            }
         }
     },
     "f32": {
@@ -452,6 +470,24 @@
                 "min": "5 GB",
                 "fraction": 0.08,
                 "max": "5 GB"
+            },
+            "retry_strategy": {
+                "memory": {
+                    "strategy": "exponential",
+                    "operand": 2
+                }
+            }
+        },
+        "filter_XY_Hail": {
+            "cpus": {
+                "min": 1,
+                "fraction": 0.03,
+                "max": 1
+            },
+            "memory": {
+                "min": "4 GB",
+                "fraction": 0.07,
+                "max": "4 GB"
             },
             "retry_strategy": {
                 "memory": {
@@ -677,6 +713,24 @@
                     "operand": 2
                 }
             }
+        },
+        "filter_XY_Hail": {
+            "cpus": {
+                "min": 1,
+                "fraction": 0.01,
+                "max": 1
+            },
+            "memory": {
+                "min": "6 GB",
+                "fraction": 0.04,
+                "max": "6 GB"
+            },
+            "retry_strategy": {
+                "memory": {
+                    "strategy": "exponential",
+                    "operand": 2
+                }
+            }
         }
     },
     "m64": {
@@ -895,6 +949,24 @@
                     "operand": 2
                 }
             }
+        },
+        "filter_XY_Hail": {
+            "cpus": {
+                "min": 1,
+                "fraction": 0.02,
+                "max": 1
+            },
+            "memory": {
+                "min": "10 GB",
+                "fraction": 0.01,
+                "max": "10 GB"
+            },
+            "retry_strategy": {
+                "memory": {
+                    "strategy": "exponential",
+                    "operand": 2
+                }
+            }
         }
     },
     "default": {
@@ -1106,6 +1178,24 @@
                 "min": "5 GB",
                 "fraction": 0.04,
                 "max": "5 GB"
+            },
+            "retry_strategy": {
+                "memory": {
+                    "strategy": "exponential",
+                    "operand": 2
+                }
+            }
+        },
+        "filter_XY_Hail": {
+            "cpus": {
+                "min": 1,
+                "fraction": 0.01,
+                "max": 1
+            },
+            "memory": {
+                "min": "6 GB",
+                "fraction": 0.04,
+                "max": "6 GB"
             },
             "retry_strategy": {
                 "memory": {
