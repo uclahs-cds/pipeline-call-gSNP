@@ -35,3 +35,6 @@ cases:
       - actual: call-gSNP-*/NA24143/GATK-*/output/GATK-*_IlluminaTest_NA24143_genotype-count.tsv
         expect: /hot/software/pipeline/pipeline-call-gSNP/Nextflow/development/output/test-call-gSNP-paired/call-gSNP-10.1.0-rc.1/NA24143/GATK-4.5.0.0/output/GATK-4.5.0.0_IlluminaTest_NA24143_genotype-count.tsv
         method: md5
+      - actual: call-gSNP-*/NA24143/GATK-*/output/Hail-*_IlluminaTest_NA24143.vcf.bgz
+        expect: /hot/software/pipeline/pipeline-call-gSNP/Nextflow/development/output/test-call-gSNP-paired/call-gSNP-10.1.0-rc.1/NA24143/GATK-4.5.0.0/output/Hail-0.2.133_GATK-4.5.0.0_IlluminaTest_NA24143.vcf.bgz
+        script: test/assert-vcf.sh
