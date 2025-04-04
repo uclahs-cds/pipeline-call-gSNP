@@ -9,6 +9,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 ### Added
+- Add PAR BED paths to `docs/xy_filtration_workflow.md`
 - Add XY Filter to NFTest results
 - Add XY filtration
 - NFTest test case

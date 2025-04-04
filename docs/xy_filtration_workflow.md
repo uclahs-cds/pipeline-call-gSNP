@@ -19,6 +19,9 @@
 
 ## Pseudo-Autosomal Regions (PARs)
 ### GRCh38 - GIAB XY Stratitification PAR [v3.5](https://ftp-trace.ncbi.nlm.nih.gov/ReferenceSamples/giab/release/genome-stratifications/v3.5/GRCh38@all/XY/)
+
+Path: `/hot/resource/database/GIAB-genome-stratifications-v3.5/processed/GRCh38/XY/GIAB-XY-PAR-v3.5_GRCh38.bed`
+
 | CHROM | START | END | PAR |
 |---|---|---|---|---|
 | chrX | 10000 | 44821 | PAR1 |
@@ -40,6 +43,9 @@
 | chrY | 56887902 | 57217415 | PAR2 |
 
 ### GRCm39
+
+Path: `/hot/resource/database/GRCm39-stratifications/original/GRCm39/pseudoautosomal_regions_GRCm39.bed`
+
 | CHROM | START | END | PAR | REFERENCE |
 |---|---|---|---|---|
 | X | 168752755 | 169376592 | PAR | GRCm39 |
