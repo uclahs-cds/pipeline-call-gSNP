@@ -11,4 +11,4 @@ on:
 
 jobs:
   tests:
-    uses: uclahs-cds/tool-Nextflow-action/.github/workflows/nextflow-tests.yml@main
+    uses: uclahs-cds/tool-Nextflow-action/.github/workflows/nextflow-tests.yml@v1
