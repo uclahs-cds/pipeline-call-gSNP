@@ -74,7 +74,7 @@ process call_gSNP_DeepVariant {
 
     /opt/deepvariant/bin/run_deepvariant \
         --model_type=${model_type} \
-        --ref=${reference_faste} \
+        --ref=${reference_fasta} \
         --reads=${bam} \
         --output_vcf=${vcf_filename} \
         --output_gvcf=${gvcf_filename} \
