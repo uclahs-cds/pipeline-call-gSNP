@@ -27,7 +27,7 @@ process convert_IntervalListToBed_GATK {
     tuple val(interval_id), path(intervals)
 
     output:
-    tuple val(interval_id), path(output_filename)), emit: interval_bed
+    tuple val(interval_id), path(output_filename), emit: interval_bed
     path ".command.*"
 
     script:
