@@ -31,7 +31,7 @@ process call_gSNP_DeepVariant {
                saveAs: { "${task.process.replace(':', '/')}/log${file(it).getName()}" }
 
     input:
-    tuple val(sample_id), path(bam), path(bam_index), path(intervals), path(interval_id)
+    tuple val(sample_id), path(bam), path(bam_index), path(intervals), val(interval_id)
     path(reference_fasta)
     path(reference_index)
     path(reference_dict)
