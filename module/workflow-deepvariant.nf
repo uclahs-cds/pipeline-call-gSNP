@@ -55,6 +55,7 @@ workflow deepvariant {
     *   Merge VCFs and GVCFs
     */
     call_gSNP_DeepVariant.out.vcf
+        .filter{ raw_vcf_out -> (raw_vcf_out[3] != "0") } // Filter out empty VCFs
         .groupTuple(by: 0) // Group by sample
         .map{ vcf_group ->
             [
@@ -67,6 +68,7 @@ workflow deepvariant {
         .set{ input_ch_merge_vcfs }
 
     call_gSNP_DeepVariant.out.gvcf
+        .filter{ raw_gvcf_out -> (raw_gvcf_out[3] != "0") } // Filter out empty GVCFs
         .groupTuple(by: 0) // Group by sample
         .map{ gvcf_group ->
             [
@@ -86,7 +88,7 @@ workflow deepvariant {
     *   Compute checksums
     */
     run_MergeVcfs_Picard.out.merged_vcf
-        .map{ merged -> [merged[0], merged[1]] }
+        .map{ merged -> [merged[1], merged[2]] }
         .flatten()
         .set{ input_ch_calculate_checksum }
 
