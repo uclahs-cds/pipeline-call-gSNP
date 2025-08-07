@@ -21,7 +21,7 @@ process convert_IntervalListToBed_GATK {
     publishDir "${params.log_output_dir}/process-log",
                mode: "copy",
                pattern: ".command.*",
-               saveAs: { "${task.process.replace(':', '/')}/log${file(it).getName()}" }
+               saveAs: { "${task.process.replace(':', '/')}-${interval_id}/log${file(it).getName()}" }
 
     input:
     tuple val(interval_id), path(intervals)
