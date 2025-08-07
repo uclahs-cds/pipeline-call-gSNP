@@ -613,9 +613,9 @@
                 "max": 4
             },
             "memory": {
-                "min": "10 GB",
+                "min": "15 GB",
                 "fraction": 0.07,
-                "max": "10 GB"
+                "max": "15 GB"
             },
             "retry_strategy": {
                 "memory": {
