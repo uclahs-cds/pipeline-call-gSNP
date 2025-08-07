@@ -28,7 +28,7 @@ process call_gSNP_DeepVariant {
     publishDir "${params.log_output_dir}/process-log",
                mode: "copy",
                pattern: ".command.*",
-               saveAs: { "${task.process.replace(':', '/')}/log${file(it).getName()}" }
+               saveAs: { "${task.process.replace(':', '/')}-${sample_id}/${interval_id}/log${file(it).getName()}" }
 
     input:
     tuple val(sample_id), path(bam), path(bam_index), path(intervals), val(interval_id)
@@ -38,8 +38,8 @@ process call_gSNP_DeepVariant {
     path(par_regions)
 
     output:
-    tuple val(sample_id), path(vcf_filename), path("${vcf_filename}.tbi"), emit: vcf
-    tuple val(sample_id), path(gvcf_filename), path("${gvcf_filename}.tbi"), emit: gvcf
+    tuple val(sample_id), path(vcf_filename), path("${vcf_filename}.tbi"), env(VCF_CALLS), emit: vcf
+    tuple val(sample_id), path(gvcf_filename), path("${gvcf_filename}.tbi"), env(GVCF_CALLS), emit: gvcf
     path ".command.*"
 
     script:
@@ -83,5 +83,8 @@ process call_gSNP_DeepVariant {
         --intermediate_results_dir=work \
         --regions=${intervals} \
         \$haploid_args
+
+    export VCF_CALLS=`zgrep -v ^# ${vcf_filename} | wc -l`
+    export GVCF_CALLS=`zgrep -v ^# ${gvcf_filename} | wc -l`
     """
 }
