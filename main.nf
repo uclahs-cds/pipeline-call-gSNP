@@ -60,9 +60,12 @@ include { extract_GenomeIntervals } from './external/pipeline-Nextflow-module/mo
         ]
     )
 include { deepvariant } from './module/workflow-deepvariant.nf' addParams(
-    output_dir_base: "${params.output_dir_root}/DeepVariant-${params.deepvariant_version}"
+    output_dir_base: "${params.output_dir_root}/DeepVariant-${params.deepvariant_version}",
+    current_caller: "DeepVariant-${params.deepvariant_version}"
 )
-include { haplotypecaller } from './module/workflow-haplotypecaller.nf'
+include { haplotypecaller } from './module/workflow-haplotypecaller.nf' addParams(
+    current_caller: "GATK-${params.gatk_version}"
+)
 
 // Returns the index file for the given bam or vcf
 def indexFile(bam_or_vcf) {
