@@ -3,6 +3,16 @@ patient_id:
   type: 'String'
   required: true
   help: 'Patient ID'
+algorithm:
+  type: 'List'
+  required: true
+  allow_empty: false
+  help: 'List of algorithms to run'
+  choices:
+    - 'HaplotypeCaller'
+    - 'DeepVariant'
+  default:
+    - 'HaplotypeCaller'
 genetic_sex:
   type: 'String'
   required: true

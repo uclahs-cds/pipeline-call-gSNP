@@ -13,6 +13,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Add XY Filter to NFTest results
 - Add XY filtration
 - NFTest test case
+- `DeepVariant` workflow
 
 ### Changed
 - Update resource handling to generalized handler
