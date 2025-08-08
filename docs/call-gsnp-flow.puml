@@ -27,6 +27,8 @@ fork
   :==call_gSNP_DeepVariant
   ----
   Call variants using DeepVariant;
+
+  #palegreen:Per-sample  VCF and GVCF + index files>
 fork again
   -><size:25>HaplotypeCaller</size>;
   split
