@@ -253,6 +253,7 @@ Please see list of [Contributors](https://github.com/uclahs-cds/pipeline-call-gS
 ---
 
 ## References
+- Poplin, R., Chang, PC., Alexander, D. et al. A universal SNP and small-indel variant caller using deep neural networks. Nat Biotechnol 36, 983–987 (2018). https://doi.org/10.1038/nbt.4235
 
 --
 
