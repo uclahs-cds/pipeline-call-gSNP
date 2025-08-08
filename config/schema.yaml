@@ -3,7 +3,7 @@ patient_id:
   type: 'String'
   required: true
   help: 'Patient ID'
-algorithms:
+algorithm:
   type: 'List'
   required: true
   allow_empty: false
