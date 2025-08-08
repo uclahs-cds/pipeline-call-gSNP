@@ -14,7 +14,7 @@
 
 ## Overview
 
-This pipeline takes BAMs and corresponding indices from [recalibrate-BAM](https://github.com/uclahs-cds/pipeline-recalibrate-BAM) and runs through GATK4 best practice to call germline short variant (SNP and INDEL). The pipeline also calls germline variants using DeepSomatic. It can be run with any combination of normal and tumor samples (normal only, tumor only, normal-tumor paired, multiple normal and tumor samples).
+This pipeline takes BAMs and corresponding indices from [recalibrate-BAM](https://github.com/uclahs-cds/pipeline-recalibrate-BAM) and runs through GATK4 best practice to call germline short variant (SNP and INDEL). The pipeline also calls germline variants using DeepVariant. It can be run with any combination of normal and tumor samples (normal only, tumor only, normal-tumor paired, multiple normal and tumor samples).
 
 ---
 
