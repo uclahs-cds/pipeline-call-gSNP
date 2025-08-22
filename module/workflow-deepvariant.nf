@@ -9,6 +9,11 @@ workflow deepvariant {
     intervals
 
     main:
+    workflow_meta = Channel.value([
+        'output_dir_base': "${params.output_dir_root}/DeepVariant-${params.deepvariant_version}",
+        'current_caller': "DeepVariant-${params.deepvariant_version}"
+    ])
+
     /**
     *   Convert intervals to BED format
     */
@@ -18,6 +23,7 @@ workflow deepvariant {
     .set{ input_ch_intervallisttobed }
 
     convert_IntervalListToBed_GATK(
+        workflow_meta,
         input_ch_intervallisttobed
     )
 
@@ -44,6 +50,7 @@ workflow deepvariant {
     *   Run DeepVariant
     */
     call_gSNP_DeepVariant(
+        workflow_meta,
         input_ch_deepvariant,
         params.reference_fasta,
         "${params.reference_fasta}.fai",
@@ -81,6 +88,7 @@ workflow deepvariant {
         .set{ input_ch_merge_gvcfs }
 
     run_MergeVcfs_Picard(
+        workflow_meta,
         input_ch_merge_vcfs.mix(input_ch_merge_gvcfs)
     )
 
@@ -92,5 +100,8 @@ workflow deepvariant {
         .flatten()
         .set{ input_ch_calculate_checksum }
 
-    calculate_sha512(input_ch_calculate_checksum)
+    calculate_sha512(
+        workflow_meta,
+        input_ch_calculate_checksum
+    )
 }
