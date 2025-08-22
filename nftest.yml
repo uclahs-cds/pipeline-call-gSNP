@@ -6,10 +6,10 @@ global:
   clean_logs: true
 
 cases:
-  - name: test-call-gSNP-paired
-    message: Test call-gSNP pipeline with one normal and one tumor pair
+  - name: test-call-gSNP-paired-haplotypecaller
+    message: Test call-gSNP HaplotypeCaller with one normal and one tumor pair
     nf_script: ./main.nf
-    nf_config: test/test-call-gSNP-paired.config
+    nf_config: test/test-call-gSNP-paired-HC.config
     params_file: test/Illumina-paired.yaml
     skip: false
     verbose: true
@@ -37,4 +37,24 @@ cases:
         method: md5
       - actual: call-gSNP-*/NA24143/GATK-*/output/Hail-*_IlluminaTest_NA24143.vcf.bgz
         expect: /hot/software/pipeline/pipeline-call-gSNP/Nextflow/development/output/test-call-gSNP-paired/call-gSNP-10.1.0-rc.1/NA24143/GATK-4.5.0.0/output/Hail-0.2.133_GATK-4.5.0.0_IlluminaTest_NA24143.vcf.bgz
+        script: test/assert-vcf.sh
+  - name: test-call-gSNP-paired-deepvariant
+    message: Test call-gSNP DeepVariant with one normal and one tumor pair
+    nf_script: ./main.nf
+    nf_config: test/test-call-gSNP-paired-DeepVariant.config
+    params_file: test/Illumina-paired.yaml
+    skip: false
+    verbose: true
+    asserts:
+      - actual: call-gSNP-*/NA24143/DeepVariant-*/output/DeepVariant-*_IlluminaTest_NA24143.vcf.gz
+        expect: /hot/software/pipeline/pipeline-call-gSNP/Nextflow/development/output/test-call-gSNP-paired-deepvariant/call-gSNP-10.1.0-rc.1/NA24143/DeepVariant-1.9.0/output/DeepVariant-1.9.0_IlluminaTest_NA24143.vcf.gz
+        script: test/assert-vcf.sh
+      - actual: call-gSNP-*/NA24143/DeepVariant-*/output/DeepVariant-*_IlluminaTest_NA24149.vcf.gz
+        expect: /hot/software/pipeline/pipeline-call-gSNP/Nextflow/development/output/test-call-gSNP-paired-deepvariant/call-gSNP-10.1.0-rc.1/NA24143/DeepVariant-1.9.0/output/DeepVariant-1.9.0_IlluminaTest_NA24149.vcf.gz
+        script: test/assert-vcf.sh
+      - actual: call-gSNP-*/NA24143/DeepVariant-*/output/DeepVariant-*_IlluminaTest_NA24143.g.vcf.gz
+        expect: /hot/software/pipeline/pipeline-call-gSNP/Nextflow/development/output/test-call-gSNP-paired-deepvariant/call-gSNP-10.1.0-rc.1/NA24143/DeepVariant-1.9.0/output/DeepVariant-1.9.0_IlluminaTest_NA24143.g.vcf.gz
+        script: test/assert-vcf.sh
+      - actual: call-gSNP-*/NA24143/DeepVariant-*/output/DeepVariant-*_IlluminaTest_NA24149.g.vcf.gz
+        expect: /hot/software/pipeline/pipeline-call-gSNP/Nextflow/development/output/test-call-gSNP-paired-deepvariant/call-gSNP-10.1.0-rc.1/NA24143/DeepVariant-1.9.0/output/DeepVariant-1.9.0_IlluminaTest_NA24149.g.vcf.gz
         script: test/assert-vcf.sh

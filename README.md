@@ -14,7 +14,7 @@
 
 ## Overview
 
-This pipeline takes BAMs and corresponding indices from [recalibrate-BAM](https://github.com/uclahs-cds/pipeline-recalibrate-BAM) and runs through GATK4 best practice to call germline short variant (SNP and INDEL). It can be run with any combination of normal and tumor samples (normal only, tumor only, normal-tumor paired, multiple normal and tumor samples).
+This pipeline takes BAMs and corresponding indices from [recalibrate-BAM](https://github.com/uclahs-cds/pipeline-recalibrate-BAM) and runs through GATK4 best practice to call germline short variant (SNP and INDEL). The pipeline also calls germline variants using DeepVariant. It can be run with any combination of normal and tumor samples (normal only, tumor only, normal-tumor paired, multiple normal and tumor samples).
 
 ---
 
@@ -55,33 +55,49 @@ python submit_nextflow_pipeline.py \
 ### 1. Split genome or target intervals into sub-intervals for parallelization
 Use the input target intervals or the whole genome intervals and split them into sub-intervals for parallel processing.
 
-### 2.	HaplotypeCaller
-Generate VCF for each split interval using HaplotypeCaller. Generate GVCF for SNPs and INDELs.
+### DeepVariant
 
-### 3. Merge raw VCFs and GVCFs
+#### 1. Convert IntervalList to BED
+Convert IntervalList format intervals to BED format.
+
+#### 2. Run DeepVariant
+Generate VCF for each split interval using DeepVariant. Generate GVCF.
+
+#### 3. Merge raw VCFs and GVCFs
 Merge raw variants from each interval.
 
-### 4. VQSR - SNPs
+#### 4. Generate sha512 checksum
+Generate sha512 checksum for VCFs and GVCFs.
+
+### HaplotypeCaller
+
+#### 2. Run HaplotypeCaller
+Generate VCF for each split interval using HaplotypeCaller. Generate GVCF for SNPs and INDELs.
+
+#### 3. Merge raw VCFs and GVCFs
+Merge raw variants from each interval.
+
+#### 4. VQSR - SNPs
 Generate VQSR (Variant Quality Score Recalibration) model for SNPs.
 
-### 5. VQSR - INDELs
+#### 5. VQSR - INDELs
 Generate VQSR model for INDELs.
 
-### 6. VQSR - Apply SNP model
+#### 6. VQSR - Apply SNP model
 Take the whole sample raw VCF from Step 3 as input, and apply the model in Step 4 to generate variants in which only SNPs are recalibrated.
 
-### 7. VQSR Apply INDEL model
+#### 7. VQSR Apply INDEL model
 Take the output from Step 6 as input, and apply the model in Step 5 to recalibrate only INDELs.
 
-#### Steps 4 through 7 model the technical profile of variants in a training set and uses that to filter out probable artifacts from the raw VCF. After these four steps, a recalibrated VCF is generated.
+##### Steps 4 through 7 model the technical profile of variants in a training set and uses that to filter out probable artifacts from the raw VCF. After these four steps, a recalibrated VCF is generated.
 
-### 8. Filter gSNP – Filter out ambiguous variants
+#### 8. Filter gSNP – Filter out ambiguous variants
 Use customized Perl script to filter out ambiguous variants.
 
-### 9. Adjust chrX and chrY genotypes based on sample sex from recalibrated VCF
+#### 9. Adjust chrX and chrY genotypes based on sample sex from recalibrated VCF
 Apply XY filtration workflow to recalibrated VCF as described [here](docs/xy_filtration_workflow.md). XY Filtration will be skipped when `genetic_sex = 'unknown'`.
 
-### 10. Generate sha512 checksum
+#### 10. Generate sha512 checksum
 Generate sha512 checksum for VCFs and GVCFs.
 
 ---
@@ -118,6 +134,7 @@ For normal-only or tumor-only samples, exclude the fields for the other state.
 |:----------------|:---------|:-----|:------------|
 | `dataset_id` | Yes | string | Dataset ID |
 | `blcds_registered_dataset` | Yes | boolean | Set to true when using BLCDS folder structure; use false for now |
+| `algorithm` | Yes | List | List of algorithms to run to call variants. Options: `HaplotypeCaller`, `DeepVariant` |
 | `genetic_sex` | Yes | string | Sample Sex, `XY`, `XX` or `unknown` |
 | `output_dir` | Yes | string | Need to set if `blcds_registered_dataset = false` |
 | `save_intermediate_files` | Yes | boolean | Set to false to disable publishing of intermediate files; true otherwise; disabling option will delete intermediate files to allow for processing of large BAMs |
@@ -188,6 +205,14 @@ base_resource_update {
 
 | Output | Description |
 |:-------|:------------|
+| `<DeepVariant>_<dataset_id>_<sample_id>.g.vcf.gz` | Per-sample DeepVariant GVCF |
+| `<DeepVariant>_<dataset_id>_<sample_id>.g.vcf.gz.sha512` | Per-sample DeepVariant GVCF checksum |
+| `<DeepVariant>_<dataset_id>_<sample_id>.g.vcf.gz.tbi` | Per-sample DeepVariant GVCF index |
+| `<DeepVariant>_<dataset_id>_<sample_id>.g.vcf.gz.tbi.sha512` | Per-sample DeepVariant GVCF index checksum |
+| `<DeepVariant>_<dataset_id>_<sample_id>.vcf.gz` | Per-sample DeepVariant VCF |
+| `<DeepVariant>_<dataset_id>_<sample_id>.vcf.gz.sha512` | Per-sample DeepVariant VCF checksum |
+| `<DeepVariant>_<dataset_id>_<sample_id>.vcf.gz.tbi` | Per-sample DeepVariant VCF index |
+| `<DeepVariant>_<dataset_id>_<sample_id>.vcf.gz.tbi.sha512` | Per-sample DeepVariant VCF index checksum |
 | `<GATK>_<dataset_id>_<sample_id>.g.vcf.gz` | Per-sample GVCF |
 | `<GATK>_<dataset_id>_<sample_id>.g.vcf.gz.sha512` | Per-sample GVCF checksum |
 | `<GATK>_<dataset_id>_<sample_id>.g.vcf.gz.tbi` | Per-sample GVCF index |
@@ -228,6 +253,7 @@ Please see list of [Contributors](https://github.com/uclahs-cds/pipeline-call-gS
 ---
 
 ## References
+- Poplin, R., Chang, PC., Alexander, D. et al. A universal SNP and small-indel variant caller using deep neural networks. Nat Biotechnol 36, 983–987 (2018). https://doi.org/10.1038/nbt.4235
 
 --
 

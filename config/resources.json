@@ -62,6 +62,36 @@
                 "max": "1 GB"
             }
         },
+        "convert_IntervalListToBed_GATK": {
+            "cpus": {
+                "min": 1,
+                "fraction": 0.5,
+                "max": 1
+            },
+            "memory": {
+                "min": "1 GB",
+                "fraction": 0.03,
+                "max": "1 GB"
+            }
+        },
+        "call_gSNP_DeepVariant": {
+            "cpus": {
+                "min": 2,
+                "fraction": 0.26,
+                "max": 2
+            },
+            "memory": {
+                "min": "10 GB",
+                "fraction": 0.33,
+                "max": "10 GB"
+            },
+            "retry_strategy": {
+                "memory": {
+                    "strategy": "exponential",
+                    "operand": 2
+                }
+            }
+        },
         "run_HaplotypeCallerGVCF_GATK": {
             "cpus": {
                 "min": 2,
@@ -296,6 +326,36 @@
                 "min": "1 GB",
                 "fraction": 0.02,
                 "max": "1 GB"
+            }
+        },
+        "convert_IntervalListToBed_GATK": {
+            "cpus": {
+                "min": 1,
+                "fraction": 0.03,
+                "max": 1
+            },
+            "memory": {
+                "min": "1 GB",
+                "fraction": 0.02,
+                "max": "1 GB"
+            }
+        },
+        "call_gSNP_DeepVariant": {
+            "cpus": {
+                "min": 4,
+                "fraction": 0.12,
+                "max": 4
+            },
+            "memory": {
+                "min": "15 GB",
+                "fraction": 0.16,
+                "max": "15 GB"
+            },
+            "retry_strategy": {
+                "memory": {
+                    "strategy": "exponential",
+                    "operand": 2
+                }
             }
         },
         "run_HaplotypeCallerGVCF_GATK": {
@@ -534,6 +594,36 @@
                 "max": "1 GB"
             }
         },
+        "convert_IntervalListToBed_GATK": {
+            "cpus": {
+                "min": 1,
+                "fraction": 0.01,
+                "max": 1
+            },
+            "memory": {
+                "min": "1 GB",
+                "fraction": 0.01,
+                "max": "1 GB"
+            }
+        },
+        "call_gSNP_DeepVariant": {
+            "cpus": {
+                "min": 4,
+                "fraction": 0.06,
+                "max": 4
+            },
+            "memory": {
+                "min": "15 GB",
+                "fraction": 0.07,
+                "max": "15 GB"
+            },
+            "retry_strategy": {
+                "memory": {
+                    "strategy": "exponential",
+                    "operand": 2
+                }
+            }
+        },
         "run_HaplotypeCallerGVCF_GATK": {
             "cpus": {
                 "min": 3,
@@ -770,6 +860,36 @@
                 "max": "1 GB"
             }
         },
+        "convert_IntervalListToBed_GATK": {
+            "cpus": {
+                "min": 1,
+                "fraction": 0.02,
+                "max": 1
+            },
+            "memory": {
+                "min": "1 GB",
+                "fraction": 0.00,
+                "max": "1 GB"
+            }
+        },
+        "call_gSNP_DeepVariant": {
+            "cpus": {
+                "min": 4,
+                "fraction": 0.08,
+                "max": 4
+            },
+            "memory": {
+                "min": "20 GB",
+                "fraction": 0.02,
+                "max": "20 GB"
+            },
+            "retry_strategy": {
+                "memory": {
+                    "strategy": "exponential",
+                    "operand": 2
+                }
+            }
+        },
         "run_HaplotypeCallerGVCF_GATK": {
             "cpus": {
                 "min": 3,
@@ -1004,6 +1124,36 @@
                 "min": "1 GB",
                 "fraction": 0.01,
                 "max": "1 GB"
+            }
+        },
+        "convert_IntervalListToBed_GATK": {
+            "cpus": {
+                "min": 1,
+                "fraction": 0.01,
+                "max": 1
+            },
+            "memory": {
+                "min": "1 GB",
+                "fraction": 0.01,
+                "max": "1 GB"
+            }
+        },
+        "call_gSNP_DeepVariant": {
+            "cpus": {
+                "min": 2,
+                "fraction": 0.05,
+                "max": 2
+            },
+            "memory": {
+                "min": "15 GB",
+                "fraction": 0.15,
+                "max": "15 GB"
+            },
+            "retry_strategy": {
+                "memory": {
+                    "strategy": "exponential",
+                    "operand": 2
+                }
             }
         },
         "run_HaplotypeCallerGVCF_GATK": {
