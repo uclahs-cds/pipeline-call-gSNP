@@ -49,13 +49,8 @@ Starting workflow...
 include { run_validate_PipeVal } from './external/pipeline-Nextflow-module/modules/PipeVal/validate/main.nf'
 include { run_SplitIntervals_GATK } from './module/split-intervals.nf'
 include { extract_GenomeIntervals } from './external/pipeline-Nextflow-module/modules/common/extract_genome_intervals/main.nf'
-include { deepvariant } from './module/workflow-deepvariant.nf' addParams(
-    output_dir_base: "${params.output_dir_root}/DeepVariant-${params.deepvariant_version}",
-    current_caller: "DeepVariant-${params.deepvariant_version}"
-)
-include { haplotypecaller } from './module/workflow-haplotypecaller.nf' addParams(
-    current_caller: "GATK-${params.gatk_version}"
-)
+include { deepvariant } from './module/workflow-deepvariant.nf'
+include { haplotypecaller } from './module/workflow-haplotypecaller.nf'
 
 // Returns the index file for the given bam or vcf
 def indexFile(bam_or_vcf) {
