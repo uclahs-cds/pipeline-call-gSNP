@@ -18,6 +18,11 @@ workflow haplotypecaller {
     intervals
 
     main:
+    workflow_meta = Channel.value([
+        'output_dir_base': params.output_dir_base,
+        'current_caller': "GATK-${params.gatk_version}"
+    ])
+
     /**
     *   Haplotype calling
     */
@@ -34,6 +39,7 @@ workflow haplotypecaller {
         .set{ input_ch_haplotypecallergvcf }
 
     run_HaplotypeCallerGVCF_GATK(
+        workflow_meta,
         params.reference_fasta,
         "${params.reference_fasta}.fai",
         "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
@@ -55,6 +61,7 @@ workflow haplotypecaller {
     .set { input_ch_combine_gvcfs }
 
     run_CombineGVCFs_GATK(
+        workflow_meta,
         params.reference_fasta,
         "${params.reference_fasta}.fai",
         "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
@@ -62,6 +69,7 @@ workflow haplotypecaller {
         )
 
     run_GenotypeGVCFs_GATK(
+        workflow_meta,
         params.reference_fasta,
         "${params.reference_fasta}.fai",
         "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
@@ -89,7 +97,10 @@ workflow haplotypecaller {
         }
         .set{ input_ch_merge_vcfs }
 
-    run_MergeVcfs_Picard_VCF(input_ch_merge_vcfs)
+    run_MergeVcfs_Picard_VCF(
+        workflow_meta,
+        input_ch_merge_vcfs
+    )
 
     run_HaplotypeCallerGVCF_GATK.out.gvcfs
         .groupTuple(by: 0) // Group by sample
@@ -103,17 +114,24 @@ workflow haplotypecaller {
         }
         .set{ input_ch_merge_gvcfs }
 
-    run_MergeVcfs_Picard_GVCF(input_ch_merge_gvcfs)
+    run_MergeVcfs_Picard_GVCF(
+        workflow_meta,
+        input_ch_merge_gvcfs
+    )
 
     /**
     *   Recalibrate variants
     */
-    recalibrate_variants(run_MergeVcfs_Picard_VCF.out.merged_vcf)
+    recalibrate_variants(
+        workflow_meta,
+        run_MergeVcfs_Picard_VCF.out.merged_vcf
+    )
 
     /**
     *   Filter variants with Perl script
     */
     filter_gSNP_GATK(
+        workflow_meta,
         params.reference_fasta,
         "${params.reference_fasta}.fai",
         "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
@@ -132,6 +150,7 @@ workflow haplotypecaller {
             .collect()
 
         filter_XY_Hail(
+            workflow_meta,
             filter_xy_ch,
             params.reference_fasta,
             "${params.reference_fasta}.fai",
@@ -152,5 +171,8 @@ workflow haplotypecaller {
         .flatten()
         .set{ input_ch_calculate_checksum }
 
-    calculate_sha512(input_ch_calculate_checksum)
+    calculate_sha512(
+        workflow_meta,
+        input_ch_calculate_checksum
+    )
 }

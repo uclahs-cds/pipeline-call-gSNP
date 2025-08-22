@@ -20,7 +20,7 @@ include { generate_standard_filename } from '../external/pipeline-Nextflow-modul
 */
 process run_VariantRecalibratorINDEL_GATK {
     container params.docker_image_gatk
-    publishDir path: "${params.output_dir_base}/intermediate/${task.process.replace(':', '/')}",
+    publishDir path: "${META.output_dir_base}/intermediate/${task.process.replace(':', '/')}",
       mode: "copy",
       enabled: params.save_intermediate_files,
       pattern: "*_output-indel.{recal*,tranches}"
@@ -35,6 +35,7 @@ process run_VariantRecalibratorINDEL_GATK {
       saveAs: { "${task.process.replace(':', '/')}/log${file(it).getName()}" }
 
     input:
+    val(META)
     path(reference_fasta)
     path(reference_fasta_fai)
     path(reference_fasta_dict)
@@ -114,12 +115,12 @@ process run_VariantRecalibratorINDEL_GATK {
 */
 process run_VariantRecalibratorSNP_GATK {
     container params.docker_image_gatk
-    publishDir path: "${params.output_dir_base}/intermediate/${task.process.replace(':', '/')}",
+    publishDir path: "${META.output_dir_base}/intermediate/${task.process.replace(':', '/')}",
       mode: "copy",
       enabled: params.save_intermediate_files,
       pattern: "*_output-snp.{recal*,tranches}"
 
-    publishDir path: "${params.output_dir_base}/QC/${task.process.replace(':', '/')}",
+    publishDir path: "${META.output_dir_base}/QC/${task.process.replace(':', '/')}",
       mode: "copy",
       pattern: "*_output-snp.{plots*,tranches.pdf}"
 
@@ -129,6 +130,7 @@ process run_VariantRecalibratorSNP_GATK {
       saveAs: { "${task.process.replace(':', '/')}/log${file(it).getName()}" }
 
     input:
+    val(META)
     path(reference_fasta)
     path(reference_fasta_fai)
     path(reference_fasta_dict)
@@ -214,12 +216,12 @@ process run_VariantRecalibratorSNP_GATK {
 */
 process run_ApplyVQSR_GATK {
     container params.docker_image_gatk
-    publishDir path: "${params.output_dir_base}/intermediate/${task.process.replace(':', '/')}/",
+    publishDir path: "${META.output_dir_base}/intermediate/${task.process.replace(':', '/')}/",
       mode: "copy",
       enabled: params.save_intermediate_files,
       pattern: "*-SNP.vcf.gz{,.tbi}"
 
-    publishDir path: "${params.output_dir_base}/output/",
+    publishDir path: "${META.output_dir_base}/output/",
       mode: "copy",
       pattern: "*SNP-AND-INDEL.vcf.gz{,.tbi}"
 
@@ -229,6 +231,7 @@ process run_ApplyVQSR_GATK {
       saveAs: { "${task.process.replace(':', '/')}/log${file(it).getName()}" }
 
     input:
+    val(META)
     val(mode)
     val(suffix)
     path(reference_fasta)

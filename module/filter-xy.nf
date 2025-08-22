@@ -19,7 +19,7 @@ include { generate_standard_filename; sanitize_string } from '../external/pipeli
 process filter_XY_Hail {
     container params.docker_image_hail
 
-    publishDir path: "${params.output_dir_base}/output",
+    publishDir path: "${META.output_dir_base}/output",
       mode: "copy",
       pattern: '*.vcf.bgz*'
 
@@ -31,6 +31,7 @@ process filter_XY_Hail {
         }
 
     input:
+    val(META)
     tuple val(sample_id), path(recalibrated_vcf), path(recalibrated_vcf_tbi)
     path(reference_fasta)
     path(reference_index)

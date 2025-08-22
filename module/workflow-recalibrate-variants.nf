@@ -7,10 +7,12 @@ include {
 
 workflow recalibrate_variants {
     take:
+    workflow_meta
     input_ch_samples
 
     main:
     run_VariantRecalibratorSNP_GATK(
+        workflow_meta,
         params.reference_fasta,
         "${params.reference_fasta}.fai",
         "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
@@ -26,6 +28,7 @@ workflow recalibrate_variants {
     )
 
     run_ApplyVQSR_GATK_SNP(
+        workflow_meta,
         'SNP',
         'SNP',
         params.reference_fasta,
@@ -35,6 +38,7 @@ workflow recalibrate_variants {
     )
 
     run_VariantRecalibratorINDEL_GATK(
+        workflow_meta,
         params.reference_fasta,
         "${params.reference_fasta}.fai",
         "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
@@ -44,6 +48,7 @@ workflow recalibrate_variants {
     )
 
     run_ApplyVQSR_GATK_INDEL(
+        workflow_meta,
         'INDEL',
         'SNP_AND_INDEL',
         params.reference_fasta,

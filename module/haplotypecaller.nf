@@ -25,7 +25,7 @@ include { generate_standard_filename } from '../external/pipeline-Nextflow-modul
 */
 process run_HaplotypeCallerGVCF_GATK {
     container params.docker_image_gatk
-    publishDir path: "${params.output_dir_base}/intermediate/${task.process.replace(':', '/')}",
+    publishDir path: "${META.output_dir_base}/intermediate/${task.process.replace(':', '/')}",
       mode: "copy",
       enabled: params.save_intermediate_files,
       pattern: '*.vcf*'
@@ -36,6 +36,7 @@ process run_HaplotypeCallerGVCF_GATK {
       saveAs: { "${task.process.replace(':', '/')}/${task.process.split(':')[-1]}-${sample_id}-${interval_id}/log${file(it).getName()}" }
 
     input:
+    val(META)
     path(reference_fasta)
     path(reference_fasta_fai)
     path(reference_fasta_dict)
