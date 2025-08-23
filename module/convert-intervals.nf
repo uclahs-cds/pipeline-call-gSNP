@@ -14,7 +14,7 @@
 process convert_IntervalListToBed_GATK {
     container params.docker_image_gatk
 
-    publishDir path: "${params.output_dir_base}/intermediate/${task.process.replace(':', '/')}",
+    publishDir path: "${META.output_dir_base}/intermediate/${task.process.replace(':', '/')}",
                mode: "copy",
                pattern: "*-contig.bed",
                enabled: params.save_intermediate_files
@@ -24,6 +24,7 @@ process convert_IntervalListToBed_GATK {
                saveAs: { "${task.process.replace(':', '/')}-${interval_id}/log${file(it).getName()}" }
 
     input:
+    val(META)
     tuple val(interval_id), path(intervals)
 
     output:

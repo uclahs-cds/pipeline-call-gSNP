@@ -18,7 +18,7 @@ include { generate_standard_filename } from '../external/pipeline-Nextflow-modul
 process run_MergeVcfs_Picard {
     container params.docker_image_picard
 
-    publishDir path: "${params.output_dir_base}/output",
+    publishDir path: "${META.output_dir_base}/output",
       mode: "copy",
       pattern: "*.vcf*"
 
@@ -28,6 +28,7 @@ process run_MergeVcfs_Picard {
       saveAs: { "${task.process.replace(':', '/')}-${id}/log${file(it).getName()}" }
 
     input:
+    val(META)
     tuple path(vcfs), path(vcf_indices), val(vcf_type), val(id)
 
     output:
@@ -36,7 +37,7 @@ process run_MergeVcfs_Picard {
 
     script:
     all_vcfs = vcfs.collect{ "-INPUT '${it}'" }.join(' ')
-    output_filename_base = generate_standard_filename(params.current_caller, params.dataset_id, id, [:])
+    output_filename_base = generate_standard_filename(META.current_caller, params.dataset_id, id, [:])
     output_filename = (vcf_type == "GVCF") ?
         "${output_filename_base}.g.vcf.gz" :
         "${output_filename_base}.vcf.gz"

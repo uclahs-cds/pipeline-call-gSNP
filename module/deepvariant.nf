@@ -21,7 +21,7 @@ process call_gSNP_DeepVariant {
 
     tag "${sample_id}-${interval_id}"
 
-    publishDir path: "${params.output_dir_base}/intermediate/${task.process.replace(':', '/')}",
+    publishDir path: "${META.output_dir_base}/intermediate/${task.process.replace(':', '/')}",
                mode: "copy",
                pattern: "*.vcf.gz*",
                enabled: params.save_intermediate_files
@@ -31,6 +31,7 @@ process call_gSNP_DeepVariant {
                saveAs: { "${task.process.replace(':', '/')}-${sample_id}/${interval_id}/log${file(it).getName()}" }
 
     input:
+    val(META)
     tuple val(sample_id), path(bam), path(bam_index), path(intervals), val(interval_id)
     path(reference_fasta)
     path(reference_index)

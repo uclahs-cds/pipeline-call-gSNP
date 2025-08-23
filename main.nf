@@ -46,26 +46,11 @@ Starting workflow...
 ------------------------------------
 """
 
-include { run_validate_PipeVal } from './external/pipeline-Nextflow-module/modules/PipeVal/validate/main.nf' addParams(
-    options: [
-        docker_image_version: params.pipeval_version,
-        main_process: "./" //Save logs in <log_dir>/process-log/run_validate_PipeVal
-        ]
-    )
+include { run_validate_PipeVal } from './external/pipeline-Nextflow-module/modules/PipeVal/validate/main.nf'
 include { run_SplitIntervals_GATK } from './module/split-intervals.nf'
-include { extract_GenomeIntervals } from './external/pipeline-Nextflow-module/modules/common/extract_genome_intervals/main.nf' addParams(
-    options: [
-        save_intermediate_files: params.save_intermediate_files,
-        output_dir: params.output_dir_base
-        ]
-    )
-include { deepvariant } from './module/workflow-deepvariant.nf' addParams(
-    output_dir_base: "${params.output_dir_root}/DeepVariant-${params.deepvariant_version}",
-    current_caller: "DeepVariant-${params.deepvariant_version}"
-)
-include { haplotypecaller } from './module/workflow-haplotypecaller.nf' addParams(
-    current_caller: "GATK-${params.gatk_version}"
-)
+include { extract_GenomeIntervals } from './external/pipeline-Nextflow-module/modules/common/extract_genome_intervals/main.nf'
+include { deepvariant } from './module/workflow-deepvariant.nf'
+include { haplotypecaller } from './module/workflow-haplotypecaller.nf'
 
 // Returns the index file for the given bam or vcf
 def indexFile(bam_or_vcf) {
@@ -105,10 +90,17 @@ workflow {
         )
         .collect()
 
+    base_meta = Channel.value([
+        'log_output_dir': params.log_output_dir,
+        'output_dir': params.output_dir_base
+    ])
+
     /**
     *   Input validation
     */
-    run_validate_PipeVal(input_ch_validate)
+    run_validate_PipeVal(
+        base_meta.combine(input_ch_validate)
+    )
 
     run_validate_PipeVal.out.validation_result
         .collectFile(
@@ -124,9 +116,11 @@ workflow {
     if (params.is_targeted) {
         intervals_to_split = Channel.from(params.intervals)
     } else {
-        extract_GenomeIntervals("${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict")
+        extract_GenomeIntervals(
+            base_meta.map{ metadata -> [metadata, "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict"] }
+        )
 
-        intervals_to_split = extract_GenomeIntervals.out.genomic_intervals
+        intervals_to_split = extract_GenomeIntervals.out.genomic_intervals.map{ genome_intervals -> genome_intervals[1] }
     }
 
     run_SplitIntervals_GATK(

@@ -18,7 +18,7 @@ include { generate_standard_filename } from '../external/pipeline-Nextflow-modul
 */
 process filter_gSNP_GATK {
     container params.docker_image_gatkfilter
-    publishDir path: "${params.output_dir_base}/output",
+    publishDir path: "${META.output_dir_base}/output",
       mode: "copy",
       pattern: "${output_filename}*"
 
@@ -28,6 +28,7 @@ process filter_gSNP_GATK {
       saveAs: { "${task.process.replace(':', '/')}/log${file(it).getName()}" }
 
     input:
+    val(META)
     path(reference_fasta)
     path(reference_fasta_fai)
     path(reference_fasta_dict)
