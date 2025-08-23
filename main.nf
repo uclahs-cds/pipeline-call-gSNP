@@ -117,7 +117,7 @@ workflow {
         intervals_to_split = Channel.from(params.intervals)
     } else {
         extract_GenomeIntervals(
-            base_meta.map{ metadata -> [metadata, "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict"]
+            base_meta.map{ metadata -> [metadata, "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict"] }
         )
 
         intervals_to_split = extract_GenomeIntervals.out.genomic_intervals.map{ genome_intervals -> genome_intervals[1] }
