@@ -18,7 +18,7 @@ jobs:
     steps:
       # Checkout codebase
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       # Run CICD-base
       - name: CICD-base
